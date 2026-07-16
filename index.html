@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    
+    <title>Ana Sayfa | StatLab</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+        
+        /* --- ÜST MENÜ LİNKLERİ --- */
+        .nav-menu-link { color: #64748b; font-size: 14px; transition: all 0.3s ease; display: flex; align-items: center; cursor: pointer; }
+        .nav-menu-link:hover { color: #2f8fe8; transform: translateY(-1px); }
+        
+        /* --- ÖZEL KARAR AĞACI BUTONU --- */
+        .decision-tree-btn {
+            position: relative; display: inline-flex; align-items: center; gap: 6px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #ffffff !important;
+            padding: 8px 18px; border-radius: 50px; font-size: 13px; font-weight: 700;
+            text-decoration: none; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+            transition: all 0.3s ease; animation: pulse-glow-purple 2s infinite;
+        }
+        .decision-tree-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.7); }
+        @keyframes pulse-glow-purple { 0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(139, 92, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); } }
+
+        /* --- GÜNCELLEMELER BUTONU --- */
+        .changelog-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(245, 158, 11, 0.1); color: #f59e0b !important;
+            padding: 6px 14px; border-radius: 50px; font-size: 13px; font-weight: 600;
+            text-decoration: none; transition: all 0.3s ease; border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        .changelog-badge:hover { background: rgba(245, 158, 11, 0.2); transform: translateY(-1px); }
+
+        /* --- TABLOLAR BUTONU (ÖZEL VE BELİRGİN) --- */
+        .tables-nav-btn {
+            display: inline-flex; align-items: center; font-weight: 700; color: #0f172a; 
+            font-size: 14.5px; padding: 6px 14px; border-radius: 8px; transition: all 0.3s ease;
+            background: rgba(47, 143, 232, 0.08); border: 1px solid rgba(47, 143, 232, 0.2);
+        }
+        .tables-nav-btn:hover { background: rgba(47, 143, 232, 0.15); color: #2f8fe8; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(47, 143, 232, 0.15); }
+        .tables-nav-icon { width: 18px; height: 18px; margin-right: 6px; object-fit: contain; }
+
+        /* --- TABLOLAR AÇILIR MENÜ (DROPDOWN) --- */
+        .dropdown-menu-custom {
+            border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
+            padding: 10px; min-width: 180px; margin-top: 10px !important;
+        }
+        .dropdown-item-custom { display: flex; align-items: center; gap: 10px; padding: 10px 15px; color: #475569; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 8px; transition: all 0.2s; }
+        .dropdown-item-custom:hover { background: rgba(47, 143, 232, 0.08); color: #2f8fe8; transform: translateX(3px); }
+
+        /* --- ÖZEL İLETİŞİM BUTONU --- */
+        .contact-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            color: #64748b; font-size: 14px; font-weight: 600; text-decoration: none;
+            padding: 6px 14px; border-radius: 8px; transition: all 0.3s ease; border: 1px solid transparent;
+        }
+        .contact-btn:hover { color: #0ea5e9; background: rgba(14, 165, 233, 0.05); border-color: rgba(14, 165, 233, 0.2); transform: translateY(-1px); }
+
+        /* --- TEK TİP PARLAK KATEGORİ BAŞLIKLARI (MAVİ) --- */
+        .cat-banner { 
+            padding: 22px 25px; border-radius: 14px; margin-top: 55px; margin-bottom: 25px; 
+            color: white; display: flex; align-items: center; gap: 18px; position: relative; overflow: hidden; 
+            background: linear-gradient(135deg, #2f8fe8, #1d7bd1); 
+            box-shadow: 0 8px 25px rgba(47, 143, 232, 0.35);
+        }
+        .cat-banner::before { 
+            content: ""; position: absolute; top: -50%; right: -10%; width: 300px; height: 300px; 
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%); 
+            border-radius: 50%; pointer-events: none; 
+        }
+        .cat-icon-box { 
+            width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; 
+            justify-content: center; font-size: 26px; flex-shrink: 0; background: white; color: #2f8fe8; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .cat-title { font-size: 22px; font-weight: 800; margin-bottom: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.2); letter-spacing: 0.5px; }
+
+        /* --- YENİ STANDART TEST KARTLARI (TİKSİZ) --- */
+        .test-card { 
+            display: flex; flex-direction: column; background: #fff; padding: 22px; border: 1px solid #e2e8f0; 
+            border-radius: 12px; height: 100%; text-decoration: none; transition: all 0.3s ease; 
+            border-left: 4px solid #cbd5e1; 
+        }
+        .test-card:hover { 
+            transform: translateY(-5px); box-shadow: 0 12px 25px rgba(0,0,0,0.08); 
+            border-left-color: #2f8fe8; 
+        }
+        
+        .test-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+        .test-title { font-size: 16px; font-weight: 700; margin-bottom: 0; line-height: 1.4; color: #0f172a; transition: color 0.3s; }
+        .test-card:hover .test-title { color: #2f8fe8; }
+        
+        .test-icon { font-size: 20px; color: #94a3b8; transition: color 0.3s, transform 0.3s; }
+        .test-card:hover .test-icon { color: #2f8fe8; transform: translateX(3px); }
+        
+        .test-desc { font-size: 13px; color: #64748b; line-height: 1.6; margin-bottom: 0; }
+
+        /* --- GECE MODU CSS --- */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #f8fafc !important; }
+        html.dark-mode .bg-white, html.dark-mode .header-area, html.dark-mode .test-card, html.dark-mode .dropdown-menu-custom { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .test-card { border-left-color: #475569; }
+        html.dark-mode .test-card:hover { border-left-color: #60a5fa; }
+        html.dark-mode .test-card .test-title { color: #f8fafc; }
+        html.dark-mode .test-card:hover .test-title { color: #60a5fa; }
+        html.dark-mode .test-icon { color: #64748b; }
+        html.dark-mode .test-card:hover .test-icon { color: #60a5fa; }
+        html.dark-mode .test-desc { color: #94a3b8; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        html.dark-mode .tables-nav-btn { color: #f8fafc; background: rgba(47, 143, 232, 0.15); border-color: rgba(47, 143, 232, 0.25); }
+        html.dark-mode .tables-nav-btn:hover { color: #60a5fa; background: rgba(47, 143, 232, 0.25); }
+        html.dark-mode .nav-menu-link { color: #cbd5e1; }
+        html.dark-mode .nav-menu-link:hover { color: #f8fafc; }
+        html.dark-mode .dropdown-item-custom { color: #cbd5e1; }
+        html.dark-mode .dropdown-item-custom:hover { background: rgba(47, 143, 232, 0.15); color: #60a5fa; }
+        html.dark-mode .contact-btn { color: #cbd5e1; }
+        html.dark-mode .contact-btn:hover { color: #38bdf8; background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.2); }
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+    </style>
+</head>
+<body>
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column" style="min-height: 100vh;">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border border-white shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="d-flex align-items-center flex-wrap gap-4">
+                        <div class="logo d-flex align-items-center border-end pe-3">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLab</span>
+                        </div>
+                        
+                        <nav class="d-flex align-items-center flex-wrap gap-3 gap-md-4">
+                            <a href="test-secici.html" class="decision-tree-btn" title="Hangi Testi Seçmeliyim?">
+                                <i class="ri-node-tree"></i> Hangi Testi Kullanmalıyım?
+                            </a>
+                            
+                            <a href="changelog.html" class="changelog-badge" title="Sistemdeki Son Yenilikleri Gör">
+                                <i class="ri-flashlight-fill"></i> Güncellemeler
+                            </a>
+                            
+                            <div class="dropdown">
+                                <a class="tables-nav-btn text-decoration-none dropdown-toggle" href="#" role="button" id="tabloDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <img src="assets/images/table.png" alt="Tablolar" class="tables-nav-icon">
+                                    Tablolar
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="tabloDropdown">
+                                    <li><a class="dropdown-item-custom" href="z-tablo.html"><i class="ri-grid-fill text-primary"></i> Z Tablosu</a></li>
+                                    <li><a class="dropdown-item-custom" href="t-tablo.html"><i class="ri-grid-fill text-primary"></i> t Tablosu</a></li>
+                                    <li><a class="dropdown-item-custom" href="ki-kare-tablo.html"><i class="ri-grid-fill text-primary"></i> Ki-Kare Tablosu</a></li>
+                                    <li><a class="dropdown-item-custom" href="f-tablo.html"><i class="ri-grid-fill text-primary"></i> F Tablosu</a></li>
+                                </ul>
+                            </div>
+                            
+                            <a href="iletisim.html" class="contact-btn">
+                                <i class="ri-mail-send-line fs-16"></i> İletişim
+                            </a>
+                        </nav>
+                    </div>
+                    
+                    <div class="header-right d-flex align-items-center">
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="main-content-container overflow-hidden flex-grow-1">
+                
+                <div class="row mb-3 mt-3">
+                    <div class="col-12 text-center">
+                        <h1 class="fw-bold text-dark display-6 mb-3">StatLab İstatistik Kütüphanesi</h1>
+                        <p class="text-secondary fs-15 mx-auto" style="max-width: 750px; line-height: 1.6;">
+                            Üzerinde çalıştığınız veriye en uygun aracı bulmak için üst menüdeki <strong>"Hangi Testi Kullanmalıyım?"</strong> asistanını başlatabilir veya aşağıdaki metodolojik alt gruplara ayrılmış dev arşivden seçiminizi yapabilirsiniz.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="cat-banner">
+                    <div class="cat-icon-box"><i class="ri-shield-check-fill"></i></div>
+                    <h3 class="cat-title">Varsayım Kontrolleri (Normallik ve Varyans)</h3>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6 col-lg-3">
+                        <a href="shapiro-wilk-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Shapiro-Wilk Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Veri setinin normal dağılıma (çan eğrisi) uyup uymadığını yüksek hassasiyetle test eder.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <a href="kolmogorov-smirnov-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Kolmogorov-Smirnov Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Büyük örneklemlerde (n>50) verinin belirli bir teorik dağılıma uyumunu ölçer.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <a href="levene-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Levene Varyans Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">İki veya daha fazla grubun varyanslarının (yayılımlarının) homojenliğini kontrol eder.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <a href="f-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">F-Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Sadece iki grubun varyanslarının birbirine eşit olup olmadığını parametrik olarak sınar.</p>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="cat-banner">
+                    <div class="cat-icon-box"><i class="ri-user-fill"></i></div>
+                    <h3 class="cat-title">Tek Örneklem Karşılaştırmaları</h3>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6 col-lg-4">
+                        <a href="tek-orneklem-t-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Tek Örneklem T-Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Bir örneklem ortalamasını, önceden bilinen bir kitle ortalamasıyla parametrik olarak karşılaştırır.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="tek-orneklem-wilcoxon-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Tek Örneklem Wilcoxon Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Normal dağılmayan verilerde örneklem medyanını sabit/teorik bir evren değeriyle kıyaslar.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="ki-kare-uyum-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Ki-Kare Uyum İyiliği Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Gözlemlenen kategorik frekansların beklenen teorik oranlara uyup uymadığını sınar.</p>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="cat-banner">
+                    <div class="cat-icon-box"><i class="ri-group-fill"></i></div>
+                    <h3 class="cat-title">İki Grup Karşılaştırmaları</h3>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6 col-lg-4">
+                        <a href="iki-orneklem-t-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">İki Örneklem T-Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">İki bağımsız grubun ortalamaları arasındaki farkın istatistiksel anlamlılığını test eder.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="mann-whitney-u-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Mann-Whitney U Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">T-Test'in non-parametrik alternatifidir. İki bağımsız grubu medyanları üzerinden kıyaslar.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="bagimli-t-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Bağımlı T-Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Aynı bireylerin iki farklı ölçümü (örn: öncesi ve sonrası) arasındaki ortalama değişimi inceler.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="wilcoxon-isaretli-siralar-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Wilcoxon İşaretli Sıralar Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Bağımlı T-Test'in non-parametrik karşılığıdır. Öncesi-sonrası medyan farklarına bakar.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="iki-orneklem-z-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">İki Örneklem Z-Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">İki farklı grubun başarı veya özellik oranlarını (yüzdelerini) birbirleriyle karşılaştırır.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="mcnemar-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">McNemar Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Bağımlı gruplarda (öncesi/sonrası) iki değerli kategorik verilerin değişim oranını ölçer.</p>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="cat-banner">
+                    <div class="cat-icon-box"><i class="ri-team-fill"></i></div>
+                    <h3 class="cat-title">Çoklu Grup Analizleri (ANOVA ve Alternatifleri)</h3>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6 col-lg-4">
+                        <a href="tek-yonlu-anova.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Tek Yönlü ANOVA Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Üç veya daha fazla bağımsız grubun ortalamaları arasında anlamlı bir fark arar.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="kruskal-wallis-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Kruskal-Wallis H Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">ANOVA'nın non-parametrik alternatifidir. 3+ grubu medyan ve sıra değerleriyle kıyaslar.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="tekrarli-olcumler-anova.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Tekrarlı Ölçümler ANOVA</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Aynı grubun üç veya daha fazla kez alınan (zaman serisi) ölçümlerindeki değişimi analiz eder.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="friedman-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Friedman Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Tekrarlı ölçümler ANOVA'nın sıralı veya normal dağılmayan verilerdeki karşılığıdır.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="iki-yonlu-anova.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">İki Yönlü ANOVA Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">İki farklı bağımsız faktörün bağımlı değişken üzerindeki ana ve ortak etkileşimlerini ölçer.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="scheirer-ray-hare-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Scheirer-Ray-Hare Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">İki yönlü ANOVA'nın sıralı verilere dayalı non-parametrik (ART) bir uzantısıdır.</p>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="cat-banner">
+                    <div class="cat-icon-box"><i class="ri-git-merge-fill"></i></div>
+                    <h3 class="cat-title">Korelasyon ve İlişki Testleri</h3>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6 col-lg-4">
+                        <a href="pearson-korelasyon-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Pearson Korelasyon Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">İki sürekli ve normal dağılan değişken arasındaki doğrusal ilişkinin gücünü ve yönünü ölçer.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="spearman-korelasyon-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Spearman Sıra Korelasyon Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Normal dağılmayan veya sıralı verilerde değişkenler arası monotonik ilişkiyi inceler.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="ki-kare-bagimsizlik-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Ki-Kare Bağımsızlık Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">İki kategorik (nominal) değişkenin birbirinden bağımsız olup olmadığını test eder.</p>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="cat-banner">
+                    <div class="cat-icon-box"><i class="ri-line-chart-fill"></i></div>
+                    <h3 class="cat-title">Regresyon ve Tahmin Modelleri</h3>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6 col-lg-4">
+                        <a href="basit-dogrusal-regresyon.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Basit Doğrusal Regresyon</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Sürekli bir bağımlı değişkenin tek bir bağımsız değişkenle nasıl değiştiğini modeller.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="coklu-dogrusal-regresyon.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Çoklu Doğrusal Regresyon</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Birden fazla bağımsız değişkenin (faktörün) sonuç üzerindeki çoklu etkilerini tahmin eder.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="lojistik-regresyon.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">İkili Lojistik Regresyon</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">İki sonuçlu (Evet/Hayır) bir olayın gerçekleşme olasılığını bağımsız faktörlerle modeller.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="poisson-regresyon.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Poisson Regresyon</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Belirli bir zaman diliminde veya alanda gerçekleşen nadir olayların frekansını tahmin eder.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="hosmer-lemeshow-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Hosmer-Lemeshow Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Lojistik regresyon modellerinin elde edilen gerçek verilere ne kadar iyi uyduğunu değerlendirir.</p>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="cat-banner">
+                    <div class="cat-icon-box"><i class="ri-heart-pulse-fill"></i></div>
+                    <h3 class="cat-title">Sağkalım (Survival) Modelleri</h3>
+                </div>
+                <div class="row g-3 mb-5">
+                    <div class="col-md-6 col-lg-4">
+                        <a href="kaplan-meier-egrisi.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Kaplan-Meier Yaşam Eğrisi</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Belirli bir olayın gerçekleşmesine kadar geçen zamana dayalı sağkalım olasılıklarını çizer.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="log-rank-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Log-Rank Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">İki veya daha fazla grubun yaşam (sağkalım) eğrilerini birbirleriyle karşılaştırır.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="cox-regresyon.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Cox Regresyon Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Çeşitli faktörlerin (yaş, cinsiyet vb.) sağkalım süresi üzerindeki risk etkisini analiz eder.</p>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+            <footer class="footer-area bg-white text-center rounded-10 rounded-bottom-0 p-3 mt-auto border-top shadow-sm">
+                <p class="fs-14 text-body mb-0">© <span>StatLab</span> - Gelişmiş İstatistiksel Analiz Platformu</p>
+            </footer>
+
+        </div>
+    </div>
+
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            
+            if (localStorage.getItem('statlab_theme') === 'dark') {
+                themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill');
+                themeIcon.classList.add('text-warning');
+            }
+
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill');
+                    themeIcon.classList.add('text-warning');
+                    themeIcon.classList.remove('text-secondary');
+                    localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill');
+                    themeIcon.classList.remove('text-warning');
+                    themeIcon.classList.add('text-secondary');
+                    localStorage.setItem('statlab_theme', 'light');
+                }
+            });
+        });
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>
