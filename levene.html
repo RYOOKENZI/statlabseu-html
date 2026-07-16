@@ -50,7 +50,7 @@
         
         .chart-container { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
         
-        .param-grid-table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: center; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+        .param-grid-table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
         .param-grid-table th { font-size: 13px; font-weight: 700; color: #475569; background-color: #f1f5f9; padding: 12px 10px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; }
         .param-grid-table th:last-child { border-right: none; }
         .param-grid-table td { padding: 12px 10px; font-size: 14px; color: #0f172a; border-bottom: 1px solid #edf2f7; border-right: 1px solid #edf2f7; background-color: #ffffff; }
@@ -383,14 +383,14 @@
 
                                     <h6 class="fs-13 fw-bold text-secondary mb-2 ms-1"><i class="ri-calculator-line align-middle"></i> ANOVA Tablosu</h6>
                                     <div class="table-responsive">
-                                        <table class="param-grid-table">
+                                        <table class="param-grid-table" style="text-align: center;">
                                             <thead>
                                                 <tr>
-                                                    <th>Kaynak<br>(Source)</th>
-                                                    <th>Serbestlik<br>($df$)</th>
-                                                    <th>Kareler Top.<br>($SS$)</th>
-                                                    <th>Ort. Kare<br>($MS$)</th>
-                                                    <th>Test Değeri<br>($F$)</th>
+                                                    <th style="text-align: left;">Kaynak<br><span class="text-muted fw-normal">(Source)</span></th>
+                                                    <th>Serbestlik<br><span class="text-muted fw-normal">($df$)</span></th>
+                                                    <th>Kareler Top.<br><span class="text-muted fw-normal">($SS$)</span></th>
+                                                    <th>Ort. Kare<br><span class="text-muted fw-normal">($MS$)</span></th>
+                                                    <th>Test Değeri<br><span class="text-muted fw-normal">($F$)</span></th>
                                                     <th>$p$-Değeri</th>
                                                 </tr>
                                             </thead>
@@ -460,36 +460,36 @@
                                             <table class="param-grid-table bg-white">
                                                 <thead>
                                                     <tr>
-                                                        <th>Kaynak<br>(Source)</th>
-                                                        <th>Serbestlik Derecesi<br>(Degrees of Freedom)</th>
-                                                        <th>Kareler Toplamı<br>(Sum of Squares)</th>
-                                                        <th>Ortalama Kare<br>(Mean Square)</th>
-                                                        <th>Test İstatistiği<br>(F statistic)</th>
-                                                        <th>$p$-Değeri<br>(p-value)</th>
+                                                        <th style="text-align: left;">Kaynak<br><span class="text-muted fw-normal">(Source)</span></th>
+                                                        <th>Serbestlik Derecesi<br><span class="text-muted fw-normal">(Degrees of Freedom)</span></th>
+                                                        <th>Kareler Toplamı<br><span class="text-muted fw-normal">(Sum of Squares)</span></th>
+                                                        <th>Ortalama Kare<br><span class="text-muted fw-normal">(Mean Square)</span></th>
+                                                        <th>Test İstatistiği<br><span class="text-muted fw-normal">(F statistic)</span></th>
+                                                        <th>$p$-Değeri<br><span class="text-muted fw-normal">(p-value)</span></th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     <tr>
                                                         <td class="fw-bold">Gruplar<br><span class="fw-normal text-muted fs-12">(between groups)</span></td>
-                                                        <td>$$k - 1$$</td>
-                                                        <td>$$SSG = \sum_{i=1}^{k} n_i (\bar{x}_i - \bar{x})^2$$</td>
-                                                        <td>$$MSG = \frac{SSG}{k - 1}$$</td>
-                                                        <td class="fw-bold text-primary">$$F = \frac{MSG}{MSE}$$</td>
-                                                        <td class="fw-bold text-success">$$P(x > F)$$</td>
+                                                        <td style="text-align: center; vertical-align: middle;">$$k - 1$$</td>
+                                                        <td style="text-align: center; vertical-align: middle;">$$SSG = \sum_{i=1}^{k} n_i (\bar{x}_i - \bar{x})^2$$</td>
+                                                        <td style="text-align: center; vertical-align: middle;">$$MSG = \frac{SSG}{k - 1}$$</td>
+                                                        <td class="fw-bold text-primary" style="text-align: center; vertical-align: middle;">$$F = \frac{MSG}{MSE}$$</td>
+                                                        <td class="fw-bold text-success" style="text-align: center; vertical-align: middle;">$$P(x > F)$$</td>
                                                     </tr>
                                                     <tr>
                                                         <td class="fw-bold">Hata<br><span class="fw-normal text-muted fs-12">(within groups)</span></td>
-                                                        <td>$$n - k$$</td>
-                                                        <td>$$SSE = \sum_{i=1}^{k} (n_i - 1) S_i^2$$</td>
-                                                        <td>$$MSE = \frac{SSE}{n - k}$$</td>
+                                                        <td style="text-align: center; vertical-align: middle;">$$n - k$$</td>
+                                                        <td style="text-align: center; vertical-align: middle;">$$SSE = \sum_{i=1}^{k} (n_i - 1) S_i^2$$</td>
+                                                        <td style="text-align: center; vertical-align: middle;">$$MSE = \frac{SSE}{n - k}$$</td>
                                                         <td></td>
                                                         <td></td>
                                                     </tr>
                                                     <tr>
                                                         <td class="fw-bold">Toplam<br><span class="fw-normal text-muted fs-12">(Total)</span></td>
-                                                        <td>$$n - 1$$</td>
-                                                        <td>$$SS(total) = SSG + SSE$$</td>
-                                                        <td class="text-muted fs-12">Örneklem Varyansı<br>$\frac{SS(total)}{n - 1}$</td>
+                                                        <td style="text-align: center; vertical-align: middle;">$$n - 1$$</td>
+                                                        <td style="text-align: center; vertical-align: middle;">$$SS(total) = SSG + SSE$$</td>
+                                                        <td class="text-muted fs-12" style="text-align: center; vertical-align: middle;">Örneklem Varyansı<br>$$\frac{SS(total)}{n - 1}$$</td>
                                                         <td></td>
                                                         <td></td>
                                                     </tr>
@@ -613,14 +613,6 @@
                 icon.classList.replace('ri-arrow-up-s-line', 'ri-arrow-down-s-line');
                 btn.classList.remove('bg-primary-subtle');
             }
-        }
-
-        function copyRCode() {
-            let text = document.getElementById("rCodeContent").innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                safeSetHTML("copyBtn", '<i class="ri-check-line text-success fs-16"></i>');
-                setTimeout(() => { safeSetHTML("copyBtn", '<i class="ri-file-copy-line fs-16 hover-white"></i>'); }, 2000);
-            });
         }
 
         function verileriKutudanCek(text) {
@@ -758,7 +750,7 @@
                 let payload = { groups: gruplar.map(g => g.data), center: merkez, alpha: alfa };
 
                 try {
-                    // API Canlıya Alındığında "http://127.0.0.1:8000/test/levene" yerine "https://api.statlabseu.com/test/levene" yapın.
+                    // YALNIZCA CANLI API ADRESİ ÇALIŞACAK
                     let istek = await fetch("https://api.statlabseu.com/test/levene", {
                         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
                     });
@@ -772,6 +764,7 @@
 
                 } catch (e) {
                     console.warn("API bağlantısı sağlanamadı. Lokal yedek motor aktif edildi.");
+                    // Lokal yedek hesaplama...
                     let genelOrt = 0;
                     let Z_verileri = gruplar.map(g => {
                         let sorted = [...g.data].sort((a,b)=>a-b); let nn = g.data.length;
@@ -806,7 +799,6 @@
                         SS_t: SS_gruplar + SS_hata, df_t: N-1
                     };
                     
-                    // Fallback Shapiro P-values
                     shapiroP_Listesi = gruplar.map(() => 0.5); 
                 }
 
@@ -814,7 +806,7 @@
                 safeSetText('fStat', fDegeri.toFixed(4));
                 safeSetText('dfVals', `${df1}, ${df2}`);
 
-                // Tablo: Grup Özetleri ve Shapiro-Wilk Analizi
+                // Tablo: Grup Özetleri
                 let tBodyGrup = document.getElementById('groupSummaryBody'); tBodyGrup.innerHTML = '';
                 let madMeans = []; let histDatasets = [];
                 const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16', '#6366f1', '#f43f5e'];
@@ -832,7 +824,6 @@
                     tr.innerHTML = `<td class="fw-medium">${g.isim}</td><td>${nn}</td><td>${mean.toFixed(3)}</td><td>${med.toFixed(3)}</td><td>${ss.toFixed(3)}</td><td class="${swColorClass}">${swP.toFixed(4)}</td>`;
                     tBodyGrup.appendChild(tr);
 
-                    // Chart verileri hazirligi
                     let c = colorPalette[i%10];
                     let z_vals = g.data.map(v => Math.abs(v - (merkez==='mean'?mean:med)));
                     let zMean = z_vals.reduce((a,b)=>a+b,0)/nn;
@@ -848,25 +839,25 @@
                 if(anovaStats) {
                     tBodyAnova.innerHTML = `
                         <tr>
-                            <td class="fw-medium bg-light">Gruplar Arası (Between)</td>
-                            <td>${anovaStats.df_b}</td>
-                            <td>${anovaStats.SS_b.toFixed(3)}</td>
-                            <td>${anovaStats.MS_b.toFixed(3)}</td>
-                            <td class="fw-bold text-dark">${fDegeri.toFixed(4)}</td>
-                            <td class="fw-bold text-primary">${pDegeri.toFixed(4)}</td>
+                            <td class="fw-medium bg-light">Gruplar<br><span class="fw-normal text-muted fs-12">(between groups)</span></td>
+                            <td style="text-align: center; vertical-align: middle;">${anovaStats.df_b}</td>
+                            <td style="text-align: center; vertical-align: middle;">${anovaStats.SS_b.toFixed(3)}</td>
+                            <td style="text-align: center; vertical-align: middle;">${anovaStats.MS_b.toFixed(3)}</td>
+                            <td class="fw-bold text-dark" style="text-align: center; vertical-align: middle;">${fDegeri.toFixed(4)}</td>
+                            <td class="fw-bold text-primary" style="text-align: center; vertical-align: middle;">${pDegeri.toFixed(4)}</td>
                         </tr>
                         <tr>
-                            <td class="fw-medium bg-light">Grup İçi Hata (Within)</td>
-                            <td>${anovaStats.df_w}</td>
-                            <td>${anovaStats.SS_w.toFixed(3)}</td>
-                            <td>${anovaStats.MS_w.toFixed(3)}</td>
+                            <td class="fw-medium bg-light">Hata<br><span class="fw-normal text-muted fs-12">(within groups)</span></td>
+                            <td style="text-align: center; vertical-align: middle;">${anovaStats.df_w}</td>
+                            <td style="text-align: center; vertical-align: middle;">${anovaStats.SS_w.toFixed(3)}</td>
+                            <td style="text-align: center; vertical-align: middle;">${anovaStats.MS_w.toFixed(3)}</td>
                             <td></td>
                             <td></td>
                         </tr>
                         <tr class="fw-bold">
-                            <td class="bg-light">Toplam (Total)</td>
-                            <td>${anovaStats.df_t}</td>
-                            <td>${anovaStats.SS_t.toFixed(3)}</td>
+                            <td class="bg-light">Toplam<br><span class="fw-normal text-muted fs-12">(Total)</span></td>
+                            <td style="text-align: center; vertical-align: middle;">${anovaStats.df_t}</td>
+                            <td style="text-align: center; vertical-align: middle;">${anovaStats.SS_t.toFixed(3)}</td>
                             <td></td>
                             <td></td>
                             <td></td>
@@ -893,38 +884,119 @@
                     options: { responsive: true, maintainAspectRatio: false, scales: { x: {type: 'linear'} }, plugins: { zoom: getZoomOptions() } }
                 });
 
-                // 3. F Dist (Sağ Kuyruklu)
+                // -------------------------------------------------------------
+                // 3. F DAĞILIM EĞRİSİ (YENİLENMİŞ MATEMATİKSEL İNTEGRASYON)
+                // -------------------------------------------------------------
                 if(window.distChartInstance) window.distChartInstance.destroy();
-                let fCurve = []; let redArea = []; let greenArea = [];
                 
-                let critF = 1.0; 
-                let maxDrawX = Math.max(5.0, fDegeri * 1.5);
-                let foundCrit = false;
-                
-                for(let x=0.01; x<20; x+=0.05) { 
-                    let p_approx = Math.exp(-x/2); 
-                    if(!foundCrit && p_approx <= alfa) { critF = x; foundCrit = true; } 
+                // 3.A Gerçek Kritik F Değerinin Hesaplanması (İntegrasyon Yöntemi)
+                let critF = 0;
+                let accArea = 0;
+                let stepSize = 0.005;
+                for(let x=0.001; x<50; x+=stepSize) {
+                    let y = fPDF(x, df1, df2);
+                    if(!isNaN(y) && isFinite(y)) {
+                        accArea += y * stepSize;
+                        if(accArea >= (1 - alfa)) {
+                            critF = x;
+                            break;
+                        }
+                    }
                 }
-                if(!foundCrit) critF = 3.0;
+                if (critF === 0) critF = 3.0; // Fail-safe yedek
+
+                // 3.B Çizim Verilerinin Ayrıştırılması
+                let maxDrawX = Math.max(critF * 1.5, fDegeri * 1.5, 5.0);
+                let fCurve = []; 
+                let redArea = []; 
+                let greenArea = [];
 
                 for(let x=0.01; x<=maxDrawX; x+=0.05) {
                     let y = fPDF(x, df1, df2);
                     if(!isNaN(y) && isFinite(y)) {
-                        fCurve.push({x:x, y:y});
-                        if(x >= critF) redArea.push({x:x, y:y});
-                        else greenArea.push({x:x, y:y});
+                        fCurve.push({x: x, y: y});
+                        if(x <= critF) {
+                            greenArea.push({x: x, y: y});
+                        } else {
+                            if (redArea.length === 0) {
+                                let yCrit = fPDF(critF, df1, df2);
+                                greenArea.push({x: critF, y: yCrit}); // Kusursuz renk birleşimi için köprü
+                                redArea.push({x: critF, y: yCrit});
+                            }
+                            redArea.push({x: x, y: y});
+                        }
                     }
                 }
-                
+
+                // 3.C Dikey Çizgilerin Koordinatları
+                let yPeak = Math.max(...fCurve.map(p => p.y));
+                let hesaplananY = fPDF(fDegeri, df1, df2);
+                let isHesaplananYValid = (!isNaN(hesaplananY) && isFinite(hesaplananY));
+
                 window.distChartInstance = new Chart(document.getElementById('distChartCanvas'), {
                     type: 'line',
                     data: { datasets: [
-                        { label: 'F Olasılık Dağılımı', data: fCurve, borderColor: isDark ? '#ffffff' : '#0f172a', borderWidth: 2.5, fill: false, pointRadius: 0 },
-                        { label: 'H₀ Reddedilemez (Kabul Bölgesi)', data: greenArea, backgroundColor: 'rgba(16, 185, 129, 0.35)', fill: true, pointRadius: 0, borderWidth: 0},
-                        { label: 'H₀ Reddedilir (Red Bölgesi, α)', data: redArea, backgroundColor: 'rgba(239, 68, 68, 0.55)', fill: true, pointRadius: 0, borderWidth: 0},
-                        { label: 'Hesaplanan F İstatistiği', data: [{x: fDegeri, y: 0}, {x: fDegeri, y: fPDF(fDegeri, df1, df2)||0.5}], borderColor: '#ef4444', borderDash: [4,4], borderWidth: 2, pointRadius: 5, pointBackgroundColor: '#ef4444' }
+                        { 
+                            label: 'F Dağılımı (Curve)', 
+                            data: fCurve, 
+                            borderColor: isDark ? '#cbd5e1' : '#0f172a', 
+                            borderWidth: 2, 
+                            fill: false, 
+                            pointRadius: 0,
+                            order: 1
+                        },
+                        { 
+                            label: 'Kabul Bölgesi (H₀)', 
+                            data: greenArea, 
+                            backgroundColor: 'rgba(16, 185, 129, 0.25)', // Yeşil Dolgu
+                            fill: 'origin', 
+                            pointRadius: 0, 
+                            borderWidth: 0,
+                            order: 4
+                        },
+                        { 
+                            label: 'Red Bölgesi (α)', 
+                            data: redArea, 
+                            backgroundColor: 'rgba(239, 68, 68, 0.35)', // Kırmızı Dolgu
+                            fill: 'origin', 
+                            pointRadius: 0, 
+                            borderWidth: 0,
+                            order: 5
+                        },
+                        { 
+                            label: `Kritik F (${critF.toFixed(3)})`, 
+                            data: [{x: critF, y: 0}, {x: critF, y: yPeak}], 
+                            borderColor: '#f59e0b', // Turuncu
+                            borderDash: [5, 5], 
+                            borderWidth: 2, 
+                            pointRadius: 0, 
+                            fill: false,
+                            order: 2
+                        },
+                        { 
+                            label: `Hesaplanan F (${fDegeri.toFixed(3)})`, 
+                            data: [{x: fDegeri, y: 0}, {x: fDegeri, y: isHesaplananYValid ? hesaplananY : yPeak/2}], 
+                            borderColor: '#ef4444', 
+                            borderWidth: 3, 
+                            pointStyle: 'rectRot',
+                            pointRadius: 5, 
+                            pointBackgroundColor: '#ef4444',
+                            fill: false,
+                            order: 3
+                        }
                     ]},
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { zoom: getZoomOptions(), legend: {position: 'bottom'} }, scales: {x: {type: 'linear'}} }
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        plugins: { 
+                            zoom: getZoomOptions(), 
+                            legend: {
+                                position: 'bottom', 
+                                labels: { boxWidth: 12, usePointStyle: true }
+                            } 
+                        }, 
+                        scales: {x: {type: 'linear'}} 
+                    }
                 });
 
                 // 4. Power Chart
