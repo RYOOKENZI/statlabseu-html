@@ -968,10 +968,9 @@ print(sonuc)</code></pre>
                 // 1. VERİYİ GÜVENLİ (HTTPS) SUNUCUYA GÖNDERİYORUZ
                 let apiAdresi = "https://api.statlabseu.com/test/shapiro"; 
                 let istek = await fetch(apiAdresi, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    // 2. PAYLOAD UYUMSUZLUĞU GİDERİLDİ (veri: yerine data: yazıldı)
-                    body: JSON.stringify({ data: data }) 
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ data: data }) 
                 });
 
                 if (!istek.ok) {
