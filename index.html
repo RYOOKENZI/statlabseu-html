@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-
     <link rel="icon" type="image/png" href="/assets/images/favicon.png">
     
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!-- Google Fonts: Başlık için özel Poppins fontu eklendi -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="assets/css/prism.css">
     <link rel="stylesheet" href="assets/css/quill.snow.css">
     <link rel="stylesheet" href="assets/css/remixicon.css">
     <link rel="stylesheet" href="assets/css/style.css">
     
-    <title>Ana Sayfa | StatLab</title>
+    <title>Ana Sayfa | StatLabseu</title>
 
     <script>
         if (localStorage.getItem('statlab_theme') === 'dark') {
@@ -23,11 +25,52 @@
     <style>
         .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
         
+        /* --- 15 SANİYELİK BETA BALONCUĞU (YENİ) --- */
+        .beta-bubble {
+            position: fixed;
+            top: 25px; 
+            right: 25px;
+            max-width: 260px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #ffffff;
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            font-weight: 600;
+            line-height: 1.5;
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.35);
+            z-index: 9999;
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+            animation: bubbleEnter 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            pointer-events: none; /* Baloncuk arkasındaki tıklamaları engellememesi için */
+        }
+        /* Baloncuğun üstündeki küçük ok işareti */
+        .beta-bubble::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            right: 24px;
+            border-width: 0 7px 7px 7px;
+            border-style: solid;
+            border-color: transparent transparent #f59e0b transparent;
+        }
+        @keyframes bubbleEnter {
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .bubble-exit {
+            animation: bubbleLeave 0.5s ease-in forwards !important;
+        }
+        @keyframes bubbleLeave {
+            from { opacity: 1; transform: translateY(0) scale(1); }
+            to { opacity: 0; transform: translateY(-20px) scale(0.95); }
+        }
+
         /* --- ÜST MENÜ LİNKLERİ --- */
         .nav-menu-link { color: #64748b; font-size: 14px; transition: all 0.3s ease; display: flex; align-items: center; cursor: pointer; }
         .nav-menu-link:hover { color: #2f8fe8; transform: translateY(-1px); }
         
-        /* --- ÖZEL KARAR AĞACI BUTONU --- */
+        /* --- 1. KARAR AĞACI BUTONU --- */
         .decision-tree-btn {
             position: relative; display: inline-flex; align-items: center; gap: 6px;
             background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #ffffff !important;
@@ -38,7 +81,31 @@
         .decision-tree-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.7); }
         @keyframes pulse-glow-purple { 0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(139, 92, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); } }
 
-        /* --- GÜNCELLEMELER BUTONU --- */
+        /* --- 2. TABLOLAR BUTONU VE MEGA AÇILIR MENÜ --- */
+        .tables-nav-btn {
+            display: inline-flex; align-items: center; font-weight: 700; color: #0f172a; 
+            font-size: 14.5px; padding: 6px 14px; border-radius: 8px; transition: all 0.3s ease;
+            background: rgba(47, 143, 232, 0.08); border: 1px solid rgba(47, 143, 232, 0.2);
+        }
+        .tables-nav-btn:hover, .tables-nav-btn[aria-expanded="true"] { background: rgba(47, 143, 232, 0.15); color: #2f8fe8; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(47, 143, 232, 0.15); }
+        .tables-nav-icon { width: 18px; height: 18px; margin-right: 6px; object-fit: contain; }
+        
+        .dropdown-mega { width: 480px; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 10px !important; }
+        .dropdown-header-custom { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 800; color: #64748b; padding-bottom: 8px; border-bottom: 2px solid #f1f5f9; margin-bottom: 10px; margin-left: 15px; margin-right: 15px; }
+        .dropdown-item-custom { display: flex; align-items: center; gap: 8px; padding: 8px 15px; color: #334155; text-decoration: none; font-size: 13.5px; font-weight: 600; border-radius: 8px; transition: all 0.2s; }
+        .dropdown-item-custom:hover { background: rgba(47, 143, 232, 0.08); color: #2f8fe8; transform: translateX(4px); }
+
+        /* --- 3. İSTATİSTİK SÖZLÜĞÜ BUTONU (YENİ VE EFEKTİF) --- */
+        .glossary-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: linear-gradient(135deg, #10b981, #059669); color: #ffffff !important;
+            padding: 8px 18px; border-radius: 50px; font-size: 13px; font-weight: 700;
+            text-decoration: none; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s ease;
+        }
+        .glossary-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6); }
+
+        /* --- 4. GÜNCELLEMELER BUTONU --- */
         .changelog-badge {
             display: inline-flex; align-items: center; gap: 6px;
             background: rgba(245, 158, 11, 0.1); color: #f59e0b !important;
@@ -47,30 +114,41 @@
         }
         .changelog-badge:hover { background: rgba(245, 158, 11, 0.2); transform: translateY(-1px); }
 
-        /* --- TABLOLAR BUTONU (ÖZEL VE BELİRGİN) --- */
-        .tables-nav-btn {
-            display: inline-flex; align-items: center; font-weight: 700; color: #0f172a; 
-            font-size: 14.5px; padding: 6px 14px; border-radius: 8px; transition: all 0.3s ease;
-            background: rgba(47, 143, 232, 0.08); border: 1px solid rgba(47, 143, 232, 0.2);
-        }
-        .tables-nav-btn:hover { background: rgba(47, 143, 232, 0.15); color: #2f8fe8; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(47, 143, 232, 0.15); }
-        .tables-nav-icon { width: 18px; height: 18px; margin-right: 6px; object-fit: contain; }
-
-        /* --- TABLOLAR AÇILIR MENÜ (DROPDOWN) --- */
-        .dropdown-menu-custom {
-            border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
-            padding: 10px; min-width: 180px; margin-top: 10px !important;
-        }
-        .dropdown-item-custom { display: flex; align-items: center; gap: 10px; padding: 10px 15px; color: #475569; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 8px; transition: all 0.2s; }
-        .dropdown-item-custom:hover { background: rgba(47, 143, 232, 0.08); color: #2f8fe8; transform: translateX(3px); }
-
-        /* --- ÖZEL İLETİŞİM BUTONU --- */
+        /* --- 5. İLETİŞİM BUTONU --- */
         .contact-btn {
             display: inline-flex; align-items: center; gap: 6px;
             color: #64748b; font-size: 14px; font-weight: 600; text-decoration: none;
             padding: 6px 14px; border-radius: 8px; transition: all 0.3s ease; border: 1px solid transparent;
         }
         .contact-btn:hover { color: #0ea5e9; background: rgba(14, 165, 233, 0.05); border-color: rgba(14, 165, 233, 0.2); transform: translateY(-1px); }
+
+        /* --- EFEKTİF ANA BAŞLIK (GİF TARZI ANİMASYONLU - BİR TIK KÜÇÜLTÜLDÜ) --- */
+        .hero-title {
+            font-family: 'Poppins', sans-serif !important;
+            font-size: clamp(1.8rem, 4vw, 2.2rem) !important; /* Bir tık küçültüldü ve responsive yapıldı */
+            font-weight: 900 !important;
+            background: linear-gradient(to right, #0f172a, #2f8fe8, #6366f1, #0ea5e9, #0f172a);
+            background-size: 300% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: textShine 4s linear infinite;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        @keyframes textShine {
+            to { background-position: 300% center; }
+        }
+
+        /* --- DAKTİLO (TYPEWRITER) EFEKTİ --- */
+        .typewriter-text {
+            color: #64748b; font-size: 15px; max-width: 750px; margin: 0 auto; line-height: 1.6;
+            min-height: 50px; 
+        }
+        .typewriter-text::after {
+            content: '|'; animation: blink 1s step-end infinite; color: #2f8fe8; font-weight: bold;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
         /* --- TEK TİP PARLAK KATEGORİ BAŞLIKLARI (MAVİ) --- */
         .cat-banner { 
@@ -113,7 +191,9 @@
 
         /* --- GECE MODU CSS --- */
         html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #f8fafc !important; }
-        html.dark-mode .bg-white, html.dark-mode .header-area, html.dark-mode .test-card, html.dark-mode .dropdown-menu-custom { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-white, html.dark-mode .header-area, html.dark-mode .test-card { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .dropdown-mega { background-color: #1e293b; border-color: #334155; }
+        html.dark-mode .dropdown-header-custom { color: #94a3b8; border-color: #334155; }
         html.dark-mode .test-card { border-left-color: #475569; }
         html.dark-mode .test-card:hover { border-left-color: #60a5fa; }
         html.dark-mode .test-card .test-title { color: #f8fafc; }
@@ -123,8 +203,19 @@
         html.dark-mode .test-desc { color: #94a3b8; }
         html.dark-mode .text-dark { color: #f8fafc !important; }
         html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        html.dark-mode .typewriter-text { color: #cbd5e1; }
+        
+        /* Gece modunda GIF tarzı animasyonun neonlaşması */
+        html.dark-mode .hero-title { 
+            background: linear-gradient(to right, #60a5fa, #34d399, #a78bfa, #60a5fa); 
+            background-size: 300% auto; 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            text-shadow: 0 0 25px rgba(96, 165, 250, 0.2); 
+        }
+        
         html.dark-mode .tables-nav-btn { color: #f8fafc; background: rgba(47, 143, 232, 0.15); border-color: rgba(47, 143, 232, 0.25); }
-        html.dark-mode .tables-nav-btn:hover { color: #60a5fa; background: rgba(47, 143, 232, 0.25); }
+        html.dark-mode .tables-nav-btn:hover, html.dark-mode .tables-nav-btn[aria-expanded="true"] { color: #60a5fa; background: rgba(47, 143, 232, 0.25); }
         html.dark-mode .nav-menu-link { color: #cbd5e1; }
         html.dark-mode .nav-menu-link:hover { color: #f8fafc; }
         html.dark-mode .dropdown-item-custom { color: #cbd5e1; }
@@ -138,6 +229,12 @@
 </head>
 <body>
 
+    <!-- YENİ 15 SANİYELİK BALONCUK (TOOLTIP) -->
+    <div id="betaTooltip" class="beta-bubble">
+        <i class="ri-information-fill align-middle fs-16 me-1"></i>
+        StatLabseu şu anda beta sürümündedir. Bazı testler ve özellikler geliştirme aşamasındadır.
+    </div>
+
     <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
 
     <div class="container" style="position: relative; z-index: 1;">
@@ -148,31 +245,60 @@
                     <div class="d-flex align-items-center flex-wrap gap-4">
                         <div class="logo d-flex align-items-center border-end pe-3">
                             <img src="assets/images/logo-icon.png" alt="logo" width="35">
-                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLab</span>
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
                         </div>
                         
                         <nav class="d-flex align-items-center flex-wrap gap-3 gap-md-4">
+                            <!-- 1. Hangi Testi Kullanmalıyım -->
                             <a href="test-secici.html" class="decision-tree-btn" title="Hangi Testi Seçmeliyim?">
                                 <i class="ri-node-tree"></i> Hangi Testi Kullanmalıyım?
                             </a>
                             
-                            <a href="changelog.html" class="changelog-badge" title="Sistemdeki Son Yenilikleri Gör">
-                                <i class="ri-flashlight-fill"></i> Güncellemeler
-                            </a>
-                            
+                            <!-- 2. Tablolar (Mega Menü) -->
                             <div class="dropdown">
                                 <a class="tables-nav-btn text-decoration-none dropdown-toggle" href="#" role="button" id="tabloDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                     <img src="assets/images/table.png" alt="Tablolar" class="tables-nav-icon">
                                     Tablolar
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="tabloDropdown">
-                                    <li><a class="dropdown-item-custom" href="z-tablo.html"><i class="ri-grid-fill text-primary"></i> Z Tablosu</a></li>
-                                    <li><a class="dropdown-item-custom" href="t-tablo.html"><i class="ri-grid-fill text-primary"></i> t Tablosu</a></li>
-                                    <li><a class="dropdown-item-custom" href="ki-kare-tablo.html"><i class="ri-grid-fill text-primary"></i> Ki-Kare Tablosu</a></li>
-                                    <li><a class="dropdown-item-custom" href="f-tablo.html"><i class="ri-grid-fill text-primary"></i> F Tablosu</a></li>
-                                </ul>
+                                <div class="dropdown-menu dropdown-mega" aria-labelledby="tabloDropdown">
+                                    <div class="row g-0">
+                                        <div class="col-6 border-end">
+                                            <h6 class="dropdown-header-custom">Temel Dağılımlar</h6>
+                                            <a class="dropdown-item-custom" href="z-tablo.html"><i class="ri-grid-fill text-primary"></i> Z Tablosu</a>
+                                            <a class="dropdown-item-custom" href="t-tablo.html"><i class="ri-grid-fill text-primary"></i> t Tablosu</a>
+                                            <a class="dropdown-item-custom" href="f-tablo.html"><i class="ri-grid-fill text-primary"></i> F Tablosu</a>
+                                            <a class="dropdown-item-custom" href="ki-kare-tablo.html"><i class="ri-grid-fill text-primary"></i> Ki-Kare Tablosu</a>
+                                            
+                                            <h6 class="dropdown-header-custom mt-3">Normallik Testleri</h6>
+                                            <a class="dropdown-item-custom" href="ks-tablo.html"><i class="ri-grid-fill text-success"></i> K-S Kritik Değerler</a>
+                                            <a class="dropdown-item-custom" href="shapiro-tablo.html"><i class="ri-grid-fill text-success"></i> Shapiro-Wilk (W) Tablosu</a>
+                                        </div>
+                                        <div class="col-6 ps-2">
+                                            <h6 class="dropdown-header-custom">Ekonometri</h6>
+                                            <a class="dropdown-item-custom" href="durbin-watson.html"><i class="ri-grid-fill text-warning"></i> Durbin-Watson (d)</a>
+                                            <a class="dropdown-item-custom" href="dickey-fuller.html"><i class="ri-grid-fill text-warning"></i> Dickey-Fuller (ADF)</a>
+                                            
+                                            <h6 class="dropdown-header-custom mt-3">Non-Parametrik & Diğer</h6>
+                                            <a class="dropdown-item-custom" href="mann-whitney-tablo.html"><i class="ri-grid-fill text-danger"></i> Mann-Whitney U</a>
+                                            <a class="dropdown-item-custom" href="wilcoxon-tablo.html"><i class="ri-grid-fill text-danger"></i> Wilcoxon (T) Tablosu</a>
+                                            <a class="dropdown-item-custom" href="spearman-tablo.html"><i class="ri-grid-fill text-info"></i> Spearman Korelasyon</a>
+                                            <a class="dropdown-item-custom" href="tukey-tablo.html"><i class="ri-grid-fill text-info"></i> Tukey's q (Post-Hoc)</a>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
+
+                            <!-- 3. İstatistik Sözlüğü (Yeni Efektif Buton) -->
+                            <a href="sozluk.html" class="glossary-btn" title="Kapsamlı İstatistik Sözlüğü">
+                                <i class="ri-book-read-fill"></i> İstatistik Sözlüğü
+                            </a>
                             
+                            <!-- 4. Güncellemeler -->
+                            <a href="changelog.html" class="changelog-badge" title="Sistemdeki Son Yenilikleri Gör">
+                                <i class="ri-flashlight-fill"></i> Güncellemeler
+                            </a>
+                            
+                            <!-- 5. İletişim -->
                             <a href="iletisim.html" class="contact-btn">
                                 <i class="ri-mail-send-line fs-16"></i> İletişim
                             </a>
@@ -189,12 +315,12 @@
 
             <div class="main-content-container overflow-hidden flex-grow-1">
                 
-                <div class="row mb-3 mt-3">
+                <div class="row mb-4 mt-4">
                     <div class="col-12 text-center">
-                        <h1 class="fw-bold text-dark display-6 mb-3">StatLab İstatistik Kütüphanesi</h1>
-                        <p class="text-secondary fs-15 mx-auto" style="max-width: 750px; line-height: 1.6;">
-                            Üzerinde çalıştığınız veriye en uygun aracı bulmak için üst menüdeki <strong>"Hangi Testi Kullanmalıyım?"</strong> asistanını başlatabilir veya aşağıdaki metodolojik alt gruplara ayrılmış dev arşivden seçiminizi yapabilirsiniz.
-                        </p>
+                        <!-- YENİ FONT, GİF TARZI ANİMASYON VE KÜÇÜLTÜLMÜŞ BOYUT -->
+                        <h1 class="mb-3 hero-title">StatLabseu İstatistik Kütüphanesi</h1>
+                        <!-- Daktilo efektinin yazılacağı boş alan -->
+                        <div id="typewriter-text" class="typewriter-text"></div>
                     </div>
                 </div>
 
@@ -430,7 +556,7 @@
             </div>
 
             <footer class="footer-area bg-white text-center rounded-10 rounded-bottom-0 p-3 mt-auto border-top shadow-sm">
-                <p class="fs-14 text-body mb-0">© <span>StatLab</span> - Gelişmiş İstatistiksel Analiz Platformu</p>
+                <p class="fs-14 text-body mb-0">© <span>StatLabseu</span> - Gelişmiş İstatistiksel Analiz Platformu</p>
             </footer>
 
         </div>
@@ -439,6 +565,7 @@
     <script src="assets/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Gece Modu Kontrolleri
             const toggleBtn = document.getElementById('theme-toggle');
             const themeIcon = document.getElementById('theme-icon');
             const htmlEl = document.documentElement;
@@ -450,7 +577,6 @@
 
             toggleBtn.addEventListener('click', () => {
                 htmlEl.classList.toggle('dark-mode');
-                
                 if (htmlEl.classList.contains('dark-mode')) {
                     themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill');
                     themeIcon.classList.add('text-warning');
@@ -463,6 +589,42 @@
                     localStorage.setItem('statlab_theme', 'light');
                 }
             });
+
+            // 15 Saniyelik Baloncuk (Tooltip) Algoritması
+            setTimeout(() => {
+                const tooltip = document.getElementById('betaTooltip');
+                if (tooltip) {
+                    tooltip.classList.add('bubble-exit'); // Çıkış animasyonunu tetikler
+                    setTimeout(() => tooltip.remove(), 600); // Animasyon bitince HTML'den tamamen siler
+                }
+            }, 15000);
+
+            // Akıllı Daktilo (Typewriter) Efekti Algoritması
+            const typingElement = document.getElementById("typewriter-text");
+            const rawHTMLText = 'Üzerinde çalıştığınız veriye en uygun aracı bulmak için üst menüdeki <strong>"Hangi Testi Kullanmalıyım?"</strong> asistanını başlatabilir veya aşağıdaki metodolojik alt gruplara ayrılmış dev arşivden seçiminizi yapabilirsiniz.';
+            
+            let charIndex = 0;
+            let isTypingTag = false;
+
+            function typeWriterEngine() {
+                if (charIndex < rawHTMLText.length) {
+                    let currentChar = rawHTMLText.charAt(charIndex);
+                    
+                    // HTML etiketlerini (< >) anında geç ki sayfa düzeni bozulmasın
+                    if (currentChar === '<') isTypingTag = true;
+                    if (currentChar === '>') isTypingTag = false;
+                    
+                    typingElement.innerHTML = rawHTMLText.substring(0, charIndex + 1);
+                    charIndex++;
+                    
+                    // Etiketteysek beklemeden yaz, normal harf ise 25ms bekle (Hacker hissi)
+                    let typingSpeed = isTypingTag ? 0 : 25;
+                    setTimeout(typeWriterEngine, typingSpeed);
+                }
+            }
+            
+            // Sayfa yüklendikten yarım saniye sonra yazmaya başla
+            setTimeout(typeWriterEngine, 500);
         });
     </script>
     <script src="assets/js/particle-bg.js"></script>
