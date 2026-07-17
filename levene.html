@@ -408,27 +408,6 @@
                                     </div>
                                 </div>
 
-                                <!-- R Tipi Terminal Kutusu Eklendi -->
-                                <div class="terminal-box mt-4">
-                                    <div class="terminal-header">
-                                        <span class="text-white fw-bold fs-14"><i class="ri-terminal-box-fill text-primary me-2"></i>R Terminal - Levene Analysis</span>
-                                        <button class="btn btn-sm btn-outline-light border-0 py-0" onclick="copyRCode()" title="Kodu Kopyala"><i class="ri-file-copy-line fs-16"></i></button>
-                                    </div>
-                                    <pre class="terminal-body" id="rCodeBlock">
-<span class="term-comment"># Levene Testi için 'car' paketini yükleyin ve çağırın</span>
-<span class="term-func">install.packages</span>(<span class="term-string">"car"</span>)
-<span class="term-keyword">library</span>(car)
-
-<span class="term-comment"># Veri setini oluşturun (Örnek format)</span>
-veri &lt;- <span class="term-func">data.frame</span>(
-  deger = <span class="term-func">c</span>(grup1_verileri, grup2_verileri, ...),
-  grup = <span class="term-func">as.factor</span>(<span class="term-func">rep</span>(<span class="term-func">c</span>(<span class="term-string">"Grup1"</span>, <span class="term-string">"Grup2"</span>, ...), times = <span class="term-func">c</span>(n1, n2, ...)))
-)
-
-<span class="term-comment"># Varyans Homojenliği Testini Çalıştır (Merkez = Medyan)</span>
-<span class="term-func">leveneTest</span>(deger ~ grup, data = veri, center = median)</pre>
-                                </div>
-
                             </div>
                         </div>
                     </div>
@@ -461,6 +440,25 @@ veri &lt;- <span class="term-func">data.frame</span>(
                                     
                                     <div id="infoPanel" class="mt-3 p-4 bg-light rounded-10 border border-light shadow-sm text-start transition-all" style="display: none; font-size: 14.5px; line-height: 1.8; color: #334155;">
                                         
+                                        <!-- YENİ EKLENEN LEVENE TESTİ BİLGİLENDİRME METNİ -->
+                                        <h5 class="fw-bold text-dark fs-16 mb-3 border-bottom pb-2 border-secondary">Levene Testi Nedir?</h5>
+                                        <p class="mb-3 text-dark">Levene testi, iki veya daha fazla grubun değişkenlikleri arasındaki farkın istatistiksel olarak anlamlı olup olmadığını kontrol eder.</p>
+                                        
+                                        <ul class="mb-4 text-dark list-unstyled ps-2 border-start border-3 border-primary">
+                                            <li class="mb-2"><strong class="text-primary">Neyi Karşılaştırır?</strong> Levene testi doğrudan varyansları karşılaştırmaz; bunun yerine veri değişkenliğini ölçmenin başka bir yolu olan Ortalama Mutlak Sapmaları (MAD) karşılaştırır. Öte yandan, eğer bu ortalama mutlak sapmalar birbirinden farklıysa, varyansların da farklı olma olasılığı çok yüksektir.</li>
+                                            <li class="mb-2"><strong class="text-primary">Nasıl Çalışır?</strong> Levene testi, her bir grubun kendi merkezinden olan mutlak sapmaları üzerinden bir ANOVA (Varyans Analizi) testi gerçekleştirir.</li>
+                                            <li class="mb-2"><strong class="text-primary">Grup Merkezi Seçimi:</strong> Grup merkezi olarak "ortalama" (mean) veya "medyan" (ortanca) kullanılabilir:
+                                                <ul class="mt-1 ps-4" style="list-style-type: disc;">
+                                                    <li>Merkez olarak ortalama kullanıldığında bu teste <strong>Levene Testi</strong> denir.</li>
+                                                    <li>Merkez olarak medyan kullanıldığında ise teste <strong>Brown-Forsythe Testi</strong> adı verilir.</li>
+                                                </ul>
+                                            </li>
+                                            <li class="mb-2"><strong class="text-primary">ANOVA'nın Amacı:</strong> Bu sapmalar üzerinde ANOVA testi yaparken temel amacımız şudur: Ortalama mutlak sapmalar (MAD) arasındaki fark, gruplar arasındaki gerçek bir farkı mı yansıtıyor, yoksa yalnızca grupların kendi içindeki rastgele gürültüden (şans faktöründen) mi kaynaklanıyor?</li>
+                                            <li class="mb-2"><strong class="text-primary">F İstatistiği:</strong> Hesaplanan F istatistiği, gruplar arası varyansın, grup içi varyansa oranını ifade eder. Birçok istatistiksel testin aksine, F istatistiği ne kadar küçük çıkarsa, ortalamaların eşit olma olasılığı o kadar yüksektir.</li>
+                                            <li class="mb-2"><strong class="text-primary">Kuyruk Yönü:</strong> Bu, sağ kuyruklu (right-tailed) bir F testidir; ANOVA testi için yalnızca dağılımın sağ kuyruğunu kullanırsınız.</li>
+                                        </ul>
+                                        <!-- / BİTİŞ -->
+
                                         <h5 class="fw-bold text-dark fs-16 mb-3 border-bottom pb-2 border-secondary">ANOVA Tablosu Formülleri</h5>
                                         
                                         <div class="mb-3">
@@ -494,8 +492,9 @@ veri &lt;- <span class="term-func">data.frame</span>(
                                                         <td style="text-align: center; vertical-align: middle;">$$k - 1$$</td>
                                                         <td style="text-align: center; vertical-align: middle;">$$SSG = \sum_{i=1}^{k} n_i (\bar{x}_i - \bar{x})^2$$</td>
                                                         <td style="text-align: center; vertical-align: middle;">$$MSG = \frac{SSG}{k - 1}$$</td>
-                                                        <td class="fw-bold text-primary" style="text-align: center; vertical-align: middle;">$$F = \frac{MSG}{MSE}$$</td>
-                                                        <td class="fw-bold text-success" style="text-align: center; vertical-align: middle;">$$P(x > F)$$</td>
+                                                        <!-- FORMÜLLERDEN RENKLER KALDIRILDI -->
+                                                        <td class="fw-bold" style="text-align: center; vertical-align: middle;">$$F = \frac{MSG}{MSE}$$</td>
+                                                        <td class="fw-bold" style="text-align: center; vertical-align: middle;">$$P(x > F)$$</td>
                                                     </tr>
                                                     <tr>
                                                         <td class="fw-bold">Hata<br><span class="fw-normal text-muted fs-12">(within groups)</span></td>
@@ -509,7 +508,7 @@ veri &lt;- <span class="term-func">data.frame</span>(
                                                         <td class="fw-bold">Toplam<br><span class="fw-normal text-muted fs-12">(Total)</span></td>
                                                         <td style="text-align: center; vertical-align: middle;">$$n - 1$$</td>
                                                         <td style="text-align: center; vertical-align: middle;">$$SS(total) = SSG + SSE$$</td>
-                                                        <td class="fw-bold text-primary" style="text-align: center; vertical-align: middle;">Örneklem Varyansı<br>$$\frac{SS(total)}{n - 1}$$</td>
+                                                        <td class="fw-bold" style="text-align: center; vertical-align: middle;">Örneklem Varyansı<br>$$\frac{SS(total)}{n - 1}$$</td>
                                                         <td></td>
                                                         <td></td>
                                                     </tr>
@@ -519,6 +518,29 @@ veri &lt;- <span class="term-func">data.frame</span>(
 
                                         <h5 class="fw-bold text-dark fs-16 mb-3 border-bottom pb-2 border-secondary">Karar Kuralı (Sağ Kuyruklu Test)</h5>
                                         <p class="mb-4">Elde edilen $F$ istatistiği, $F(k-1, n-k)$ serbestlik derecelerine sahip bir F dağılımı ile kıyaslanır. Test <strong>sağ kuyruklu (right-tailed)</strong> bir testtir; yani hesaplanan $F$ değeri kritik sınırın sağında (red bölgesinde) kalıyorsa ve buna bağlı $p$-değeri belirlenen $\alpha$ eşiğinden küçükse, varyansların homojen olmadığı ($H_0$ reddedilir) sonucuna varılır.</p>
+
+                                        <!-- TAŞINAN R TERMİNAL KUTUSU -->
+                                        <h5 class="fw-bold text-dark fs-16 mt-5 mb-3 border-bottom pb-2 border-secondary">R Kullanarak Levene Testi</h5>
+                                        <div class="terminal-box">
+                                            <div class="terminal-header">
+                                                <span class="text-white fw-bold fs-14"><i class="ri-terminal-box-fill text-primary me-2"></i>R Terminal - Levene Analysis</span>
+                                                <button class="btn btn-sm btn-outline-light border-0 py-0" onclick="copyRCode()" title="Kodu Kopyala"><i class="ri-file-copy-line fs-16"></i></button>
+                                            </div>
+                                            <pre class="terminal-body" id="rCodeBlock">
+<span class="term-comment"># Levene Testi için 'car' paketini yükleyin ve çağırın</span>
+<span class="term-func">install.packages</span>(<span class="term-string">"car"</span>)
+<span class="term-keyword">library</span>(car)
+
+<span class="term-comment"># Veri setini oluşturun (Örnek format)</span>
+veri &lt;- <span class="term-func">data.frame</span>(
+  deger = <span class="term-func">c</span>(grup1_verileri, grup2_verileri, ...),
+  grup = <span class="term-func">as.factor</span>(<span class="term-func">rep</span>(<span class="term-func">c</span>(<span class="term-string">"Grup1"</span>, <span class="term-string">"Grup2"</span>, ...), times = <span class="term-func">c</span>(n1, n2, ...)))
+)
+
+<span class="term-comment"># Varyans Homojenliği Testini Çalıştır (Merkez = Medyan)</span>
+<span class="term-func">leveneTest</span>(deger ~ grup, data = veri, center = median)</pre>
+                                        </div>
+                                        <!-- / R TERMİNAL BİTİŞ -->
 
                                     </div>
                                 </div>
@@ -552,8 +574,8 @@ veri &lt;- <span class="term-func">data.frame</span>(
 
         if (typeof window['chartjs-plugin-zoom'] !== 'undefined') { Chart.register(window['chartjs-plugin-zoom']); }
 
-        let totalGroupCounter = 3; 
-        let activeGroupIds = [1, 2, 3];
+        // DİNAMİK GRUP VERİSİ YÖNETİMİ
+        let groupData = ["", "", ""]; // Başlangıçta 3 boş grup
 
         document.addEventListener('DOMContentLoaded', () => {
             const toggleBtn = document.getElementById('theme-toggle');
@@ -575,34 +597,49 @@ veri &lt;- <span class="term-func">data.frame</span>(
             renderGruplar();
         });
 
+        function syncGroups() {
+            for(let i=0; i<groupData.length; i++) {
+                let el = document.getElementById('veri_' + (i+1));
+                if(el) groupData[i] = el.value;
+            }
+        }
+
         function renderGruplar() {
             let container = document.getElementById('gruplarKutusu');
             container.innerHTML = '';
-            activeGroupIds.forEach(id => {
+            
+            groupData.forEach((val, idx) => {
+                let id = idx + 1;
                 let div = document.createElement('div');
                 div.className = 'mb-2 position-relative';
                 div.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <label class="form-label fw-bold text-secondary fs-12 mb-0">${id}. Grup</label>
-                        ${activeGroupIds.length > 2 ? `<button class="btn btn-sm text-danger p-0 border-0 transition-all hover-scale" onclick="grupSil(${id})" title="Grubu Sil"><i class="ri-close-circle-fill fs-16"></i></button>` : ''}
+                        ${groupData.length > 2 ? `<button class="btn btn-sm text-danger p-0 border-0 transition-all hover-scale" onclick="grupSil(${idx})" title="Grubu Sil"><i class="ri-close-circle-fill fs-16"></i></button>` : ''}
                     </div>
-                    <textarea id="veri_${id}" class="form-control bg-light border-0 p-2 fs-13 text-secondary rounded-10" rows="2" placeholder="Sayıları girin (virgül, boşluk veya alt alta)..."></textarea>
+                    <textarea id="veri_${id}" class="form-control bg-light border-0 p-2 fs-13 text-secondary rounded-10" rows="2" placeholder="Sayıları girin (virgül, boşluk veya alt alta)...">${val}</textarea>
                 `;
                 container.appendChild(div);
+                
+                // Anlık veri senkronizasyonu
+                document.getElementById(`veri_${id}`).addEventListener('input', function() {
+                    groupData[idx] = this.value;
+                });
             });
-            document.getElementById('grupSayiRozet').innerText = activeGroupIds.length + "/10 Grup";
+            document.getElementById('grupSayiRozet').innerText = groupData.length + "/10 Grup";
         }
 
         function grupEkle() {
-            if(activeGroupIds.length >= 10) { alert("Maksimum 10 grup ekleyebilirsiniz."); return; }
-            totalGroupCounter++;
-            activeGroupIds.push(totalGroupCounter);
+            syncGroups();
+            if(groupData.length >= 10) { alert("Maksimum 10 grup ekleyebilirsiniz."); return; }
+            groupData.push(""); // Yeni boş grup ekle
             renderGruplar();
         }
 
-        function grupSil(id) {
-            if(activeGroupIds.length <= 2) return;
-            activeGroupIds = activeGroupIds.filter(gId => gId !== id);
+        function grupSil(idx) {
+            syncGroups();
+            if(groupData.length <= 2) return;
+            groupData.splice(idx, 1); // Seçili grubu listeden tamamen uçur, alttakiler otomatik kayar
             renderGruplar();
         }
 
@@ -634,8 +671,9 @@ veri &lt;- <span class="term-func">data.frame</span>(
         }
 
         function ornekVeriYukle() {
-            if(activeGroupIds.length < 3) { activeGroupIds = [1, 2, 3]; totalGroupCounter = 3; renderGruplar(); }
-            activeGroupIds.forEach((id, index) => {
+            syncGroups();
+            // Yalnızca mevcutta kaç tane grup varsa onları doldurur (Otomatik yeni grup yaratmaz)
+            groupData.forEach((val, index) => {
                 let n = 35 + Math.floor(Math.random() * 15);
                 let mean = 50 + (index * 2);
                 let sd = 4 + (index * 8);
@@ -645,13 +683,14 @@ veri &lt;- <span class="term-func">data.frame</span>(
                     let num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
                     data.push((num * sd + mean).toFixed(2));
                 }
-                let box = document.getElementById(`veri_${id}`);
-                if(box) box.value = data.join('\n');
+                groupData[index] = data.join('\n');
             });
+            renderGruplar();
         }
 
         function temizleVeri() {
-            activeGroupIds.forEach(id => { let box = document.getElementById(`veri_${id}`); if(box) box.value = ''; });
+            groupData = ["", "", ""]; // Temizleyince default 3 boş gruba döner
+            renderGruplar();
             document.getElementById('dosyaGezgini').value = '';
             document.getElementById('aktifSonuc').style.display = 'none'; document.getElementById('leftPanelExtra').style.display = 'none';
             document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('bosDurum').style.display = 'block';
@@ -662,13 +701,18 @@ veri &lt;- <span class="term-func">data.frame</span>(
         }
 
         function baslatAnalizLoading() {
+            syncGroups();
             let aktifGruplarVeri = [];
             let gozlemSayisi = 0;
-            activeGroupIds.forEach(id => {
-                let txt = document.getElementById(`veri_${id}`).value;
+            
+            groupData.forEach((txt, idx) => {
                 let data = verileriKutudanCek(txt);
-                if(data.length > 1) { aktifGruplarVeri.push({isim: `${id}. Grup`, data: data}); gozlemSayisi += data.length; }
+                if(data.length > 1) { 
+                    aktifGruplarVeri.push({isim: `${idx+1}. Grup`, data: data}); 
+                    gozlemSayisi += data.length; 
+                }
             });
+            
             if (aktifGruplarVeri.length < 2) { alert("Test için en az 2 grupta geçerli veri olmalıdır."); return; }
             if (gozlemSayisi > 1000) { alert(`Maksimum 1000 gözlem girebilirsiniz! (Şu an: ${gozlemSayisi})`); return; }
             
@@ -733,7 +777,7 @@ veri &lt;- <span class="term-func">data.frame</span>(
 
         function copyRCode() {
             const code = document.getElementById("rCodeBlock").innerText;
-            navigator.clipboard.writeText(code).then(() => { alert("R kodu kopyalandı!"); });
+            navigator.clipboard.writeText(code).then(() => { alert("R kodu başarıyla kopyalandı!"); });
         }
 
         async function analizEtLeveneAPI(gruplar) {
@@ -849,7 +893,7 @@ veri &lt;- <span class="term-func">data.frame</span>(
                     options: { responsive: true, maintainAspectRatio: false, scales: { x: {type: 'linear'} }, plugins: { zoom: getZoomOptions() } }
                 });
 
-                // 3. F Eğrisi Grafiği (Yeşil/Kırmızı Bölgeli Kusursuz Yapı)
+                // 3. F Eğrisi Grafiği
                 if(window.distChartInstance) window.distChartInstance.destroy();
                 
                 let critF = 0;
