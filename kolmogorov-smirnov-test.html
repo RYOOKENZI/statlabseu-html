@@ -80,6 +80,16 @@
         /* DİKKAT ÇEKİCİ BAŞLIK STİLİ */
         .title-highlight { color: #2f8fe8; font-weight: 800; font-size: 1.15rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 3px solid #2f8fe8 !important; padding-bottom: 8px; display: inline-block; }
 
+        /* YENİ: DİKKAT ÇEKİCİ BUTON STİLLERİ & ANİMASYONU */
+        @keyframes pulse-btn {
+            0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.8); }
+            70% { box-shadow: 0 0 0 15px rgba(14, 165, 233, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); }
+        }
+        .btn-pulse { animation: pulse-btn 1.8s infinite; background: linear-gradient(135deg, #2f8fe8, #0ea5e9); border: none; color: white !important; }
+        .btn-pulse:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(14, 165, 233, 0.4); background: linear-gradient(135deg, #1d7bd1, #0284c7); }
+        .btn-action { font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; transition: all 0.3s ease; }
+
         /* GECE MODU AYARLARI */
         html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #f8fafc !important; }
         html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
@@ -183,7 +193,7 @@
                 <div class="row">
                     <div class="col-lg-4 mb-4">
                         <div class="card bg-white border-0 rounded-10 p-4 shadow-sm">
-                            <h4 class="mb-3 fs-17 fw-semibold">Veri Havuzu</h4>
+                            <h4 class="mb-3 fs-17 fw-semibold text-dark">Veri Havuzu & Parametreler</h4>
                             
                             <div class="mb-4">
                                 <div class="custom-upload-zone p-3 rounded-10 text-center cursor-pointer" id="uploadZone" onclick="document.getElementById('dosyaGezgini').click()">
@@ -251,10 +261,18 @@
                                 </select>
                             </div>
 
-                            <div class="d-flex justify-content-between gap-2 mt-2">
-                                <button class="btn btn-outline-secondary w-100 py-2 rounded-10 fw-medium fs-13" onclick="ornekVeriYukle()">Örnek Veri</button>
-                                <button class="btn btn-primary w-100 py-2 rounded-10 fw-bold fs-13" onclick="baslatAnalizLoading()">Analiz Et</button>
-                                <button class="btn btn-outline-danger w-100 py-2 rounded-10 fw-medium fs-13" onclick="temizleVeri()">Temizle</button>
+                            <div class="d-flex flex-column gap-3 mt-4">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-secondary w-50 py-2 rounded-10 btn-action" onclick="ornekVeriYukle()">
+                                        <i class="ri-magic-line align-middle me-1"></i> Örnek Veri
+                                    </button>
+                                    <button class="btn btn-outline-danger w-50 py-2 rounded-10 btn-action" onclick="temizleVeri()">
+                                        <i class="ri-delete-bin-line align-middle me-1"></i> Temizle
+                                    </button>
+                                </div>
+                                <button class="btn w-100 py-3 rounded-10 btn-action btn-pulse" onclick="baslatAnalizLoading()">
+                                    <i class="ri-bar-chart-2-fill align-middle me-1 fs-18"></i> VERİLERİ ANALİZ ET
+                                </button>
                             </div>
                         </div>
 
@@ -839,12 +857,14 @@ lillie.test(veri)</code></pre>
                         body: JSON.stringify(payload)
                     });
                     
-                    if(istek.ok) {
-                        let apiSonuc = await istek.json();
-                        // Eğer API başarılı yanıt dönerse, Python Statsmodels'in %100 hassas sonuçları JavaScript'in üstüne yazılır.
-                        D = apiSonuc.statistic;
-                        pVal = apiSonuc.p_value;
+                    if(!istek.ok) {
+                        throw new Error(`API Hatası: ${istek.status} - ${istek.statusText}`);
                     }
+                    
+                    let apiSonuc = await istek.json();
+                    // Eğer API başarılı yanıt dönerse, Python Statsmodels'in %100 hassas sonuçları JavaScript'in üstüne yazılır.
+                    D = apiSonuc.statistic;
+                    pVal = apiSonuc.p_value;
                 } catch (e) {
                     console.warn("API bağlantısı sağlanamadı. Tarayıcı içi lokal istatistik motoru (JS) devrede.", e);
                 }
