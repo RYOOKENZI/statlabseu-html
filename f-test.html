@@ -37,7 +37,6 @@
             font-weight: normal; font-style: normal;
         }
         .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
-        
         .math-var { font-family: 'STIX Two Math', serif !important; font-style: italic; font-weight: normal; color: inherit; display: inline-block; }
 
         .custom-upload-zone { border: 2px dashed #2f8fe8 !important; background-color: rgba(47, 143, 232, 0.04); transition: all 0.2s ease-in-out; }
@@ -46,7 +45,6 @@
 
         .chart-container { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
         
-        /* Tablo Stilleri ve Satır Atlatma Düzenlemeleri */
         .param-grid-table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: center; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
         .param-grid-table th { font-size: 13px; font-weight: 700; color: #475569; background-color: #f1f5f9; padding: 12px 10px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; white-space: nowrap; vertical-align: middle; line-height: 1.4; }
         .param-grid-table th:last-child { border-right: none; }
@@ -289,8 +287,8 @@
                                             </div>
                                             <div class="col-12">
                                                 <div class="p-2 bg-body-bg rounded-10 border border-light d-flex justify-content-around px-4">
-                                                    <div><span class="text-muted fs-12 fw-semibold">Pay (<i>df<sub>1</sub></i>):</span> <span id="df1Val" class="text-dark fw-bold fs-14 ms-1">-</span></div>
-                                                    <div><span class="text-muted fs-12 fw-semibold">Payda (<i>df<sub>2</sub></i>):</span> <span id="df2Val" class="text-dark fw-bold fs-14 ms-1">-</span></div>
+                                                    <div><span class="text-muted fs-12 fw-semibold">Pay (<span class="math-var">df_1</span>):</span> <span id="df1Val" class="text-dark fw-bold fs-14 ms-1">-</span></div>
+                                                    <div><span class="text-muted fs-12 fw-semibold">Payda (<span class="math-var">df_2</span>):</span> <span id="df2Val" class="text-dark fw-bold fs-14 ms-1">-</span></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -411,7 +409,7 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="chart-container py-2 h-100">
-                                            <h5 class="fs-12 fw-bold text-secondary mb-2 text-center text-uppercase tracking-wider">Test Gücü (Power vs Tip II Hata)</h5>
+                                            <h5 class="fs-12 fw-bold text-secondary mb-2 text-center text-uppercase tracking-wider">Test Gücü Dağılımı (Power vs Tip II Hata)</h5>
                                             <div style="position: relative; height: 250px;"><canvas id="powerChart"></canvas></div>
                                         </div>
                                     </div>
@@ -808,7 +806,36 @@ var.test(grup1, grup2, alternative = "less")    # Grup 1 < Grup 2</code></pre>
         }
 
         async function analizEtF(arr1, arr2) {
-            // API İSTEĞİ (Kusursuz Güvenlik Kalkanı Eklenmiş Hali)
+            try {
+                let alfa = parseFloat(document.getElementById('alfaInput').value);
+                let hyp = document.getElementById('hypType').value;
+                let s1 = calculateGroupStats(arr1); let s2 = calculateGroupStats(arr2);
+                
+                let F = s1.variance / s2.variance;
+                let df1 = s1.n - 1; let df2 = s2.n - 1;
+                
+                let cdfVal = fCDF(F, df1, df2);
+                let pVal = 0;
+                if(hyp === 'two-sided') pVal = 2 * Math.min(cdfVal, 1 - cdfVal);
+                else if(hyp === 'greater') pVal = 1 - cdfVal;
+                else if(hyp === 'less') pVal = cdfVal;
+
+                let ciLow = 0, ciHigh = Infinity;
+                if(hyp === 'two-sided') { ciLow = F / fCritBinary(1 - alfa/2, df1, df2); ciHigh = F / fCritBinary(alfa/2, df1, df2); } 
+                else if(hyp === 'greater') { ciLow = F / fCritBinary(1 - alfa, df1, df2); } 
+                else if(hyp === 'less') { ciHigh = F / fCritBinary(alfa, df1, df2); }
+
+                let N = s1.n + s2.n; let grandMean = (arr1.reduce((a,b)=>a+b,0) + arr2.reduce((a,b)=>a+b,0)) / N;
+                let ssB = s1.n * Math.pow(s1.mean - grandMean, 2) + s2.n * Math.pow(s2.mean - grandMean, 2);
+                let ssW = s1.sum_sq + s2.sum_sq; let ssT = ssB + ssW;
+                let dfB = 1; let dfW = N - 2; let dfT = N - 1;
+                let msB = ssB / dfB; let msW = ssW / dfW; let fAnova = msB / msW;
+                let pAnova = 1 - fCDF(fAnova, dfB, dfW);
+                let etaSq = ssB / ssT;
+                
+                let fCritP = fCritBinary(1-alfa, dfB, dfW);
+                let powerJS = 1 - fCDF(fCritP / Math.max(1.0001, fAnova), dfB, dfW);
+
                 try {
                     let istek = await fetch("https://api.statlabseu.com/test/f-test", {
                         method: "POST", headers: { "Content-Type": "application/json" },
@@ -816,8 +843,6 @@ var.test(grup1, grup2, alternative = "less")    # Grup 1 < Grup 2</code></pre>
                     });
                     if(istek.ok) { 
                         let apiSonuc = await istek.json(); 
-                        
-                        // EĞER API'DEN VERİ GELİRSE ÜSTÜNE YAZ, GELMEZSE (Eski sürümse) LOKAL JS İLE DEVAM ET
                         if(apiSonuc.statistic !== undefined) F = apiSonuc.statistic; 
                         if(apiSonuc.p_value !== undefined) pVal = apiSonuc.p_value; 
                         if(apiSonuc.ci_lower !== undefined) ciLow = apiSonuc.ci_lower; 
@@ -851,7 +876,9 @@ var.test(grup1, grup2, alternative = "less")    # Grup 1 < Grup 2</code></pre>
                 else { setStyle('assumptionsBox', 'display', 'none'); setClass('norm1Val', "text-success fw-bold"); setClass('norm2Val', "text-success fw-bold"); }
 
                 setTxt('df1Val', df1); setTxt('df2Val', df2); setTxt('fStat', F.toFixed(4));
-                setTxt('ciLevel', (1-alfa)*100); setTxt('ciLower', ciLow === 0 ? "0.0000" : ciLow.toFixed(4)); setTxt('ciUpper', ciHigh === Infinity ? "∞" : ciHigh.toFixed(4));
+                setTxt('ciLevel', (1-alfa)*100); 
+                setTxt('ciLower', (ciLow === 0 || !isFinite(ciLow)) ? (ciLow===0?"0.0000":"-∞") : ciLow.toFixed(4)); 
+                setTxt('ciUpper', !isFinite(ciHigh) ? "∞" : ciHigh.toFixed(4));
 
                 setTxt('aDfB', dfB); setTxt('aSsB', ssB.toFixed(3)); setTxt('aMsB', msB.toFixed(3)); setTxt('aF', fAnova.toFixed(4)); setTxt('aP', pAnova < 0.0001 ? "<0.0001" : pAnova.toFixed(4));
                 setTxt('aDfW', dfW); setTxt('aSsW', ssW.toFixed(3)); setTxt('aMsW', msW.toFixed(3));
