@@ -168,19 +168,18 @@
                             </div>
 
                             <div class="row g-2 mb-1">
-    <div class="col-6">
-        <label class="form-label fw-medium text-secondary fs-13 mb-1">Grup 1 Gözlemleri</label>
-        <textarea id="veriKutusu1" class="form-control bg-light border-0 p-3 fs-13 text-secondary rounded-10" rows="5" placeholder="Sayıları girin..."></textarea>
-    </div>
-    <div class="col-6">
-        <label class="form-label fw-medium text-secondary fs-13 mb-1">Grup 2 Gözlemleri</label>
-        <textarea id="veriKutusu2" class="form-control bg-light border-0 p-3 fs-13 text-secondary rounded-10" rows="5" placeholder="Sayıları girin..."></textarea>
-    </div>
-</div>
-<!-- 1000 Veri Sınırı Uyarısı (Yeni Eklenen Kısım) -->
-<div class="mb-3 text-end px-1">
-    <span class="fs-11 text-muted"><i class="ri-information-line align-middle text-primary me-1"></i>Her grup için maks. 1000 gözlem sınırı</span>
-</div>
+                                <div class="col-6">
+                                    <label class="form-label fw-medium text-secondary fs-13 mb-1">Grup 1 Gözlemleri</label>
+                                    <textarea id="veriKutusu1" class="form-control bg-light border-0 p-3 fs-13 text-secondary rounded-10" rows="5" placeholder="Sayıları girin..."></textarea>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label fw-medium text-secondary fs-13 mb-1">Grup 2 Gözlemleri</label>
+                                    <textarea id="veriKutusu2" class="form-control bg-light border-0 p-3 fs-13 text-secondary rounded-10" rows="5" placeholder="Sayıları girin..."></textarea>
+                                </div>
+                            </div>
+                            <div class="mb-3 text-end px-1">
+                                <span class="fs-11 text-muted"><i class="ri-information-line align-middle text-primary me-1"></i>Her grup için maks. 1000 gözlem sınırı</span>
+                            </div>
 
                             <div class="mb-3">
                                 <label class="form-label fw-medium text-secondary fs-13 mb-1">Anlamlılık Seviyesi (<span class="math-var">&alpha;</span>)</label>
@@ -291,8 +290,8 @@
                                             </div>
                                             <div class="col-12">
                                                 <div class="p-2 bg-body-bg rounded-10 border border-light d-flex justify-content-around px-4">
-                                                    <div><span class="text-muted fs-12 fw-semibold">Pay (<span class="math-var">df_1</span>):</span> <span id="df1Val" class="text-dark fw-bold fs-14 ms-1">-</span></div>
-                                                    <div><span class="text-muted fs-12 fw-semibold">Payda (<span class="math-var">df_2</span>):</span> <span id="df2Val" class="text-dark fw-bold fs-14 ms-1">-</span></div>
+                                                    <div><span class="text-muted fs-12 fw-semibold">Pay (<i>df<sub>1</sub></i>):</span> <span id="df1Val" class="text-dark fw-bold fs-14 ms-1">-</span></div>
+                                                    <div><span class="text-muted fs-12 fw-semibold">Payda (<i>df<sub>2</sub></i>):</span> <span id="df2Val" class="text-dark fw-bold fs-14 ms-1">-</span></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -332,7 +331,7 @@
                                             <h5 class="fs-13 fw-bold text-dark mb-3 text-center text-uppercase tracking-wider">F Dağılımı ve Kritik Bölgeler</h5>
                                             <div style="position: relative; height: 350px; width: 100%;"><canvas id="distChart"></canvas></div>
                                             <p class="text-muted text-center fs-12 mt-3 px-3 mb-0">
-                                                <i class="ri-information-line align-middle"></i> <strong>Not:</strong> Belirgin düz çizgi hesaplanan F istatistiğini, kesikli kırmızı çizgi seçilen anlamlılık düzeyine göre kritik F değerini göstermektedir. Hesaplanan F, kırmızı alana düşerse H₀ reddedilir.
+                                                <i class="ri-information-line align-middle"></i> <strong>Not:</strong> Düz çizgi hesaplanan F istatistiğini, kesikli kırmızı çizgi seçilen anlamlılık düzeyine göre kritik F değerini göstermektedir. Hesaplanan F, kırmızı alana düşerse H₀ reddedilir.
                                             </p>
                                         </div>
                                     </div>
@@ -607,7 +606,7 @@ var.test(grup1, grup2, alternative = "less")    # Grup 1 < Grup 2</code></pre>
             return 1 - bt * betacf(1-x, b, a) / b;
         }
         function gammaln(z) {
-            let j, x, tmp, ser; let cof = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+            let j, x, y, tmp, ser; let cof = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
             y = x = z; tmp = x + 5.5; tmp -= (x + 0.5) * Math.log(tmp); ser = 1.000000000190015;
             for (j = 0; j <= 5; j++) ser += cof[j] / ++y;
             return -tmp + Math.log(2.5066282746310005 * ser / x);
@@ -682,8 +681,6 @@ var.test(grup1, grup2, alternative = "less")    # Grup 1 < Grup 2</code></pre>
             if(pValue > alpha) { if(icon) icon.className = "ri-arrow-up-s-fill fs-24 text-success"; if(text) text.className = "badge bg-success mt-1 fs-12 shadow-sm font-monospace text-white border border-success"; }
             else { if(icon) icon.className = "ri-arrow-up-s-fill fs-24 text-danger"; if(text) text.className = "badge bg-danger mt-1 fs-12 shadow-sm font-monospace text-white border border-danger"; }
 
-            // YANLIŞLIKLA SİLİNEN KISIM BURASIYDI (Geri Eklendi)
-            // Bu kısım p-değerini alıp hem ana kutuya hem de ibreye yazdırır.
             let st = null;
             function step(ts) {
                 if(!st) st = ts; let pr = Math.min((ts - st) / 1200, 1); let e = 1 - Math.pow(1 - pr, 3);
@@ -692,14 +689,12 @@ var.test(grup1, grup2, alternative = "less")    # Grup 1 < Grup 2</code></pre>
             }
             requestAnimationFrame(step);
         }
-        }
 
         function cizGrafikler(F, df1, df2, s1, s2, arr1, arr2, alpha, hyp, powerVal) {
             const isDark = document.documentElement.classList.contains('dark-mode');
             const fColor = isDark ? '#94a3b8' : '#64748b'; const gColor = isDark ? '#334155' : '#e2e8f0';
             Object.values(charts).forEach(c => { if(c) c.destroy(); });
 
-            // 1. F DAĞILIMI (Görseldeki gibi kusursuz alan doldurmalı)
             let fLow = 0, fHigh = 100; 
             if(hyp === 'two-sided') { fLow = fCritBinary(alpha/2, df1, df2); fHigh = fCritBinary(1-alpha/2, df1, df2); }
             else if(hyp === 'greater') { fHigh = fCritBinary(1-alpha, df1, df2); fLow = -1; }
@@ -921,6 +916,5 @@ var.test(grup1, grup2, alternative = "less")    # Grup 1 < Grup 2</code></pre>
             } catch (error) { setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block'); alert("Hata: " + error); }
         }
     </script>
-    <script src="assets/js/particle-bg.js"></script>
 </body>
 </html>
