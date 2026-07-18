@@ -25,7 +25,7 @@
     <style>
         .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
         
-        /* --- 15 SANİYELİK BETA BALONCUĞU (YENİ) --- */
+        /* --- 15 SANİYELİK BETA BALONCUĞU --- */
         .beta-bubble {
             position: fixed;
             top: 25px; 
@@ -43,9 +43,8 @@
             opacity: 0;
             transform: translateY(-20px) scale(0.95);
             animation: bubbleEnter 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            pointer-events: none; /* Baloncuk arkasındaki tıklamaları engellememesi için */
+            pointer-events: none; 
         }
-        /* Baloncuğun üstündeki küçük ok işareti */
         .beta-bubble::after {
             content: '';
             position: absolute;
@@ -95,7 +94,7 @@
         .dropdown-item-custom { display: flex; align-items: center; gap: 8px; padding: 8px 15px; color: #334155; text-decoration: none; font-size: 13.5px; font-weight: 600; border-radius: 8px; transition: all 0.2s; }
         .dropdown-item-custom:hover { background: rgba(47, 143, 232, 0.08); color: #2f8fe8; transform: translateX(4px); }
 
-        /* --- 3. İSTATİSTİK SÖZLÜĞÜ BUTONU (YENİ VE EFEKTİF) --- */
+        /* --- 3. İSTATİSTİK SÖZLÜĞÜ BUTONU --- */
         .glossary-btn {
             display: inline-flex; align-items: center; gap: 6px;
             background: linear-gradient(135deg, #10b981, #059669); color: #ffffff !important;
@@ -122,22 +121,36 @@
         }
         .contact-btn:hover { color: #0ea5e9; background: rgba(14, 165, 233, 0.05); border-color: rgba(14, 165, 233, 0.2); transform: translateY(-1px); }
 
-        /* --- EFEKTİF ANA BAŞLIK (GİF TARZI ANİMASYONLU - BİR TIK KÜÇÜLTÜLDÜ) --- */
+        /* --- SADE VE EFEKTİF ANA BAŞLIK --- */
         .hero-title {
             font-family: 'Poppins', sans-serif !important;
-            font-size: clamp(1.8rem, 4vw, 2.2rem) !important; /* Bir tık küçültüldü ve responsive yapıldı */
+            font-size: clamp(1.8rem, 4vw, 2.5rem) !important;
             font-weight: 900 !important;
-            background: linear-gradient(to right, #0f172a, #2f8fe8, #6366f1, #0ea5e9, #0f172a);
-            background-size: 300% auto;
-            color: transparent;
-            -webkit-background-clip: text;
-            background-clip: text;
-            animation: textShine 4s linear infinite;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            margin-bottom: 15px;
+            
+            /* Göz yormayan, zarif bir renk akışı */
+            background: linear-gradient(to right, #0f172a, #2f8fe8, #0f172a);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+            
+            /* Sadece yukarı doğru yumuşakça belirir ve hafifçe parlar */
+            opacity: 0;
+            transform: translateY(25px);
+            animation: smoothFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards, subtleShine 6s linear infinite 0.8s;
         }
-        @keyframes textShine {
-            to { background-position: 300% center; }
+
+        @keyframes smoothFadeUp {
+            0% { opacity: 0; transform: translateY(25px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes subtleShine {
+            to { background-position: 200% center; }
         }
 
         /* --- DAKTİLO (TYPEWRITER) EFEKTİ --- */
@@ -205,13 +218,15 @@
         html.dark-mode .text-secondary { color: #cbd5e1 !important; }
         html.dark-mode .typewriter-text { color: #cbd5e1; }
         
-        /* Gece modunda GIF tarzı animasyonun neonlaşması */
+        /* Gece modunda Başlık Optimizasyonu */
         html.dark-mode .hero-title { 
-            background: linear-gradient(to right, #60a5fa, #34d399, #a78bfa, #60a5fa); 
-            background-size: 300% auto; 
+            background: linear-gradient(to right, #f8fafc, #60a5fa, #f8fafc); 
+            background-size: 200% auto; 
             -webkit-background-clip: text; 
+            background-clip: text;
             -webkit-text-fill-color: transparent; 
-            text-shadow: 0 0 25px rgba(96, 165, 250, 0.2); 
+            color: transparent;
+            filter: drop-shadow(0 0 8px rgba(96, 165, 250, 0.25));
         }
         
         html.dark-mode .tables-nav-btn { color: #f8fafc; background: rgba(47, 143, 232, 0.15); border-color: rgba(47, 143, 232, 0.25); }
@@ -229,7 +244,6 @@
 </head>
 <body>
 
-    <!-- YENİ 15 SANİYELİK BALONCUK (TOOLTIP) -->
     <div id="betaTooltip" class="beta-bubble">
         <i class="ri-information-fill align-middle fs-16 me-1"></i>
         StatLabseu şu anda beta sürümündedir. Bazı testler ve özellikler geliştirme aşamasındadır.
@@ -249,16 +263,13 @@
                         </div>
                         
                         <nav class="d-flex align-items-center flex-wrap gap-3 gap-md-4">
-                            <!-- 1. Hangi Testi Kullanmalıyım -->
                             <a href="test-secici.html" class="decision-tree-btn" title="Hangi Testi Seçmeliyim?">
                                 <i class="ri-node-tree"></i> Hangi Testi Kullanmalıyım?
                             </a>
                             
-                            <!-- 2. Tablolar (Mega Menü) -->
                             <div class="dropdown">
                                 <a class="tables-nav-btn text-decoration-none dropdown-toggle" href="#" role="button" id="tabloDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <img src="assets/images/table.png" alt="Tablolar" class="tables-nav-icon">
-                                    Tablolar
+                                    <img src="assets/images/table.png" alt="Tablolar" class="tables-nav-icon"> Tablolar
                                 </a>
                                 <div class="dropdown-menu dropdown-mega" aria-labelledby="tabloDropdown">
                                     <div class="row g-0">
@@ -288,17 +299,14 @@
                                 </div>
                             </div>
 
-                            <!-- 3. İstatistik Sözlüğü (Yeni Efektif Buton) -->
                             <a href="sozluk.html" class="glossary-btn" title="Kapsamlı İstatistik Sözlüğü">
                                 <i class="ri-book-read-fill"></i> İstatistik Sözlüğü
                             </a>
                             
-                            <!-- 4. Güncellemeler -->
                             <a href="changelog.html" class="changelog-badge" title="Sistemdeki Son Yenilikleri Gör">
                                 <i class="ri-flashlight-fill"></i> Güncellemeler
                             </a>
                             
-                            <!-- 5. İletişim -->
                             <a href="iletisim.html" class="contact-btn">
                                 <i class="ri-mail-send-line fs-16"></i> İletişim
                             </a>
@@ -317,9 +325,7 @@
                 
                 <div class="row mb-4 mt-4">
                     <div class="col-12 text-center">
-                        <!-- YENİ FONT, GİF TARZI ANİMASYON VE KÜÇÜLTÜLMÜŞ BOYUT -->
-                        <h1 class="mb-3 hero-title">StatLabseu İstatistik Kütüphanesi</h1>
-                        <!-- Daktilo efektinin yazılacağı boş alan -->
+                        <h1 class="hero-title">StatLabseu İstatistik Kütüphanesi</h1>
                         <div id="typewriter-text" class="typewriter-text"></div>
                     </div>
                 </div>
@@ -562,10 +568,43 @@
         </div>
     </div>
 
+    <!-- GÜVENLİK: Sağ Tık ve Geliştirici Araçları Engelleme -->
+    <script>
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' || e.keyCode === 123) {
+                e.preventDefault();
+                return false;
+            }
+            if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73)) {
+                e.preventDefault();
+                return false;
+            }
+            if (e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74)) {
+                e.preventDefault();
+                return false;
+            }
+            if (e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c' || e.keyCode === 67)) {
+                e.preventDefault();
+                return false;
+            }
+            if (e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.keyCode === 85)) {
+                e.preventDefault();
+                return false;
+            }
+            if (e.metaKey && e.altKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+
     <script src="assets/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Gece Modu Kontrolleri
             const toggleBtn = document.getElementById('theme-toggle');
             const themeIcon = document.getElementById('theme-icon');
             const htmlEl = document.documentElement;
@@ -590,16 +629,15 @@
                 }
             });
 
-            // 15 Saniyelik Baloncuk (Tooltip) Algoritması
             setTimeout(() => {
                 const tooltip = document.getElementById('betaTooltip');
                 if (tooltip) {
-                    tooltip.classList.add('bubble-exit'); // Çıkış animasyonunu tetikler
-                    setTimeout(() => tooltip.remove(), 600); // Animasyon bitince HTML'den tamamen siler
+                    tooltip.classList.add('bubble-exit');
+                    setTimeout(() => tooltip.remove(), 600);
                 }
             }, 15000);
 
-            // Akıllı Daktilo (Typewriter) Efekti Algoritması
+            // --- YENİ: Akıllı Daktilo (Typewriter) Efekti Algoritması ---
             const typingElement = document.getElementById("typewriter-text");
             const rawHTMLText = 'Üzerinde çalıştığınız veriye en uygun aracı bulmak için üst menüdeki <strong>"Hangi Testi Kullanmalıyım?"</strong> asistanını başlatabilir veya aşağıdaki metodolojik alt gruplara ayrılmış dev arşivden seçiminizi yapabilirsiniz.';
             
@@ -610,21 +648,19 @@
                 if (charIndex < rawHTMLText.length) {
                     let currentChar = rawHTMLText.charAt(charIndex);
                     
-                    // HTML etiketlerini (< >) anında geç ki sayfa düzeni bozulmasın
                     if (currentChar === '<') isTypingTag = true;
                     if (currentChar === '>') isTypingTag = false;
                     
                     typingElement.innerHTML = rawHTMLText.substring(0, charIndex + 1);
                     charIndex++;
                     
-                    // Etiketteysek beklemeden yaz, normal harf ise 25ms bekle (Hacker hissi)
                     let typingSpeed = isTypingTag ? 0 : 25;
                     setTimeout(typeWriterEngine, typingSpeed);
                 }
             }
             
-            // Sayfa yüklendikten yarım saniye sonra yazmaya başla
-            setTimeout(typeWriterEngine, 500);
+            // Başlığın yükselmesini bekleyip (yaklaşık 0.8 sn) daktiloyu başlatır
+            setTimeout(typeWriterEngine, 800);
         });
     </script>
     <script src="assets/js/particle-bg.js"></script>
