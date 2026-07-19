@@ -861,7 +861,6 @@ print(sonuc)</code></pre>
             });
         }
 
-        // --- TAM İSTEDİĞİN GİBİ SAĞ KUYRUKLU DAĞILIM GRAFİĞİ (GÜVENLİ ZOOM) ---
         function cizCanliDistributionChart(zStat, pValue, alpha) {
             const ctx = document.getElementById('distChartCanvas').getContext('2d');
             if (window.distChartInstance) window.distChartInstance.destroy();
@@ -966,26 +965,26 @@ print(sonuc)</code></pre>
                 document.getElementById('bosDurum').style.display = 'none';
                 document.getElementById('loadingOverlay').style.display = 'block';
 
-                // 1. VERİYİ SUNUCUYA (API'YE) GÖNDERİYORUZ
-                let apiAdresi = "http://178.105.50.229:8000/api/normality/shapiro-wilk"; 
+                // 1. VERİYİ GÜVENLİ (HTTPS) SUNUCUYA GÖNDERİYORUZ
+                let apiAdresi = "https://api.statlabseu.com/test/shapiro"; 
                 let istek = await fetch(apiAdresi, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ veri: data }) 
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ data: data }) 
                 });
 
                 if (!istek.ok) {
                     throw new Error("Sunucuya ulaşılamadı. API adresini veya CORS ayarlarını kontrol edin.");
                 }
 
-                // 2. KUSURSUZ SONUÇLARI SUNUCUDAN ALIYORUZ
+                // 3. KUSURSUZ SONUÇLARI SUNUCUDAN ALIYORUZ
                 let sonuc = await istek.json();
 
-                // Python API'nizin gönderdiği tam anahtar kelimeleri yakalıyoruz:
-                let W = sonuc.w_istatistigi || sonuc.statistic || sonuc.W; 
-                let pValue = sonuc.p_degeri || sonuc.p_value || sonuc.p;
+                // Python API'mizin gönderdiği değişken adlarını güvenle yakalıyoruz:
+                let W = sonuc.statistic; 
+                let pValue = sonuc.p_value;
 
-                // 3. TANIMLAYICI İSTATİSTİKLERİ HESAPLIYORUZ (Yerel JS ile)
+                // --- KALAN TÜM İŞLEMLER VE GRAFİK ÇİZİMLERİ ---
                 let mean = data.reduce((a, b) => a + b, 0) / n;
                 let SS = data.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0);
                 let sampleSD = Math.sqrt(SS / (n - 1));
@@ -1019,7 +1018,7 @@ print(sonuc)</code></pre>
                 document.getElementById('aktifSonuc').style.display = 'block';
                 document.getElementById('leftPanelExtra').style.display = 'block';
 
-                // 4. ARAYÜZÜ VE GRAFİKLERİ GÜNCELLİYORUZ
+                // ARAYÜZÜ VE GRAFİKLERİ GÜNCELLİYORUZ
                 guncelleLinearGauge(pValue, alfa);
                 cizCanliHistogram(data, mean, sampleSD);
                 cizCanliQQPlot(data, mean, sampleSD);
