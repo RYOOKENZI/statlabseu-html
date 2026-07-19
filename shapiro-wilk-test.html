@@ -621,7 +621,7 @@ print(sonuc)</code></pre>
         function baslatAnalizLoading() {
             let txt = document.getElementById('veriKutusu').value; let data = verileriKutudanCek(txt);
             if (data.length < 3) { alert("Test için örneklem boyutu en az 3 olmalıdır."); return; }
-            if (data.length > 1000) { alert("Maksimum 1000 gözlem girebilirsiniz! Lütfen veri setinizi küçültün."); return; }
+            if (gozlemSayisi > 1000) { alert(`Maksimum 1000 gözlem girebilirsiniz! (Şu an: ${gozlemSayisi})`); return; }
             
             document.getElementById('bosDurum').style.display = 'none'; document.getElementById('aktifSonuc').style.display = 'none';
             document.getElementById('loadingOverlay').style.display = 'block';
