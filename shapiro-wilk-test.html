@@ -159,9 +159,7 @@
                 <div class="row">
                     <div class="col-lg-4 mb-4">
                         <div class="card bg-white border-0 rounded-10 p-4 shadow-sm">
-                            <h4 class="mb-3 fs-17 fw-semibold text-dark">Veri Havuzu & Parametreler</h4>
-        
-        <!-- Dosya yükleme bölgesi buradan devam edecek... -->
+                            <h4 class="mb-3 fs-17 fw-semibold">Veri Havuzu</h4>
                             
                             <div class="mb-4">
                                 <div class="custom-upload-zone p-3 rounded-10 text-center cursor-pointer" onclick="document.getElementById('dosyaGezgini').click()">
@@ -621,7 +619,7 @@ print(sonuc)</code></pre>
         function baslatAnalizLoading() {
             let txt = document.getElementById('veriKutusu').value; let data = verileriKutudanCek(txt);
             if (data.length < 3) { alert("Test için örneklem boyutu en az 3 olmalıdır."); return; }
-            if (gozlemSayisi > 1000) { alert(`Maksimum 1000 gözlem girebilirsiniz! (Şu an: ${gozlemSayisi})`); return; }
+            if (data.length > 1000) { alert("Maksimum 1000 gözlem girebilirsiniz! Lütfen veri setinizi küçültün."); return; }
             
             document.getElementById('bosDurum').style.display = 'none'; document.getElementById('aktifSonuc').style.display = 'none';
             document.getElementById('loadingOverlay').style.display = 'block';
@@ -863,6 +861,7 @@ print(sonuc)</code></pre>
             });
         }
 
+        // --- TAM İSTEDİĞİN GİBİ SAĞ KUYRUKLU DAĞILIM GRAFİĞİ (GÜVENLİ ZOOM) ---
         function cizCanliDistributionChart(zStat, pValue, alpha) {
             const ctx = document.getElementById('distChartCanvas').getContext('2d');
             if (window.distChartInstance) window.distChartInstance.destroy();
@@ -967,26 +966,26 @@ print(sonuc)</code></pre>
                 document.getElementById('bosDurum').style.display = 'none';
                 document.getElementById('loadingOverlay').style.display = 'block';
 
-                // 1. VERİYİ GÜVENLİ (HTTPS) SUNUCUYA GÖNDERİYORUZ
-                let apiAdresi = "https://api.statlabseu.com/test/shapiro"; 
+                // 1. VERİYİ SUNUCUYA (API'YE) GÖNDERİYORUZ
+                let apiAdresi = "http://178.105.50.229:8000/api/normality/shapiro-wilk"; 
                 let istek = await fetch(apiAdresi, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ data: data }) 
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ veri: data }) 
                 });
 
                 if (!istek.ok) {
                     throw new Error("Sunucuya ulaşılamadı. API adresini veya CORS ayarlarını kontrol edin.");
                 }
 
-                // 3. KUSURSUZ SONUÇLARI SUNUCUDAN ALIYORUZ
+                // 2. KUSURSUZ SONUÇLARI SUNUCUDAN ALIYORUZ
                 let sonuc = await istek.json();
 
-                // Python API'mizin gönderdiği değişken adlarını güvenle yakalıyoruz:
-                let W = sonuc.statistic; 
-                let pValue = sonuc.p_value;
+                // Python API'nizin gönderdiği tam anahtar kelimeleri yakalıyoruz:
+                let W = sonuc.w_istatistigi || sonuc.statistic || sonuc.W; 
+                let pValue = sonuc.p_degeri || sonuc.p_value || sonuc.p;
 
-                // --- KALAN TÜM İŞLEMLER VE GRAFİK ÇİZİMLERİ ---
+                // 3. TANIMLAYICI İSTATİSTİKLERİ HESAPLIYORUZ (Yerel JS ile)
                 let mean = data.reduce((a, b) => a + b, 0) / n;
                 let SS = data.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0);
                 let sampleSD = Math.sqrt(SS / (n - 1));
@@ -1020,7 +1019,7 @@ print(sonuc)</code></pre>
                 document.getElementById('aktifSonuc').style.display = 'block';
                 document.getElementById('leftPanelExtra').style.display = 'block';
 
-                // ARAYÜZÜ VE GRAFİKLERİ GÜNCELLİYORUZ
+                // 4. ARAYÜZÜ VE GRAFİKLERİ GÜNCELLİYORUZ
                 guncelleLinearGauge(pValue, alfa);
                 cizCanliHistogram(data, mean, sampleSD);
                 cizCanliQQPlot(data, mean, sampleSD);
