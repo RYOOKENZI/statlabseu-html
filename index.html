@@ -166,7 +166,7 @@
         /* --- TEK TİP PARLAK KATEGORİ BAŞLIKLARI (MAVİ) --- */
         .cat-banner { 
             padding: 22px 25px; border-radius: 14px; margin-top: 55px; margin-bottom: 25px; 
-            color: white; display: flex; align-items: center; gap: 18px; position: relative; overflow: hidden; 
+            color: white; display: flex; align-items: center; flex-wrap: wrap; gap: 18px; position: relative; overflow: hidden; 
             background: linear-gradient(135deg, #2f8fe8, #1d7bd1); 
             box-shadow: 0 8px 25px rgba(47, 143, 232, 0.35);
         }
@@ -181,6 +181,25 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
         .cat-title { font-size: 22px; font-weight: 800; margin-bottom: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.2); letter-spacing: 0.5px; }
+
+        /* --- YENİ EKLENEN: ETİKET (TAG) TASARIMI --- */
+        .cat-tag {
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 50px;
+            margin-left: auto;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(4px);
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 2;
+        }
 
         /* --- YENİ STANDART TEST KARTLARI (TİKSİZ) --- */
         .test-card { 
@@ -201,6 +220,11 @@
         .test-card:hover .test-icon { color: #2f8fe8; transform: translateX(3px); }
         
         .test-desc { font-size: 13px; color: #64748b; line-height: 1.6; margin-bottom: 0; }
+
+        /* --- MOBİL UYUM (RESPONSIVE) --- */
+        @media (max-width: 768px) {
+            .cat-tag { margin-left: 0; margin-top: 5px; font-size: 12px; }
+        }
 
         /* --- GECE MODU CSS --- */
         html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #f8fafc !important; }
@@ -330,9 +354,11 @@
                     </div>
                 </div>
 
+                <!-- 1. KATEGORİ -->
                 <div class="cat-banner">
                     <div class="cat-icon-box"><i class="ri-shield-check-fill"></i></div>
-                    <h3 class="cat-title">Varsayım Kontrolleri (Normallik ve Varyans)</h3>
+                    <h3 class="cat-title">Varsayım Kontrolleri</h3>
+                    <span class="cat-tag"><i class="ri-price-tag-3-fill"></i> Normallik • Varyans</span>
                 </div>
                 <div class="row g-3">
                     <div class="col-md-6 col-lg-3">
@@ -343,7 +369,7 @@
                     </div>
                     <div class="col-md-6 col-lg-3">
                         <a href="ks-lilliefors-test.html" class="test-card">
-                            <div class="test-header"><h5 class="test-title">Kolmogorov-Smirnov & Lilliefors Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <div class="test-header"><h5 class="test-title">Kolmogorov-Smirnov & Lilliefors</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
                             <p class="test-desc">Büyük örneklemlerde (n>50) verinin belirli bir teorik dağılıma uyumunu ölçer.</p>
                         </a>
                     </div>
@@ -355,15 +381,17 @@
                     </div>
                     <div class="col-md-6 col-lg-3">
                         <a href="f-test.html" class="test-card">
-                            <div class="test-header"><h5 class="test-title">F-Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <div class="test-header"><h5 class="test-title">F Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
                             <p class="test-desc">Sadece iki grubun varyanslarının birbirine eşit olup olmadığını parametrik olarak sınar.</p>
                         </a>
                     </div>
                 </div>
 
+                <!-- 2. KATEGORİ -->
                 <div class="cat-banner">
                     <div class="cat-icon-box"><i class="ri-user-fill"></i></div>
                     <h3 class="cat-title">Tek Örneklem Karşılaştırmaları</h3>
+                    <span class="cat-tag"><i class="ri-price-tag-3-fill"></i> Tek Grup Analizleri</span>
                 </div>
                 <div class="row g-3">
                     <div class="col-md-6 col-lg-4">
@@ -373,22 +401,36 @@
                         </a>
                     </div>
                     <div class="col-md-6 col-lg-4">
-                        <a href="tek-orneklem-wilcoxon-test.html" class="test-card">
-                            <div class="test-header"><h5 class="test-title">Tek Örneklem Wilcoxon Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
-                            <p class="test-desc">Normal dağılmayan verilerde örneklem medyanını sabit/teorik bir evren değeriyle kıyaslar.</p>
+                        <a href="tek-orneklem-z-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Tek Örneklem Z-Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Evren standart sapması bilindiğinde veya örneklem çok büyük olduğunda bir grubun ortalamasını popülasyonla kıyaslar.</p>
                         </a>
                     </div>
                     <div class="col-md-6 col-lg-4">
-                        <a href="ki-kare-uyum-test.html" class="test-card">
-                            <div class="test-header"><h5 class="test-title">Ki-Kare Uyum İyiliği Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
-                            <p class="test-desc">Gözlemlenen kategorik frekansların beklenen teorik oranlara uyup uymadığını sınar.</p>
+                        <a href="tek-orneklem-wilcoxon-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Tek Örneklem Wilcoxon Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Normal dağılmayan verilerde örneklem medyanını sabit veya teorik bir evren değeriyle kıyaslar.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-6">
+                        <a href="binom-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Binom Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">İki olasılıklı (başarı/başarısızlık) kategorik verilerde, örneklem oranının beklenen teorik olasılıktan farkını sınar.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-6">
+                        <a href="isaret-testi.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">İşaret (Sign) Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Ölçüm farklarının sadece artı veya eksi yönlerine bakarak tek grup veya bağımlı iki grubun medyanını test eder.</p>
                         </a>
                     </div>
                 </div>
 
+                <!-- 3. KATEGORİ -->
                 <div class="cat-banner">
                     <div class="cat-icon-box"><i class="ri-group-fill"></i></div>
                     <h3 class="cat-title">İki Grup Karşılaştırmaları</h3>
+                    <span class="cat-tag"><i class="ri-price-tag-3-fill"></i> Bağımsız • Bağımlı Gruplar</span>
                 </div>
                 <div class="row g-3">
                     <div class="col-md-6 col-lg-4">
@@ -398,27 +440,27 @@
                         </a>
                     </div>
                     <div class="col-md-6 col-lg-4">
-                        <a href="mann-whitney-u-test.html" class="test-card">
-                            <div class="test-header"><h5 class="test-title">Mann-Whitney U Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
-                            <p class="test-desc">T-Test'in non-parametrik alternatifidir. İki bağımsız grubu medyanları üzerinden kıyaslar.</p>
-                        </a>
-                    </div>
-                    <div class="col-md-6 col-lg-4">
                         <a href="bagimli-t-test.html" class="test-card">
                             <div class="test-header"><h5 class="test-title">Bağımlı T-Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
                             <p class="test-desc">Aynı bireylerin iki farklı ölçümü (örn: öncesi ve sonrası) arasındaki ortalama değişimi inceler.</p>
                         </a>
                     </div>
                     <div class="col-md-6 col-lg-4">
-                        <a href="wilcoxon-isaretli-siralar-test.html" class="test-card">
-                            <div class="test-header"><h5 class="test-title">Wilcoxon İşaretli Sıralar Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
-                            <p class="test-desc">Bağımlı T-Test'in non-parametrik karşılığıdır. Öncesi-sonrası medyan farklarına bakar.</p>
-                        </a>
-                    </div>
-                    <div class="col-md-6 col-lg-4">
                         <a href="iki-orneklem-z-test.html" class="test-card">
                             <div class="test-header"><h5 class="test-title">İki Örneklem Z-Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
                             <p class="test-desc">İki farklı grubun başarı veya özellik oranlarını (yüzdelerini) birbirleriyle karşılaştırır.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="mann-whitney-u-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Mann-Whitney U Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">T-Test'in non-parametrik alternatifidir. İki bağımsız grubu medyanları üzerinden kıyaslar.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-4">
+                        <a href="wilcoxon-isaretli-siralar-test.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Wilcoxon İşaretli Sıralar Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Bağımlı T-Test'in non-parametrik karşılığıdır. Öncesi-sonrası medyan farklarına bakar.</p>
                         </a>
                     </div>
                     <div class="col-md-6 col-lg-4">
@@ -429,77 +471,71 @@
                     </div>
                 </div>
 
+                <!-- 4. KATEGORİ -->
                 <div class="cat-banner">
                     <div class="cat-icon-box"><i class="ri-team-fill"></i></div>
-                    <h3 class="cat-title">Çoklu Grup Analizleri (ANOVA ve Alternatifleri)</h3>
+                    <h3 class="cat-title">Çoklu Grup Analizleri (ANOVA)</h3>
+                    <span class="cat-tag"><i class="ri-price-tag-3-fill"></i> Üç veya Daha Fazla Grup</span>
                 </div>
                 <div class="row g-3">
-                    <div class="col-md-6 col-lg-4">
+                    <div class="col-md-6 col-lg-3">
                         <a href="tek-yonlu-anova.html" class="test-card">
-                            <div class="test-header"><h5 class="test-title">Tek Yönlü ANOVA Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <div class="test-header"><h5 class="test-title">Tek Yönlü ANOVA</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
                             <p class="test-desc">Üç veya daha fazla bağımsız grubun ortalamaları arasında anlamlı bir fark arar.</p>
                         </a>
                     </div>
-                    <div class="col-md-6 col-lg-4">
+                    <div class="col-md-6 col-lg-3">
+                        <a href="iki-yonlu-anova.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">İki Yönlü ANOVA</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">İki farklı bağımsız faktörün bağımlı değişken üzerindeki ana ve ortak etkileşimlerini ölçer.</p>
+                        </a>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
                         <a href="kruskal-wallis-test.html" class="test-card">
                             <div class="test-header"><h5 class="test-title">Kruskal-Wallis H Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
                             <p class="test-desc">ANOVA'nın non-parametrik alternatifidir. 3+ grubu medyan ve sıra değerleriyle kıyaslar.</p>
                         </a>
                     </div>
-                    <div class="col-md-6 col-lg-4">
-                        <a href="tekrarli-olcumler-anova.html" class="test-card">
-                            <div class="test-header"><h5 class="test-title">Tekrarlı Ölçümler ANOVA</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
-                            <p class="test-desc">Aynı grubun üç veya daha fazla kez alınan (zaman serisi) ölçümlerindeki değişimi analiz eder.</p>
-                        </a>
-                    </div>
-                    <div class="col-md-6 col-lg-4">
+                    <div class="col-md-6 col-lg-3">
                         <a href="friedman-test.html" class="test-card">
                             <div class="test-header"><h5 class="test-title">Friedman Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
                             <p class="test-desc">Tekrarlı ölçümler ANOVA'nın sıralı veya normal dağılmayan verilerdeki karşılığıdır.</p>
                         </a>
                     </div>
-                    <div class="col-md-6 col-lg-4">
-                        <a href="iki-yonlu-anova.html" class="test-card">
-                            <div class="test-header"><h5 class="test-title">İki Yönlü ANOVA Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
-                            <p class="test-desc">İki farklı bağımsız faktörün bağımlı değişken üzerindeki ana ve ortak etkileşimlerini ölçer.</p>
-                        </a>
-                    </div>
-                    <div class="col-md-6 col-lg-4">
-                        <a href="scheirer-ray-hare-test.html" class="test-card">
-                            <div class="test-header"><h5 class="test-title">Scheirer-Ray-Hare Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
-                            <p class="test-desc">İki yönlü ANOVA'nın sıralı verilere dayalı non-parametrik (ART) bir uzantısıdır.</p>
-                        </a>
-                    </div>
                 </div>
 
+                <!-- 5. KATEGORİ -->
                 <div class="cat-banner">
                     <div class="cat-icon-box"><i class="ri-git-merge-fill"></i></div>
                     <h3 class="cat-title">Korelasyon ve İlişki Testleri</h3>
+                    <span class="cat-tag"><i class="ri-price-tag-3-fill"></i> İlişki • Korelasyon</span>
                 </div>
                 <div class="row g-3">
                     <div class="col-md-6 col-lg-4">
                         <a href="pearson-korelasyon-test.html" class="test-card">
-                            <div class="test-header"><h5 class="test-title">Pearson Korelasyon Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <div class="test-header"><h5 class="test-title">Pearson Korelasyon</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
                             <p class="test-desc">İki sürekli ve normal dağılan değişken arasındaki doğrusal ilişkinin gücünü ve yönünü ölçer.</p>
                         </a>
                     </div>
                     <div class="col-md-6 col-lg-4">
                         <a href="spearman-korelasyon-test.html" class="test-card">
-                            <div class="test-header"><h5 class="test-title">Spearman Sıra Korelasyon Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <div class="test-header"><h5 class="test-title">Spearman Korelasyon</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
                             <p class="test-desc">Normal dağılmayan veya sıralı verilerde değişkenler arası monotonik ilişkiyi inceler.</p>
                         </a>
                     </div>
                     <div class="col-md-6 col-lg-4">
-                        <a href="ki-kare-bagimsizlik-test.html" class="test-card">
-                            <div class="test-header"><h5 class="test-title">Ki-Kare Bağımsızlık Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
-                            <p class="test-desc">İki kategorik (nominal) değişkenin birbirinden bağımsız olup olmadığını test eder.</p>
+                        <a href="kendall-tau-korelasyon.html" class="test-card">
+                            <div class="test-header"><h5 class="test-title">Kendall Tau Korelasyon</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <p class="test-desc">Aykırı değerlerin fazla olduğu veya örneklemin küçük olduğu sıralı verilerde değişkenler arası ilişkiyi hesaplar.</p>
                         </a>
                     </div>
                 </div>
 
+                <!-- 6. KATEGORİ -->
                 <div class="cat-banner">
                     <div class="cat-icon-box"><i class="ri-line-chart-fill"></i></div>
                     <h3 class="cat-title">Regresyon ve Tahmin Modelleri</h3>
+                    <span class="cat-tag"><i class="ri-price-tag-3-fill"></i> Modelleme • Tahmin</span>
                 </div>
                 <div class="row g-3">
                     <div class="col-md-6 col-lg-4">
@@ -520,23 +556,13 @@
                             <p class="test-desc">İki sonuçlu (Evet/Hayır) bir olayın gerçekleşme olasılığını bağımsız faktörlerle modeller.</p>
                         </a>
                     </div>
-                    <div class="col-md-6 col-lg-4">
-                        <a href="poisson-regresyon.html" class="test-card">
-                            <div class="test-header"><h5 class="test-title">Poisson Regresyon</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
-                            <p class="test-desc">Belirli bir zaman diliminde veya alanda gerçekleşen nadir olayların frekansını tahmin eder.</p>
-                        </a>
-                    </div>
-                    <div class="col-md-6 col-lg-4">
-                        <a href="hosmer-lemeshow-test.html" class="test-card">
-                            <div class="test-header"><h5 class="test-title">Hosmer-Lemeshow Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
-                            <p class="test-desc">Lojistik regresyon modellerinin elde edilen gerçek verilere ne kadar iyi uyduğunu değerlendirir.</p>
-                        </a>
-                    </div>
                 </div>
 
+                <!-- 7. KATEGORİ -->
                 <div class="cat-banner">
                     <div class="cat-icon-box"><i class="ri-heart-pulse-fill"></i></div>
                     <h3 class="cat-title">Sağkalım (Survival) Modelleri</h3>
+                    <span class="cat-tag"><i class="ri-price-tag-3-fill"></i> Yaşam Süresi • Risk Analizi</span>
                 </div>
                 <div class="row g-3 mb-5">
                     <div class="col-md-6 col-lg-4">
@@ -553,7 +579,7 @@
                     </div>
                     <div class="col-md-6 col-lg-4">
                         <a href="cox-regresyon.html" class="test-card">
-                            <div class="test-header"><h5 class="test-title">Cox Regresyon Test</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
+                            <div class="test-header"><h5 class="test-title">Cox Regresyonu</h5><i class="test-icon ri-arrow-right-up-line"></i></div>
                             <p class="test-desc">Çeşitli faktörlerin (yaş, cinsiyet vb.) sağkalım süresi üzerindeki risk etkisini analiz eder.</p>
                         </a>
                     </div>
