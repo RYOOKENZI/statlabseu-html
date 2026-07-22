@@ -131,9 +131,11 @@
             color: #e2e8f0;
         }
 
-        /* Özel Tablo Hover ve Satır Tasarımı */
         .rank-table-row { transition: all 0.2s; }
         .rank-table-row:hover { transform: scale(1.01); box-shadow: 0 4px 10px rgba(0,0,0,0.05); z-index: 10; position: relative; }
+        
+        .formula-box { background-color: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 15px; font-size: 15px; overflow-x: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+        html.dark-mode .formula-box { background-color: #1e293b; border-color: #334155; box-shadow: none; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -172,7 +174,7 @@
                     <i class="ri-information-line"></i>
                     <div>
                         <strong class="d-block text-dark mb-1">Tek Örneklem Wilcoxon İşaretli Sıralar Testi</strong>
-                        <p>Normal dağılım varsayımı karşılanmadığında bir örneklem medyanının teorik bir değerden ($m_0$) farklı olup olmadığını sıra (rank) temelli analiz eden non-parametrik testtir.</p>
+                        <p>Normal dağılım varsayımı karşılanmadığında bir örneklem medyanının teorik bir değerden ($\mu_0$) farklı olup olmadığını sıra (rank) temelli analiz eden non-parametrik testtir.</p>
                     </div>
                 </div>
 
@@ -208,16 +210,16 @@
                             <hr class="border-secondary opacity-25 my-4">
 
                             <div class="mb-3">
-                                <label class="form-label fw-medium text-secondary fs-13 mb-1 text-primary fw-bold">Test Edilecek Medyan ($m_0$)</label>
+                                <label class="form-label fw-medium text-secondary fs-13 mb-1 text-primary fw-bold">Test Edilecek Değer ($\mu_0$)</label>
                                 <input type="number" id="muInput" class="form-control bg-light border border-primary rounded-10 py-2 fs-13" placeholder="Örn: 40" step="any">
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label fw-medium text-secondary fs-13 mb-1">Test Yönü (Kuyruk)</label>
                                 <select id="hypType" class="form-select bg-light border-0 rounded-10 py-2 fs-13">
-                                    <option value="two-sided" selected>İki Yönlü ($m \neq m_0$)</option>
-                                    <option value="greater">Sağ Kuyruk ($m > m_0$)</option>
-                                    <option value="less">Sol Kuyruk ($m < m_0$)</option>
+                                    <option value="two-sided" selected>İki Yönlü ($\mu \neq \mu_0$)</option>
+                                    <option value="greater">Sağ Kuyruk ($\mu > \mu_0$)</option>
+                                    <option value="less">Sol Kuyruk ($\mu < \mu_0$)</option>
                                 </select>
                             </div>
 
@@ -249,11 +251,11 @@
                             <h4 class="mb-3 fs-17 fw-semibold text-dark"><i class="ri-shield-check-line text-primary me-1"></i> Veri Özeti</h4>
                             <div class="d-flex flex-column gap-2">
                                 <div class="d-flex justify-content-between align-items-center p-2 bg-body-bg rounded-10">
-                                    <span class="text-muted fs-13 fw-semibold">Toplam Gözlem ($n$):</span>
+                                    <span class="text-muted fs-13 fw-semibold">Toplam Gözlem ($N$):</span>
                                     <span id="validObs" class="text-dark fw-bold fs-14">-</span>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center p-2 bg-body-bg rounded-10">
-                                    <span class="text-muted fs-13 fw-semibold" title="Test medyanına tam eşit olanlar atılır">Sıfır Fark ($m_0$'a Eşit):</span>
+                                    <span class="text-muted fs-13 fw-semibold" title="Test medyanına tam eşit olanlar atılır">Sıfır Fark ($\mu_0$'a Eşit):</span>
                                     <span id="zeroCount" class="badge bg-warning-subtle text-warning rounded-pill">-</span>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center p-2 bg-body-bg rounded-10">
@@ -331,8 +333,8 @@
                                             </div>
                                             <div class="col-12">
                                                 <div class="p-2 bg-body-bg rounded-10 border border-light d-flex justify-content-around px-4">
-                                                    <div><span class="text-muted fs-12 fw-semibold">Pozitif Sıra Top. ($W^+$):</span> <span id="wPlusVal" class="text-success fw-bold fs-14 ms-1">-</span></div>
-                                                    <div><span class="text-muted fs-12 fw-semibold">Negatif Sıra Top. ($W^-$):</span> <span id="wMinusVal" class="text-danger fw-bold fs-14 ms-1">-</span></div>
+                                                    <div><span class="text-muted fs-12 fw-semibold">Pozitif Sıra Top. (W⁺):</span> <span id="wPlusVal" class="text-success fw-bold fs-14 ms-1">-</span></div>
+                                                    <div><span class="text-muted fs-12 fw-semibold">Negatif Sıra Top. (W⁻):</span> <span id="wMinusVal" class="text-danger fw-bold fs-14 ms-1">-</span></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -346,9 +348,11 @@
                                             <thead>
                                                 <tr>
                                                     <th>Geçerli $N$</th>
-                                                    <th>Örneklem Medyanı</th>
-                                                    <th>Test Medyanı ($m_0$)</th>
-                                                    <th>IQR</th>
+                                                    <th>Medyan</th>
+                                                    <th>Test Değeri ($\mu_0$)</th>
+                                                    <th>1. Çeyrek (Q1)</th>
+                                                    <th>3. Çeyrek (Q3)</th>
+                                                    <th>Çeyrekler Arası Aralık</th>
                                                     <th>Min - Maks</th>
                                                 </tr>
                                             </thead>
@@ -357,6 +361,8 @@
                                                     <td id="tdN" class="fw-bold">-</td>
                                                     <td id="tdMedian" class="text-primary fw-bold">-</td>
                                                     <td id="tdM0">-</td>
+                                                    <td id="tdQ1">-</td>
+                                                    <td id="tdQ3">-</td>
                                                     <td id="tdIQR">-</td>
                                                     <td id="tdRange">-</td>
                                                 </tr>
@@ -365,7 +371,7 @@
                                     </div>
                                     <div class="mt-3 text-end">
                                         <span class="badge eta-badge px-3 py-2 border rounded-pill">
-                                            Etki Büyüklüğü ($r = \frac{|Z|}{\sqrt{N}}$): <strong id="tdEffectSize" class="ms-1 fs-14 text-dark">-</strong>
+                                            Etki Büyüklüğü ($r = \frac{|Z|}{\sqrt{n}}$): <strong id="tdEffectSize" class="ms-1 fs-14 text-dark">-</strong>
                                         </span>
                                     </div>
                                 </div>
@@ -384,8 +390,8 @@
                                                         <tr>
                                                             <th class="text-center">Gözlem</th>
                                                             <th class="text-center">Değer ($x_i$)</th>
-                                                            <th class="text-center">Fark ($x_i - m_0$)</th>
-                                                            <th class="text-center">Mutlak Fark ($|x_i - m_0|$)</th>
+                                                            <th class="text-center">Fark ($d_i = x_i - \mu_0$)</th>
+                                                            <th class="text-center">Mutlak Fark ($|d_i|$)</th>
                                                             <th class="text-center">Sıra (Rank)</th>
                                                             <th class="text-center">İşaretli Sıra</th>
                                                         </tr>
@@ -404,30 +410,30 @@
 
                                 <div class="row g-4 mt-2">
                                     <div class="col-md-6">
-                                        <div class="chart-container py-3 h-100">
-                                            <h5 class="fs-13 fw-bold text-dark mb-3 text-center text-uppercase tracking-wider">Dağılım (Scatter) Grafiği ($x_i$ vs $m_0$)</h5>
-                                            <div style="position: relative; height: 260px; width: 100%;"><canvas id="scatterChart"></canvas></div>
+                                        <div class="chart-container py-3 h-100 d-flex flex-column">
+                                            <h5 class="fs-13 fw-bold text-dark mb-3 text-center text-uppercase tracking-wider">Dağılım Grafiği (xᵢ vs μ₀)</h5>
+                                            <div style="position: relative; height: 260px; width: 100%; flex-grow: 1;"><canvas id="scatterChart"></canvas></div>
                                         </div>
                                     </div>
 
                                     <div class="col-md-6">
-                                        <div class="chart-container py-3 h-100">
-                                            <h5 class="fs-13 fw-bold text-dark mb-3 text-center text-uppercase tracking-wider">Kutu Grafiği ($m_0$ Referanslı)</h5>
+                                        <div class="chart-container py-3 h-100 d-flex flex-column">
+                                            <h5 class="fs-13 fw-bold text-dark mb-3 text-center text-uppercase tracking-wider">Kutu Grafiği (Box Plot)</h5>
                                             <div style="position: relative; height: 260px; width: 100%;"><canvas id="boxChart"></canvas></div>
                                         </div>
                                     </div>
 
                                     <div class="col-md-6">
-                                        <div class="chart-container py-3 h-100">
-                                            <h5 class="fs-13 fw-bold text-dark mb-3 text-center text-uppercase tracking-wider">Fark Histogramı ($d_i = x_i - m_0$)</h5>
-                                            <div style="position: relative; height: 260px; width: 100%;"><canvas id="histChart"></canvas></div>
+                                        <div class="chart-container py-3 h-100 d-flex flex-column">
+                                            <h5 class="fs-13 fw-bold text-dark mb-3 text-center text-uppercase tracking-wider">Fark Histogramı (dᵢ = xᵢ - μ₀)</h5>
+                                            <div style="position: relative; height: 260px; width: 100%; flex-grow: 1;"><canvas id="histChart"></canvas></div>
                                         </div>
                                     </div>
 
                                     <div class="col-md-6">
-                                        <div class="chart-container py-3 h-100">
-                                            <h5 class="fs-13 fw-bold text-dark mb-3 text-center text-uppercase tracking-wider">İşaretli Sıra Toplamları Çubuk Grafiği ($W^+$ ve $W^-$)</h5>
-                                            <div style="position: relative; height: 260px; width: 100%;"><canvas id="rankBarChart"></canvas></div>
+                                        <div class="chart-container py-3 h-100 d-flex flex-column">
+                                            <h5 class="fs-13 fw-bold text-dark mb-3 text-center text-uppercase tracking-wider">İşaretli Sıra Çubuk Grafiği (W⁺ ve W⁻)</h5>
+                                            <div style="position: relative; height: 260px; width: 100%; flex-grow: 1;"><canvas id="rankBarChart"></canvas></div>
                                         </div>
                                     </div>
                                 </div>
@@ -451,7 +457,7 @@
                         <div class="card bg-white border-0 rounded-10 p-4 shadow-sm text-start">
                             
                             <h5 class="fw-bold text-dark fs-16 mb-3 border-bottom pb-2 border-secondary"><i class="ri-book-read-line align-middle me-1 text-primary"></i> Tek Örneklem Wilcoxon İşaretli Sıralar Testi Hakkında</h5>
-                            <p class="text-muted fs-14 lh-lg">Tek Örneklem Wilcoxon İşaretli Sıralar Testi, bir örneklemin medyanının belirli bir hipotez değerinden ($m_0$) anlamlı biçimde farklı olup olmadığını değerlendiren parametrik olmayan bir istatistiksel testtir. Bu test, verilerin normal dağılım varsayımını sağlamadığı veya örneklem büyüklüğünün küçük olduğu durumlarda tek örneklem t-testine alternatif olarak kullanılır.</p>
+                            <p class="text-muted fs-14 lh-lg">Tek Örneklem Wilcoxon İşaretli Sıralar Testi, bir örneklemin medyanının belirli bir hipotez değerinden ($\mu_0$) anlamlı biçimde farklı olup olmadığını değerlendiren parametrik olmayan bir istatistiksel testtir. Bu test, verilerin normal dağılım varsayımını sağlamadığı veya örneklem büyüklüğünün küçük olduğu durumlarda tek örneklem t-testine alternatif olarak kullanılır.</p>
                             
                             <p class="text-muted fs-14 lh-lg">Test, her gözlemin hipotez medyanından farkını hesaplar, sıfır farkları çıkarır ve kalan farkların mutlak değerlerini sıralayarak pozitif ve negatif sıra toplamlarını karşılaştırır. Analiz sonucunda elde edilen test istatistiği ve $p$ değeri kullanılarak örneklem medyanının hipotez değerinden farklı olup olmadığı değerlendirilir.</p>
                             
@@ -473,8 +479,90 @@
                                 <li>Gözlemler birbirinden bağımsız olmalıdır.</li>
                                 <li>Veri en az sıralı (ordinal) ölçekte olmalıdır.</li>
                                 <li>Farkların dağılımının yaklaşık simetrik olması önerilir.</li>
-                                <li>Hipotez medyanı ($m_0$) önceden belirlenmiş olmalıdır.</li>
+                                <li>Hipotez değeri ($\mu_0$) önceden belirlenmiş olmalıdır.</li>
                             </ul>
+
+                            <div class="decision-rule-box mb-2 mt-4 text-center">
+                                <strong>Karar Kuralı:</strong> <br>
+                                $p < \alpha \rightarrow H_0 \text{ reddedilir.}$ <br>
+                                $p \ge \alpha \rightarrow H_0 \text{ reddedilemez.}$
+                            </div>
+                            
+                            <!-- AÇILIR KAPANIR TEORİK ALTYAPI VE FORMÜLLER BUTONU -->
+                            <div class="mt-5 mb-2">
+                                <button class="btn btn-pulse w-100 py-3 d-flex justify-content-between align-items-center fs-15 fw-bold rounded-10 border-0 shadow" type="button" data-bs-toggle="collapse" data-bs-target="#teorikFormuller" aria-expanded="false" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: white;">
+                                    <span><i class="ri-function-line me-2 fs-20 align-middle"></i> Teorik Altyapı ve Matematiksel Formülleri Görüntüle</span>
+                                    <i class="ri-arrow-down-s-line fs-22"></i>
+                                </button>
+                                <div class="collapse mt-3" id="teorikFormuller">
+                                    <div class="card card-body bg-body-bg border border-light p-4 rounded-10 shadow-sm">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">1. Farkların Hesaplanması</strong>
+                                                    Her gözlem için hipotez medyanından fark hesaplanır:
+                                                    $$d_i = x_i - \mu_0$$
+                                                    $x_i$: $i$. gözlem<br>
+                                                    $\mu_0$: Hipotez medyanı
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">2. Mutlak Farklar</strong>
+                                                    Sıfır olmayan farkların mutlak değerleri alınır:
+                                                    $$|d_i|$$
+                                                    Bu değerler küçükten büyüğe sıralanır ve sıra numarası verilir. Eşitlik durumunda (tie) ortalama sıra atanır.
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">3. Pozitif ve Negatif Sıra Toplamları</strong>
+                                                    $$W^+ = \sum R_i^+$$
+                                                    $$W^- = \sum R_i^-$$
+                                                    $R_i^+$: Pozitif farkların sıra numaraları<br>
+                                                    $R_i^-$: Negatif farkların sıra numaraları
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">4. Test İstatistiği</strong>
+                                                    En yaygın gösterim:
+                                                    $$W = \min(W^+, W^-)$$
+                                                    <em>Not: Bazı kaynaklar yalnızca $W^+$ değerini raporlar. StatLabseu minimumu baz alır.</em>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">5. Beklenen Değer (Büyük Örneklem)</strong>
+                                                    $$E(W) = \frac{n(n+1)}{4}$$
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">6. Varyans</strong>
+                                                    Bağ (tie) yoksa:
+                                                    $$Var(W) = \frac{n(n+1)(2n+1)}{24}$$
+                                                    Bağlı sıralar varsa bu varyans için tie düzeltmesi uygulanır.
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">7. Z Dönüşümü</strong>
+                                                    Büyük örneklemlerde:
+                                                    $$Z = \frac{W - E(W)}{\sqrt{Var(W)}}$$
+                                                    İsteğe bağlı olarak süreklilik düzeltmesi uygulanabilir.
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">8. Etki Büyüklüğü</strong>
+                                                    $$r = \frac{|Z|}{\sqrt{n}}$$
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
                         </div>
                     </div>
@@ -570,7 +658,6 @@
             Object.values(charts).forEach(c => { if(c) c.destroy(); });
         }
 
-        // Kusursuz Abramowitz and Stegun Normal CDF Yaklaşımı
         function zCDF(x) {
             let z = Math.abs(x);
             let t = 1 / (1 + 0.2316419 * z);
@@ -612,7 +699,7 @@
                 type: 'scatter',
                 data: {
                     datasets: [{
-                        label: 'Gözlem Değerleri ($x_i$)',
+                        label: 'Gözlem Değerleri (xᵢ)',
                         data: raw_d.map((val, idx) => ({x: idx + 1, y: val})),
                         backgroundColor: '#6366f1', pointRadius: 5
                     }]
@@ -637,7 +724,7 @@
                         ctx.beginPath(); ctx.moveTo(xScale.left, yPos); ctx.lineTo(xScale.right, yPos);
                         ctx.lineWidth = 2.5; ctx.strokeStyle = '#ef4444'; ctx.setLineDash([6, 6]); ctx.stroke();
                         ctx.fillStyle = '#ef4444'; ctx.font = '12px sans-serif';
-                        ctx.fillText(`m₀ = ${m0}`, xScale.left + 5, yPos - 5);
+                        ctx.fillText(`μ₀ = ${m0}`, xScale.left + 5, yPos - 5);
                         ctx.restore();
                     }
                 }]
@@ -654,7 +741,7 @@
                 data: {
                     labels: ['Örneklem Dağılımı'],
                     datasets: [
-                        { label: 'IQR Aralığı (Q1 - Q3)', data: [[q1, q3]], backgroundColor: 'rgba(99, 102, 241, 0.4)', borderColor: '#6366f1', borderWidth: 1 }
+                        { label: 'Çeyrekler Arası Aralık (Q1 - Q3)', data: [[q1, q3]], backgroundColor: 'rgba(99, 102, 241, 0.4)', borderColor: '#6366f1', borderWidth: 1 }
                     ]
                 },
                 options: {
@@ -667,19 +754,73 @@
                 plugins: [{
                     id: 'boxLines',
                     afterDraw: (chart) => {
-                        let ctx = chart.ctx; let yScale = chart.scales.y; let xScale = chart.scales.x;
+                        let ctx = chart.ctx; 
+                        let yScale = chart.scales.y; 
+                        let xScale = chart.scales.x;
                         let xCenter = xScale.getPixelForValue(0);
+                        
                         let yMed = yScale.getPixelForValue(med);
                         let yMin = yScale.getPixelForValue(minV);
                         let yMax = yScale.getPixelForValue(maxV);
+                        let yQ1 = yScale.getPixelForValue(q1);
+                        let yQ3 = yScale.getPixelForValue(q3);
                         let yM0 = yScale.getPixelForValue(m0);
 
                         ctx.save();
-                        ctx.beginPath(); ctx.moveTo(xCenter - 30, yMed); ctx.lineTo(xCenter + 30, yMed);
-                        ctx.lineWidth = 3; ctx.strokeStyle = '#10b981'; ctx.stroke();
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(xCenter, yMin); ctx.lineTo(xCenter, yQ1);
+                        ctx.moveTo(xCenter, yMax); ctx.lineTo(xCenter, yQ3);
+                        ctx.strokeStyle = '#6366f1'; ctx.lineWidth = 2; ctx.stroke();
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(xCenter - 15, yMin); ctx.lineTo(xCenter + 15, yMin);
+                        ctx.moveTo(xCenter - 15, yMax); ctx.lineTo(xCenter + 15, yMax);
+                        ctx.stroke();
 
-                        ctx.beginPath(); ctx.moveTo(xScale.left, yM0); ctx.lineTo(xScale.right, yM0);
-                        ctx.lineWidth = 2.5; ctx.strokeStyle = '#ef4444'; ctx.setLineDash([4,4]); ctx.stroke();
+                        ctx.beginPath(); 
+                        ctx.moveTo(xCenter - 30, yMed); 
+                        ctx.lineTo(xCenter + 30, yMed);
+                        ctx.lineWidth = 3; 
+                        ctx.strokeStyle = '#10b981'; 
+                        ctx.stroke();
+
+                        ctx.beginPath(); 
+                        ctx.moveTo(xScale.left, yM0); 
+                        ctx.lineTo(xScale.right, yM0);
+                        ctx.lineWidth = 2.5; 
+                        ctx.strokeStyle = '#ef4444'; 
+                        ctx.setLineDash([4,4]); 
+                        ctx.stroke();
+                        ctx.setLineDash([]); 
+
+                        ctx.fillStyle = fColor;
+                        ctx.font = 'bold 11px sans-serif';
+                        ctx.textBaseline = 'middle';
+                        
+                        ctx.textAlign = 'left';
+                        ctx.fillText('← Q3 (Üst Kenar)', xCenter + 35, yQ3);
+                        ctx.fillText('← Q1 (Alt Kenar)', xCenter + 35, yQ1);
+                        ctx.fillStyle = '#10b981';
+                        ctx.fillText('← Medyan', xCenter + 35, yMed);
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(xCenter - 45, yQ1);
+                        ctx.lineTo(xCenter - 55, yQ1);
+                        ctx.lineTo(xCenter - 55, yQ3);
+                        ctx.lineTo(xCenter - 45, yQ3);
+                        ctx.strokeStyle = fColor;
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                        
+                        ctx.fillStyle = fColor;
+                        ctx.textAlign = 'right';
+                        ctx.fillText('IQR →', xCenter - 60, yQ1 + (yQ3 - yQ1) / 2);
+
+                        ctx.fillStyle = '#ef4444';
+                        ctx.textAlign = 'left';
+                        ctx.fillText('μ₀ Referansı', xScale.left + 10, yM0 - 10);
+
                         ctx.restore();
                     }
                 }]
@@ -694,7 +835,7 @@
 
             charts.hist = new Chart(ctxHist, {
                 type: 'bar',
-                data: { labels: lbls, datasets: [ { label: 'Frekans ($d_i$)', data: bins, backgroundColor: 'rgba(56, 189, 248, 0.6)', borderColor: '#38bdf8', borderWidth: 1 } ] },
+                data: { labels: lbls, datasets: [ { label: 'Frekans (dᵢ)', data: bins, backgroundColor: 'rgba(56, 189, 248, 0.6)', borderColor: '#38bdf8', borderWidth: 1 } ] },
                 options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks:{color:fColor}, grid:{display:false} }, y: { beginAtZero:true, ticks:{color:fColor}, grid:{color:gColor} } } },
                 plugins: [{
                     id: 'zeroLine',
@@ -711,7 +852,7 @@
             charts.rankBar = new Chart(document.getElementById('rankBarChart').getContext('2d'), {
                 type: 'bar',
                 data: {
-                    labels: ['Pozitif Sıralar ($W^+$)', 'Negatif Sıralar ($W^-$)'],
+                    labels: ['Pozitif Sıralar (W⁺)', 'Negatif Sıralar (W⁻)'],
                     datasets: [{
                         data: [w_plus, w_minus],
                         backgroundColor: ['rgba(52, 211, 153, 0.8)', 'rgba(248, 113, 113, 0.8)'],
@@ -732,7 +873,7 @@
 
         function baslatAnalizLoading() {
             let mu0 = document.getElementById('muInput').value;
-            if(!mu0 || isNaN(mu0)) { alert("Lütfen test edilecek medyan değerini (m₀) giriniz."); return; }
+            if(!mu0 || isNaN(mu0)) { alert("Lütfen test edilecek değeri (μ₀) giriniz."); return; }
 
             let d = document.getElementById('veriKutusu').value.replace(/,/g, '.').split(/[\s;:\r\n]+/).map(Number).filter(v => !isNaN(v));
             if (d.length < 2) { alert("Analiz için en az 2 gözlem girmelisiniz."); return; }
@@ -882,6 +1023,8 @@
                 setTxt('tdN', nValid); 
                 setTxt('tdMedian', median.toFixed(3)); 
                 setTxt('tdM0', m0);
+                setTxt('tdQ1', q1.toFixed(3)); 
+                setTxt('tdQ3', q3.toFixed(3)); 
                 setTxt('tdIQR', iqr.toFixed(3)); 
                 setTxt('tdRange', `${minVal} - ${maxVal}`);
                 setTxt('tdEffectSize', effectSize.toFixed(3));
@@ -893,7 +1036,8 @@
                 if (window.MathJax && window.MathJax.typesetPromise) {
                     window.MathJax.typesetPromise([
                         document.getElementById('aktifSonuc'), 
-                        document.getElementById('detayliHesapTablosu')
+                        document.getElementById('detayliHesapTablosu'),
+                        document.getElementById('teorikFormuller')
                     ]).catch(()=>{});
                 }
 
@@ -901,7 +1045,7 @@
                 if (pVal > alfa) {
                     setClass('kararKutusu', "alert border-0 p-4 mb-2 rounded-10 d-flex align-items-start bg-success-subtle text-success shadow-sm mt-4");
                     setClass('kararIkon', "ri-checkbox-circle-fill text-success fs-28"); setTxt('kararBaslik', "Medyan Beklenen Değere Eşittir (H₀ Reddedilemez)");
-                    setHTML('kararAciklama', `P-değeri (${pVal.toFixed(4)}) > <span class="math-var">&alpha;</span> (${alfa}) olduğundan örneklem medyanı ile $m_0$ arasında <strong>istatistiksel olarak anlamlı bir fark yoktur.</strong>`);
+                    setHTML('kararAciklama', `P-değeri (${pVal.toFixed(4)}) > <span class="math-var">&alpha;</span> (${alfa}) olduğundan örneklem medyanı ile $\\mu_0$ arasında <strong>istatistiksel olarak anlamlı bir fark yoktur.</strong>`);
                 } else {
                     setClass('kararKutusu', "alert border-0 p-4 mb-2 rounded-10 d-flex align-items-start bg-danger-subtle text-danger shadow-sm mt-4");
                     setClass('kararIkon', "ri-error-warning-fill text-danger fs-28"); setTxt('kararBaslik', "Medyan Farklıdır (H₀ Reddedilir)");
