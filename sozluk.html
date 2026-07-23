@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <title>İstatistik Sözlüğü | StatLabseu</title>
+
+    <script>
+        // Sayfa yüklenmeden önce koyu modu kontrol et (Parlama/Flicker engelleme)
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        @font-face {
+            font-family: 'STIX Two Math';
+            src: url('assets/fonts/STIXTwoMath-Regular.ttf') format('truetype');
+            font-weight: normal; font-style: normal;
+        }
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+        
+        /* Arama Çubuğu */
+        .search-wrapper { position: relative; margin-bottom: 30px; }
+        .search-wrapper input { padding-left: 55px; height: 60px; font-size: 16px; border-radius: 12px; border: 2px solid #e2e8f0; width: 100%; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+        .search-wrapper input:focus { border-color: #2f8fe8; box-shadow: 0 0 0 4px rgba(47, 143, 232, 0.1); outline: none; }
+        .search-wrapper i { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); font-size: 24px; color: #94a3b8; }
+
+        /* Alfabetik Navigasyon */
+        .dictionary-nav { position: sticky; top: 20px; z-index: 100; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 15px; background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; margin-bottom: 40px; }
+        .letter-link { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: 700; font-size: 15px; color: #2f8fe8; background: #f1f5f9; text-decoration: none; transition: all 0.2s ease; }
+        .letter-link:hover { background: #2f8fe8; color: white; transform: translateY(-3px); box-shadow: 0 4px 10px rgba(47,143,232,0.3); }
+
+        /* Harf Başlıkları */
+        .letter-header { font-size: 26px; font-weight: 800; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin: 40px 0 20px 0; display: flex; align-items: center; scroll-margin-top: 100px; }
+        .letter-header span { background: linear-gradient(135deg, #2f8fe8, #0ea5e9); color: white; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 12px; margin-right: 15px; box-shadow: 0 4px 10px rgba(47,143,232,0.2); }
+
+        /* Terim Kutuları */
+        .term-box { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px 25px; margin-bottom: 15px; transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden; }
+        .term-box::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #e2e8f0; transition: background 0.3s; }
+        .term-box:hover { transform: translateX(5px); box-shadow: 0 5px 15px rgba(0,0,0,0.03); border-color: #cbd5e1; }
+        .term-box:hover::before { background: #2f8fe8; }
+        
+        .term-title { font-size: 17px; font-weight: 700; color: #0f172a; margin-bottom: 10px; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .term-en { font-size: 13px; font-weight: 600; color: #64748b; background: #f1f5f9; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.3px; display: inline-flex; align-items: center; }
+        .term-en i { margin-right: 4px; font-size: 14px; }
+        .term-desc { color: #475569; font-size: 15px; line-height: 1.7; margin: 0; }
+
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+
+        /* "Sonuç Bulunamadı" Uyarı Kutusu */
+        #noResults { display: none; text-align: center; padding: 50px 20px; }
+        #noResults i { font-size: 50px; color: #cbd5e1; margin-bottom: 15px; }
+
+
+        /* =======================================================
+           🌙 GECE MODU (DARK MODE) KUSURSUZ ENTEGRASYON 
+           ======================================================= */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-muted, html.dark-mode .text-secondary { color: #94a3b8 !important; }
+        html.dark-mode .border, html.dark-mode .border-white { border-color: #334155 !important; }
+        
+        /* Arama Kutusu Gece Modu */
+        html.dark-mode .search-wrapper input { background-color: #1e293b !important; border-color: #334155 !important; color: #f8fafc !important; }
+        html.dark-mode .search-wrapper input:focus { border-color: #3b82f6 !important; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important; }
+        
+        /* Alfabetik Gezinme Menüsü Gece Modu */
+        html.dark-mode .dictionary-nav { background: rgba(15, 23, 42, 0.85) !important; border-color: #334155 !important; }
+        html.dark-mode .letter-link { background: #0f172a !important; color: #60a5fa !important; border: 1px solid #334155; }
+        html.dark-mode .letter-link:hover { background: #3b82f6 !important; color: #ffffff !important; border-color: #3b82f6 !important; }
+        
+        /* Harf Başlıkları Gece Modu */
+        html.dark-mode .letter-header { color: #f8fafc !important; border-color: #334155 !important; }
+        
+        /* Sözlük Terim Kutuları Gece Modu */
+        html.dark-mode .term-box { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .term-box:hover { border-color: #475569 !important; box-shadow: 0 5px 15px rgba(0,0,0,0.2) !important; }
+        html.dark-mode .term-box::before { background-color: #334155 !important; }
+        html.dark-mode .term-box:hover::before { background-color: #3b82f6 !important; }
+        html.dark-mode .term-title { color: #f8fafc !important; }
+        html.dark-mode .term-en { background-color: #0f172a !important; color: #94a3b8 !important; border: 1px solid #334155 !important; }
+        html.dark-mode .term-desc { color: #cbd5e1 !important; }
+        
+        /* Sonuç Bulunamadı Ekranı Gece Modu */
+        html.dark-mode #noResults h5 { color: #f8fafc !important; }
+        html.dark-mode #noResults i { color: #475569 !important; }
+
+        /* Buton Gece Modu */
+        html.dark-mode .theme-btn { background-color: #334155 !important; color: #f8fafc !important; }
+        html.dark-mode .theme-btn:hover { background-color: #475569 !important; }
+
+        /* 🟢 MATHJAX GECE MODU (FORMÜL RENK DÜZELTMESİ) 🟢 */
+        html.dark-mode mjx-container { color: #e2e8f0 !important; text-shadow: 0 0 1px rgba(255,255,255,0.1); }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border border-white shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-book-open-line align-middle me-1"></i> İstatistik Sözlüğü
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="main-content-container overflow-hidden">
+                
+                <div class="search-wrapper">
+                    <i class="ri-search-2-line"></i>
+                    <input type="text" id="termSearch" placeholder="Sözlükte Türkçe veya İngilizce bir terim arayın (Örn: ANOVA, Standart Sapma, Varyans)..." onkeyup="searchTerms()">
+                </div>
+
+                <div class="dictionary-nav">
+                    <a href="#letter-A" class="letter-link">A</a>
+                    <a href="#letter-B" class="letter-link">B</a>
+                    <a href="#letter-C" class="letter-link">C</a>
+                    <a href="#letter-D" class="letter-link">D</a>
+                    <a href="#letter-E" class="letter-link">E</a>
+                    <a href="#letter-F" class="letter-link">F</a>
+                    <a href="#letter-G" class="letter-link">G</a>
+                    <a href="#letter-H" class="letter-link">H</a>
+                    <a href="#letter-I" class="letter-link">İ</a>
+                    <a href="#letter-K" class="letter-link">K</a>
+                    <a href="#letter-L" class="letter-link">L</a>
+                    <a href="#letter-M" class="letter-link">M</a>
+                    <a href="#letter-N" class="letter-link">N</a>
+                    <a href="#letter-O" class="letter-link">O</a>
+                    <a href="#letter-P" class="letter-link">P</a>
+                    <a href="#letter-R" class="letter-link">R</a>
+                    <a href="#letter-S" class="letter-link">S</a>
+                    <a href="#letter-T" class="letter-link">T</a>
+                    <a href="#letter-U" class="letter-link">U</a>
+                    <a href="#letter-V" class="letter-link">V</a>
+                    <a href="#letter-W" class="letter-link">W</a>
+                    <a href="#letter-Y" class="letter-link">Y</a>
+                    <a href="#letter-Z" class="letter-link">Z</a>
+                </div>
+
+                <div id="noResults">
+                    <i class="ri-file-search-line d-block"></i>
+                    <h5 class="text-dark fw-bold">Sonuç Bulunamadı</h5>
+                    <p class="text-muted">Aradığınız terime uygun bir kayıt sözlüğümüzde yer almıyor.</p>
+                </div>
+
+                <!-- ================== HARF: A ================== -->
+                <div id="letter-A" class="letter-group">
+                    <h2 class="letter-header"><span>A</span></h2>
+                    
+                    <div class="term-box search-item" data-term="A Katsayısı Sabit Intercept">
+                        <h5 class="term-title">A Katsayısı / Sabit <span class="term-en"><i class="ri-translate-2"></i> Intercept</span></h5>
+                        <p class="term-desc">Bir regresyon doğrusu eşitliğindeki ($Y=a+bX$) sabit terim, $a$ katsayısıdır. Regresyon doğrusunun Y eksenini kestiği noktanın ordinatıdır. X (bağımsız değişken) sıfır olduğunda, bağımlı değişken Y'nin alacağı değere eşittir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Absis Abscissa X ekseni">
+                        <h5 class="term-title">Absis <span class="term-en"><i class="ri-translate-2"></i> Abscissa</span></h5>
+                        <p class="term-desc">Bir grafiğin yatay eksenidir. X ekseni olarak bilinir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Açıklanabilen Değişkenlik Explained Variation">
+                        <h5 class="term-title">Açıklanabilen Değişkenlik <span class="term-en"><i class="ri-translate-2"></i> Explained Variation</span></h5>
+                        <p class="term-desc">Dağılımın ortalaması hakkında tahmin edilen puanların değişkenliğidir. Bu açıklanan varyansa veya regresyon kareler toplamına (regSS) karşı gelir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Açıklanamayan Değişkenlik Unexplained Variation">
+                        <h5 class="term-title">Açıklanamayan Değişkenlik <span class="term-en"><i class="ri-translate-2"></i> Unexplained Variation</span></h5>
+                        <p class="term-desc">Regresyon doğrusu (veya tahmin edilen puanlar) etrafındaki puanların değişkenliğidir. Bu değişkenlik $\sum(Y-Y')^2$ formülü ile açıklanır ve bu açıklanamayan değişkenliğe ya da artık kareler toplamına karşılık gelir. İki değişken arasında mükemmel bir ilişki varsa, hiç açıklanamayan varyans olmayacak ve bu durumda bütün puanlar regresyon doğrusu üzerinde olacaktır. İlişki zayıfladıkça puanların doğruya göre sapmaları artacak ve açıklanamayan varyans söz konusu olacaktır.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Açıklayıcı Değişken Predictor Cause Explanatory Variable">
+                        <h5 class="term-title">Açıklayıcı Değişken <span class="term-en"><i class="ri-translate-2"></i> Predictor / Explanatory Variable</span></h5>
+                        <p class="term-desc">Bir ilişkideki bilinen puanların diğer değişkendeki bilinmeyen puanları kestirmede kullanıldığı değişkene denir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Açımlayıcı Veri Analizi Exploratory Data Analysis EDA">
+                        <h5 class="term-title">Açımlayıcı Veri Analizi <span class="term-en"><i class="ri-translate-2"></i> Exploratory Data Analysis</span></h5>
+                        <p class="term-desc">Verilerin nasıl dağıldığı ile ilgili bir varsayım gerektirmeyen, istatistiksel sonuç çıkarım ihtiva etmeyen, verileri göstermek, açıklamak ve özetlemek üzere kullanılan yöntemlerdir. Bu teknikler gövde-yaprak ve kutu (box plot) diyagramlarını içerir. Bu teknikler J. Tukey tarafından geliştirilmiştir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Ağırlıklandırılmamış Ortalama Unweighted Mean">
+                        <h5 class="term-title">Ağırlıklandırılmamış Ortalama <span class="term-en"><i class="ri-translate-2"></i> Unweighted Mean</span></h5>
+                        <p class="term-desc">Eşit ağırlıklı ortalama olarak bilinir. Bazı gözlemlere daha büyük ağırlık verilmeden hesaplanan ortalamadır.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Ağırlıklı Ortalama Weighted Mean">
+                        <h5 class="term-title">Ağırlıklı Ortalama <span class="term-en"><i class="ri-translate-2"></i> Weighted Mean</span></h5>
+                        <p class="term-desc">Birden fazla veri kümesinin bulunduğu bir durumda, bunların farklı katsayılarla ($a_1, a_2, \dots, a_n$) ağırlıklandırılması gerekebilir. Ölçmelerin farklı katsayılarla çarpılmasından sonra hesaplanan ortalamaya, ağırlıklı ortalama denir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Aldatıcı İlişki Spurious Relationship">
+                        <h5 class="term-title">Aldatıcı İlişki <span class="term-en"><i class="ri-translate-2"></i> Spurious Relationship</span></h5>
+                        <p class="term-desc">Bir kontrol ya da test değişkeninin girmesi ile bağımsız ve bağımlı değişken arasındaki ilişkinin kaybolması ya da manidar bir biçimde zayıflaması demektir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Alfa Hatası Alpha Error 1. Tip Hata Type 1">
+                        <h5 class="term-title">Alfa Hatası (1. Tip Hata) <span class="term-en"><i class="ri-translate-2"></i> Alpha Error</span></h5>
+                        <p class="term-desc">$H_0$ null hipotezine göre, bir istatistiksel testin hata üretme olasılığıdır. Doğru olan bir null hipotezinin reddedilmesi olasılığıdır. Bir örnekleme dağılımının ret bölgesinin büyüklüğünü gösterir. 1. tip hata yapma olasılığına alpha ($\alpha$) denir. Bu olasılık manidarlık düzeyidir. Doğru olan bir null hipotezinin kabul edilmesi ise doğru bir karar olup, $1-\alpha$ (güven aralığı) ile gösterilir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Algoritma Algorithm">
+                        <h5 class="term-title">Algoritma <span class="term-en"><i class="ri-translate-2"></i> Algorithm</span></h5>
+                        <p class="term-desc">Özellikle hesaplamalarda, belli bir miktarın gerçek değerine dönüştürülmesine tekrarlayan bir süreç ile olanak veren kesin bir ilişki veya kurallar dizisi anlamına gelmektedir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Alt Örneklem Subsample Subsampling">
+                        <h5 class="term-title">Alt Örneklem <span class="term-en"><i class="ri-translate-2"></i> Subsample</span></h5>
+                        <p class="term-desc">Bir örneklemin kendi içinden tekrar seçilen örneklemi anlamındadır.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Amaçlı Örneklem Purposive Sample">
+                        <h5 class="term-title">Amaçlı Örneklem <span class="term-en"><i class="ri-translate-2"></i> Purposive Sample</span></h5>
+                        <p class="term-desc">Bireysel birimlerin araştırmacının amacına ve yargısına dayalı yöntemlerle seçildiği bir örneklemdir. Yanlılığa (bias) açık olmasından dolayı seyrek olarak kullanılmaktadır.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Ampirik Bilgi Empirical Knowledge">
+                        <h5 class="term-title">Ampirik Bilgi <span class="term-en"><i class="ri-translate-2"></i> Empirical Knowledge</span></h5>
+                        <p class="term-desc">Gözlemler, deneyler ve somut ölçümler sonucu elde edilen objektif bilgiler.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Anlamlılık Manidarlık Düzeyi Significance Level Testi">
+                        <h5 class="term-title">Anlamlılık / Manidarlık Düzeyi <span class="term-en"><i class="ri-translate-2"></i> Significance Level</span></h5>
+                        <p class="term-desc">Hipotez test etmede, $H_0$ (null) hipotezini reddetmek için kullanılan bir kriterdir. $H_0$ hipotezinin doğru olduğu halde reddedilme olasılığına anlamlılık düzeyi denir. 1. tür hata yapma olasılığını verir, $\alpha$ sembolü ile gösterilir. Genelde $\alpha$ değerleri 0.05, 0.01 ve 0.001 olarak alınır. Hesaplanan $p$ değeri bu eşikten küçükse sonuç istatistiksel olarak manidardır.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Ara Değişken Intervening Variable">
+                        <h5 class="term-title">Ara Değişken <span class="term-en"><i class="ri-translate-2"></i> Intervening Variable</span></h5>
+                        <p class="term-desc">Diğer iki değişkeni sebep-sonuç ilişkisiyle bağlayan, araya giren değişkendir. Örneğin, düşük motivasyon ile düşük başarı arasındaki ilişkide, motivasyon bir ara değişkendir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Aralık Ölçeği Interval Scale">
+                        <h5 class="term-title">Aralık Ölçeği <span class="term-en"><i class="ri-translate-2"></i> Interval Scale</span></h5>
+                        <p class="term-desc">Bağıl (itibari) bir başlangıç (sıfır) noktası olan, iki ardışık ölçme birimi arasındaki uzaklığın aynı olduğu bir ölçektir. Bu ölçeğe ait puanlar toplanabilir ve çıkarılabilir ancak gerçek bir sıfır noktası olmadığı için oransal (kat) karşılaştırmalara uygun değildir (Örn: Termometre sıcaklıkları).</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Araştırma Hipotezi Alternatif Experimental Alternative Hypothesis">
+                        <h5 class="term-title">Araştırma (Alternatif) Hipotezi <span class="term-en"><i class="ri-translate-2"></i> Alternative Hypothesis</span></h5>
+                        <p class="term-desc">$H_0$ (Null) hipotezinin reddedilmesi durumunda kabul edilen hipotezdir. Araştırmacının doğrulanmasını beklediği, değişkenler arasında bir ilişkinin ya da farkın olduğunu savunan hipotezdir. $H_1$ ya da $H_a$ sembolü ile gösterilir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Artık Kalan Hata Residual Varyans">
+                        <h5 class="term-title">Artık / Hata (Residual) <span class="term-en"><i class="ri-translate-2"></i> Residual</span></h5>
+                        <p class="term-desc">Bağımlı değişken Y'nin gözlenen değeri ile yordanan (tahmin edilen) değeri ($Y-Y'$) arasındaki sapma puanları olan, regresyonda yapılan açıklanamayan hatadır.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Asimetrik İlişki Testi Dağılım Asymmetrical Distribution">
+                        <h5 class="term-title">Asimetrik Dağılım <span class="term-en"><i class="ri-translate-2"></i> Asymmetrical Distribution</span></h5>
+                        <p class="term-desc">Simetrik olmayan, herhangi bir merkezi değer etrafında eşit dağılmayan, sağa ya da sola çarpık olan dağılımdır.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Aşamalı Adımsal Regresyon Stepwise Regression">
+                        <h5 class="term-title">Aşamalı (Stepwise) Regresyon <span class="term-en"><i class="ri-translate-2"></i> Stepwise Regression</span></h5>
+                        <p class="term-desc">Çoklu regresyonda bağımlı değişkenin en önemli yordayıcılarının aşama aşama modele dahil edildiği tekniktir. Bağımlı değişkenle en yüksek korelasyon veren değişkenle başlanır, modelin açıklayıcılığına ($R^2$) katkı sağlayan diğer değişkenler sırayla modele alınır.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Ayırıcı Diskriminant Analizi Fonksiyon Discriminant Analysis">
+                        <h5 class="term-title">Ayırıcı (Diskriminant) Analizi <span class="term-en"><i class="ri-translate-2"></i> Discriminant Analysis</span></h5>
+                        <p class="term-desc">Birimleri ya da bireyleri, ölçülen özelliklerine bakarak en az hata ile ait oldukları önceden bilinen gruplara ayırmak ve sınıflandırmak üzere yapılan çok değişkenli bir analiz tekniğidir.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: B ================== -->
+                <div id="letter-B" class="letter-group">
+                    <h2 class="letter-header"><span>B</span></h2>
+
+                    <div class="term-box search-item" data-term="Bağdaşmaz Kesişimi Olmayan Karşılıklı Birbirini Dışta Tutan Olaylar Mutually Exclusive Events">
+                        <h5 class="term-title">Bağdaşmaz / Birbirini Dışta Tutan Olaylar <span class="term-en"><i class="ri-translate-2"></i> Mutually Exclusive Events</span></h5>
+                        <p class="term-desc">İki olayın aynı anda ortaya çıkmasının imkansız olduğu olaylardır. Bir deneme durumunda sonuçlardan biri gözlendiğinde diğeri gözlenemiyorsa bunlar bağdaşmazdır (Örn: Zar atıldığında aynı anda hem tek hem çift gelmesi imkansızdır).</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Bağımlı Değişken Dependent Variable">
+                        <h5 class="term-title">Bağımlı Değişken <span class="term-en"><i class="ri-translate-2"></i> Dependent Variable</span></h5>
+                        <p class="term-desc">Deneysel bir çalışmada, bağımsız değişkene bağlı olarak ortaya çıkan, araştırmanın "sonucu" durumunda olan ve ölçülen değişkene denir. (Örn: Öğretim yönteminin matematik başarısı üzerindeki etkisinde "matematik başarısı" bağımlı değişkendir).</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Bağımsız Değişken Independent Variable">
+                        <h5 class="term-title">Bağımsız Değişken <span class="term-en"><i class="ri-translate-2"></i> Independent Variable</span></h5>
+                        <p class="term-desc">Araştırmacı tarafından manipüle edilebilen (değiştirilebilen) ve bağımlı değişken üzerindeki "etkisi araştırılan" (sebep konumundaki) değişkenlere denir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Bağımsız Örneklem Independent Sample">
+                        <h5 class="term-title">Bağımsız Örneklem <span class="term-en"><i class="ri-translate-2"></i> Independent Sample</span></h5>
+                        <p class="term-desc">Birbirleri üzerinde hiçbir etkisi olmayacak şekilde, aynı evrenden ya da farklı evrenlerden seçilen farklı denek gruplarıdır (Örn: Deney ve Kontrol grupları, Kadınlar ve Erkekler).</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Bar Sütun Grafik Bar Chart Graph">
+                        <h5 class="term-title">Bar (Sütun) Grafik <span class="term-en"><i class="ri-translate-2"></i> Bar Chart</span></h5>
+                        <p class="term-desc">Sınıflamalı (kategorik) verileri özetlemenin bir yoludur. Barlar birbirini izler ancak kategorik oldukları için birbirlerine dokunmayacak şekilde (aralıklı) yerleştirilir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Bartlett Testi Doğrusallık">
+                        <h5 class="term-title">Bartlett Testi <span class="term-en"><i class="ri-translate-2"></i> Bartlett's Test</span></h5>
+                        <p class="term-desc">Bağımsız normal örneklemlerden elde edilen grupların varyanslarının homojenliğini (eşitliğini) test eden bir istatistiksel testtir. Sapan değerlere (outliers) karşı Levene testinden daha hassastır.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Basıklık Kurtosis Basık Dağılım Platykurtic">
+                        <h5 class="term-title">Basıklık <span class="term-en"><i class="ri-translate-2"></i> Kurtosis</span></h5>
+                        <p class="term-desc">Bir dağılımın sivri olup olmadığının ölçüsüdür. Basıklık katsayısının sıfırdan küçük olması dağılımın basık (platykurtic), sıfırdan büyük olması ise sivri (leptokurtic) olduğunu gösterir. Sıfır olması normal dağılım basıklığıdır (mesokurtic).</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Basit Doğrusal Regresyon Simple Linear Regression">
+                        <h5 class="term-title">Basit Doğrusal Regresyon <span class="term-en"><i class="ri-translate-2"></i> Simple Linear Regression</span></h5>
+                        <p class="term-desc">Bir bağımlı ve yalnızca bir bağımsız (yordayıcı) değişken arasındaki doğrusal ilişkiyi en küçük kareler yöntemi ile bulmaya yönelik matematiksel bir modeldir ($Y = a + bX$).</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Beklenen Değer Evren Ortalaması Expected Value">
+                        <h5 class="term-title">Beklenen Değer / Evren Ortalaması <span class="term-en"><i class="ri-translate-2"></i> Expected Value</span></h5>
+                        <p class="term-desc">Bir tesadüfi değişkenin beklenen değeri, onun örnekleme dağılımının ortalamasını (merkezi değerini) gösterir ve $E(X)$ veya $\mu$ sembolü ile ifade edilir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Beta Hatası Beta Error 2. Tip Hata Type 2">
+                        <h5 class="term-title">Beta Hatası (2. Tip Hata) <span class="term-en"><i class="ri-translate-2"></i> Beta Error</span></h5>
+                        <p class="term-desc">Karşıt hipotezin ($H_1$) gerçekte doğru olduğu halde, $H_0$ hipotezinin reddedilememesi ile yapılan hatadır. $\beta$ ile gösterilir. Testin gücü ile ters orantılıdır ($\beta = 1 - \text{Testin Gücü}$).</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Binom Dağılım Binomial Distribution Test">
+                        <h5 class="term-title">Binom Dağılımı <span class="term-en"><i class="ri-translate-2"></i> Binomial Distribution</span></h5>
+                        <p class="term-desc">Sadece iki çıktısı olan (başarı/başarısızlık, yazı/tura) birbirinden bağımsız $n$ sayıdaki deneydeki başarı sayısının olasılık dağılımıdır. Beklenen değer $E(X)=np$, varyans ise $npq$'dur.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Bonferroni Eşitsizliği Inequality">
+                        <h5 class="term-title">Bonferroni Düzeltmesi <span class="term-en"><i class="ri-translate-2"></i> Bonferroni Correction</span></h5>
+                        <p class="term-desc">Birden fazla karşılaştırma yapıldığında 1. Tip hata oranının (Alpha) kontrolsüzce artmasını engellemek için kullanılan, anlamlılık düzeyinin test sayısına bölündüğü istatistiksel bir düzeltmedir.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: C/Ç ================== -->
+                <div id="letter-C" class="letter-group">
+                    <h2 class="letter-header"><span>C</span></h2>
+                    
+                    <div class="term-box search-item" data-term="Cochran Q Testi Test">
+                        <h5 class="term-title">Cochran Q Testi <span class="term-en"><i class="ri-translate-2"></i> Cochran Q Test</span></h5>
+                        <p class="term-desc">K sayıda bağımlı/ilişkili örneklem söz konusu olduğunda, üç veya daha fazla eşleştirilmiş kategorik (genellikle 1 ve 0 olarak ikili) veri setinin birbirlerinden farklı olup olmadığını test eden parametrik olmayan yöntemdir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Çok Değişkenli Varyans Analizi MANOVA Multivariate Analysis of Variance">
+                        <h5 class="term-title">Çok Değişkenli Varyans Analizi (MANOVA) <span class="term-en"><i class="ri-translate-2"></i> MANOVA</span></h5>
+                        <p class="term-desc">Bir ya da daha fazla bağımsız değişkene göre oluşan grupların, iki veya daha fazla "bağımlı değişken" bütünü (vektörü) bakımından aynı anda farklılık gösterip göstermediğini test eder.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Çoklu Birlikte Doğrusallık Çoklu Bağlantı Multicollinearity">
+                        <h5 class="term-title">Çoklu Bağlantı / Birlikte Doğrusallık <span class="term-en"><i class="ri-translate-2"></i> Multicollinearity</span></h5>
+                        <p class="term-desc">Çoklu regresyon analizinde, yordayıcı (bağımsız) değişkenlerin kendi aralarında çok yüksek derecede korelasyon göstermesi sorunudur. Modelin güvenilirliğini düşürür (VIF ve Tolerans değerleri ile tespit edilir).</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Çoklu Determinasyon Katsayısı Belirlilik R2 Multiple Determination Coefficient">
+                        <h5 class="term-title">Çoklu Determinasyon Katsayısı ($R^2$) <span class="term-en"><i class="ri-translate-2"></i> Multiple R-Squared</span></h5>
+                        <p class="term-desc">İki veya daha fazla bağımsız değişkenin, bir bağımlı değişkendeki varyansın (değişkenliğin) % kaçını ortaklaşa açıklayabildiğini gösteren orandır.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: D ================== -->
+                <div id="letter-D" class="letter-group">
+                    <h2 class="letter-header"><span>D</span></h2>
+
+                    <div class="term-box search-item" data-term="Değişim Katsayısı Varyasyon V Coefficient of Variation">
+                        <h5 class="term-title">Değişim / Varyasyon Katsayısı ($V$) <span class="term-en"><i class="ri-translate-2"></i> Coefficient of Variation</span></h5>
+                        <p class="term-desc">Grupların değişkenlik açısından standartlaştırılarak karşılaştırılmasında kullanılır. Standart sapmanın ortalamaya bölünüp 100 ile çarpılmasıyla elde edilen yüzdelik bir ifadedir. $V$ değeri küçük olan grup daha homojendir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Deneysel Desen Plan Experimental Design">
+                        <h5 class="term-title">Deneysel Desen <span class="term-en"><i class="ri-translate-2"></i> Experimental Design</span></h5>
+                        <p class="term-desc">İlgilenilen hipotezlere cevap verebilmek ve neden-sonuç ilişkilerini izole edebilmek için, verilerin toplanması, grupların atanması ve bağımsız değişkenlerin manipüle edilmesine yönelik araştırmacı tarafından kurulan istatistiksel plandır.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Doğrulayıcı Faktör Analizi Confirmatory Factor Analysis CFA">
+                        <h5 class="term-title">Doğrulayıcı Faktör Analizi <span class="term-en"><i class="ri-translate-2"></i> Confirmatory Factor Analysis</span></h5>
+                        <p class="term-desc">Araştırmacının önceden belirlediği bir teorik yapıya veya hipoteze göre, hangi değişkenlerin (maddelerin) hangi faktörler (boyutlar) altında toplanması gerektiğini önceden modele tanımlayıp, verilerin bu teoriyle ne kadar uyumlu olduğunu test ettiği gelişmiş analizdir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Dummy Boş Değişken Dummy Variable">
+                        <h5 class="term-title">Dummy (Kukla/Boş) Değişken <span class="term-en"><i class="ri-translate-2"></i> Dummy Variable</span></h5>
+                        <p class="term-desc">Regresyon analizine kategorik (isimsel) verileri dahil edebilmek için oluşturulan, sadece 1 ve 0 değerlerini alabilen yapay değişkenlerdir (Örn: Erkek=0, Kadın=1).</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: E ================== -->
+                <div id="letter-E" class="letter-group">
+                    <h2 class="letter-header"><span>E</span></h2>
+
+                    <div class="term-box search-item" data-term="Eğim b Slope">
+                        <h5 class="term-title">Eğim ($b$) <span class="term-en"><i class="ri-translate-2"></i> Slope</span></h5>
+                        <p class="term-desc">Regresyon eşitliğinde ($Y = a + bX$), bağımsız değişken $X$'teki 1 birimlik artışa karşılık, bağımlı değişken $Y$'de meydana gelecek ortalama değişimi belirten katsayıdır.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="En Küçük Kareler Yöntemi Least Squares Method">
+                        <h5 class="term-title">En Küçük Kareler Yöntemi <span class="term-en"><i class="ri-translate-2"></i> Least Squares Method</span></h5>
+                        <p class="term-desc">Regresyon doğrusunun (veya modelinin) katsayılarını hesaplarken, gözlenen değerler ile modelin tahmin ettiği değerler arasındaki hata paylarının kareleri toplamını ($\sum(Y-Y')^2$) minimum yapmayı amaçlayan temel matematiksel optimizasyon yöntemidir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Eta Kare Etki Büyüklüğü Eta Squared">
+                        <h5 class="term-title">Eta Kare ($\eta^2$) <span class="term-en"><i class="ri-translate-2"></i> Eta Squared</span></h5>
+                        <p class="term-desc">Varyans analizi (ANOVA) sonucunda, gruplar arası kareler toplamının, genel kareler toplamına bölünmesiyle bulunur. Bağımsız değişkenin (işlemin) bağımlı değişkende ne kadarlık bir varyansı (etkiyi) tek başına açıkladığını gösteren etki büyüklüğü indeksidir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Evren Anakütle Population Ortalaması Varyansı">
+                        <h5 class="term-title">Evren (Anakütle) <span class="term-en"><i class="ri-translate-2"></i> Population</span></h5>
+                        <p class="term-desc">Araştırmacının hakkında genelleme yapmak istediği, belirli ortak özelliklere sahip tüm birimlerin ya da gözlemlerin oluşturduğu bütündür. Evren ortalaması $\mu$, standart sapması $\sigma$ ve varyansı $\sigma^2$ gibi evrene ait değişmez kesin değerlere <strong>Parametre</strong> denir.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: F ================== -->
+                <div id="letter-F" class="letter-group">
+                    <h2 class="letter-header"><span>F</span></h2>
+
+                    <div class="term-box search-item" data-term="F Dağılım İstatistiği Oranı F Ratio Distribution">
+                        <h5 class="term-title">F İstatistiği ve Dağılımı <span class="term-en"><i class="ri-translate-2"></i> F Distribution</span></h5>
+                        <p class="term-desc">İki farklı varyans tahmininin (örneğin Gruplar Arası Varyans / Grup İçi Varyans) birbirine oranından doğan asimetrik ve her zaman pozitif bir dağılımdır. ANOVA testlerinde gruplar arası farkın rastlantısal olup olmadığını test etmek için kullanılır.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Faktör Analizi Factor Analysis">
+                        <h5 class="term-title">Faktör Analizi <span class="term-en"><i class="ri-translate-2"></i> Factor Analysis</span></h5>
+                        <p class="term-desc">Çok sayıdaki birbiriyle ilişkili değişkeni (örneğin bir anketin 50 maddesi), kendi aralarındaki korelasyonları temel alarak "Faktör" adı verilen daha az sayıdaki anlamlı, bağımsız, alt ve gizil (latent) boyuta indirgemeyi amaçlayan çok değişkenli istatistik tekniğidir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Fisher'in Tam Olasılık Kesin Testi Fisher's Exact Test">
+                        <h5 class="term-title">Fisher'in Kesin Testi <span class="term-en"><i class="ri-translate-2"></i> Fisher's Exact Test</span></h5>
+                        <p class="term-desc">2x2 formatındaki çapraz tablolarda (kontingensi), hücrelerdeki beklenen frekansların 5'in altına düştüğü durumlarda, Ki-Kare testi varsayımları bozulduğu için olasılıkları faktöriyeller üzerinden "kesin (exact)" olarak hesaplayan asimptotik olmayan testtir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Frekans f Dağılımı Poligonu Frequency">
+                        <h5 class="term-title">Frekans ($f$) <span class="term-en"><i class="ri-translate-2"></i> Frequency</span></h5>
+                        <p class="term-desc">Bir veri setinde, belirli bir puanın (veya aralığın) kaç defa gözlendiğini/tekrarlandığını belirten sayıdır.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: G ================== -->
+                <div id="letter-G" class="letter-group">
+                    <h2 class="letter-header"><span>G</span></h2>
+
+                    <div class="term-box search-item" data-term="Geçerlilik Validity">
+                        <h5 class="term-title">Geçerlilik <span class="term-en"><i class="ri-translate-2"></i> Validity</span></h5>
+                        <p class="term-desc">Bir ölçme aracının (test, anket, cihaz), ölçmeyi amaçladığı yapıyı, başka özellikleri işin içine karıştırmadan ne derece doğru ve amacına uygun ölçebildiğinin göstergesidir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Güven Aralığı Sınırları Confidence Interval">
+                        <h5 class="term-title">Güven Aralığı <span class="term-en"><i class="ri-translate-2"></i> Confidence Interval</span></h5>
+                        <p class="term-desc">Örneklem istatistiklerinden yola çıkarak, bilinmeyen gerçek evren parametresinin, belirlenen bir olasılık derecesiyle (örn: %95 veya %99) içine düşmesinin beklendiği tahmin alt ve üst sınır aralığıdır.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Güvenirlik Reliability">
+                        <h5 class="term-title">Güvenirlik <span class="term-en"><i class="ri-translate-2"></i> Reliability</span></h5>
+                        <p class="term-desc">Bir ölçme aracının aynı nesneleri, farklı zamanlarda veya aynı testin alternatif formlarıyla ölçtüğünde ne kadar tutarlı, kararlı ve hatalardan arınmış sonuçlar verdiğinin bir indeksidir.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: H ================== -->
+                <div id="letter-H" class="letter-group">
+                    <h2 class="letter-header"><span>H</span></h2>
+
+                    <div class="term-box search-item" data-term="Hipotez Testi Hypothesis Test Null">
+                        <h5 class="term-title">Hipotez Testi <span class="term-en"><i class="ri-translate-2"></i> Hypothesis Testing</span></h5>
+                        <p class="term-desc">Örneklemden alınan veriler yardımıyla, evrene ait ortaya atılan iddiaların (hipotezlerin) olasılık kuralları çerçevesinde doğruluğunun sorgulanması ve bir karara bağlanması sürecidir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Histogram">
+                        <h5 class="term-title">Histogram <span class="term-en"><i class="ri-translate-2"></i> Histogram</span></h5>
+                        <p class="term-desc">Sürekli değişkenlerin veri dağılımlarını göstermek için tasarlanan grafik türüdür. Yatay eksende veri aralıkları (gerçek sınırlarıyla), dikey eksende frekanslar yer alır ve sütunlar birbirine bitişik çizilir.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: İ ================== -->
+                <div id="letter-I" class="letter-group">
+                    <h2 class="letter-header"><span>İ</span></h2>
+
+                    <div class="term-box search-item" data-term="İki Yönlü ANOVA İki-Yönlü Varyans Analizi Two-way">
+                        <h5 class="term-title">İki-Yönlü Varyans Analizi <span class="term-en"><i class="ri-translate-2"></i> Two-Way ANOVA</span></h5>
+                        <p class="term-desc">Bağımlı değişken üzerinde, bağımsız iki farklı faktörün hem ayrı ayrı (temel etkiler) hem de birbirleriyle olan etkileşimlerinin (ortak etki) eş zamanlı test edilmesini sağlayan parametrik testtir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="İki-Yönlü Test Yönsüz Two-tailed Test">
+                        <h5 class="term-title">İki-Yönlü Test <span class="term-en"><i class="ri-translate-2"></i> Two-Tailed Test</span></h5>
+                        <p class="term-desc">Araştırma hipotezinde farkın veya ilişkinin bir yöne (büyüktür/küçüktür) odaklanmadığı, "sadece fark vardır" hipotezinin kurulduğu durumlarda, normal dağılım eğrisinin her iki ucundaki ret bölgelerinin ($\alpha/2$) aynı anda kontrol edildiği test yaklaşımıdır.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="İlişkili Örneklemler Tekrarlı Paired Repeated Samples t-testi">
+                        <h5 class="term-title">İlişkili (Bağımlı) Örneklemler t-Testi <span class="term-en"><i class="ri-translate-2"></i> Paired Samples t-Test</span></h5>
+                        <p class="term-desc">Aynı deneklerin iki farklı zamanda (Ön-Test / Son-Test gibi) veya iki farklı koşul altındaki sürekli ölçümleri arasındaki farkın istatistiksel olarak anlamlı olup olmadığını test eden parametrik yöntemdir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="İlişkisiz Bağımsız Örneklemler t-testi Independent Samples">
+                        <h5 class="term-title">İlişkisiz (Bağımsız) Örneklemler t-Testi <span class="term-en"><i class="ri-translate-2"></i> Independent Samples t-Test</span></h5>
+                        <p class="term-desc">Aralarında hiçbir bağ bulunmayan iki farklı grubun (örn: Kadınlar vs Erkekler) belirli bir sürekli değişkene ait ortalamaları arasındaki farkın evrende anlamlı olup olmadığını inceleyen parametrik testtir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="İstatistik Kestirisel Betimsel Statistics">
+                        <h5 class="term-title">İstatistik <span class="term-en"><i class="ri-translate-2"></i> Statistics</span></h5>
+                        <p class="term-desc">Evreni temsil etmek üzere seçilen bir "örneklemden" elde edilen ve o örneklemi özetleyen sayısal değerlerdir (Örneklem ortalaması $x$, standart sapması $s$ gibi). Aynı zamanda verilerin toplanması, özetlenmesi ve evren hakkında tahmin yürütülmesini (Kestirisel İstatistik) sağlayan bilim dalıdır.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: K ================== -->
+                <div id="letter-K" class="letter-group">
+                    <h2 class="letter-header"><span>K</span></h2>
+
+                    <div class="term-box search-item" data-term="Karar Kuralı P değeri Decision Rule">
+                        <h5 class="term-title">Karar Kuralı <span class="term-en"><i class="ri-translate-2"></i> Decision Rule</span></h5>
+                        <p class="term-desc">Hesaplanan P-değerinin önceden belirlenen $\alpha$ (0.05 gibi) eşik değerinden küçük olması durumunda $H_0$ hipotezinin reddedilerek sonucun anlamlı bulunması esasına dayanan kesin test mantığıdır.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Ki-Kare Bağımsızlık Testi Chi-squared Test of Independence">
+                        <h5 class="term-title">Ki-Kare Bağımsızlık Testi <span class="term-en"><i class="ri-translate-2"></i> Chi-Square Test of Independence</span></h5>
+                        <p class="term-desc">Çapraz (Kontingensi) tablolarda sınıflandırılmış iki kategorik (nitel) değişkenin, evrende birbirinden bağımsız olup olmadığını, "Gözlenen" ve "Beklenen" frekanslar arasındaki sapmaları toplayarak test eden parametrik olmayan bir istatistiktir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Korelasyon Katsayısı Pearson Spearman Correlation Coefficient">
+                        <h5 class="term-title">Korelasyon Katsayısı ($r$) <span class="term-en"><i class="ri-translate-2"></i> Correlation Coefficient</span></h5>
+                        <p class="term-desc">İki değişken arasındaki ilişkinin hem "Yönünü" (+ veya -) hem de "Gücünü" ölçen istatistiktir. Daima -1 ile +1 arasında değer alır. 0'a yaklaşması ilişkinin zayıfladığını veya olmadığını, 1'e yaklaşması mükemmel doğrusal ilişkiyi gösterir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Kovaryans Analizi ANCOVA Covariate Analysis">
+                        <h5 class="term-title">Kovaryans Analizi (ANCOVA) <span class="term-en"><i class="ri-translate-2"></i> Analysis of Covariance</span></h5>
+                        <p class="term-desc">Bağımsız değişkenlerin bağımlı değişken üzerindeki etkisini incelerken, bağımlı değişkeni etkileyebilecek ancak araştırmanın asıl odağı olmayan ikincil sürekli değişkenlerin (Kovaryet / Ortak değişken) etkisini matematiksel olarak dışarıda tutan istatistiksel modeldir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Kruskal-Wallis Varyans Analizi Tek Yönlü ANOVA Test">
+                        <h5 class="term-title">Kruskal-Wallis Testi <span class="term-en"><i class="ri-translate-2"></i> Kruskal-Wallis H Test</span></h5>
+                        <p class="term-desc">Üç veya daha fazla bağımsız grubun medyanlarının (sıralamalarının) farklı olup olmadığını karşılaştıran, Tek Yönlü ANOVA'nın "parametrik olmayan (non-parametrik)" dağılımsız versiyonudur.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Kutu Grafiği Boxplot Box and Whisker Plot">
+                        <h5 class="term-title">Kutu Grafiği <span class="term-en"><i class="ri-translate-2"></i> Boxplot</span></h5>
+                        <p class="term-desc">John Tukey tarafından geliştirilen; verilerin Minimum, Q1 (25. Yüzdelik), Medyan, Q3 (75. Yüzdelik) ve Maksimum olmak üzere 5-sayılı özetini aynı anda sunan, aykırı değerleri harika görselleştiren modern grafik türüdür.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: L ================== -->
+                <div id="letter-L" class="letter-group">
+                    <h2 class="letter-header"><span>L</span></h2>
+
+                    <div class="term-box search-item" data-term="Levene Testi Homogeneity Varyans">
+                        <h5 class="term-title">Levene Testi <span class="term-en"><i class="ri-translate-2"></i> Levene's Test</span></h5>
+                        <p class="term-desc">İki veya daha fazla grubun varyanslarının birbirine eşit (homojen) olup olmadığını test eden yöntemdir. ANOVA veya bağımsız t-testi öncesinde "Varyansların Homojenliği" varsayımının kontrolünde sıkça kullanılır.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Lojistik Regresyon Logistic Regression">
+                        <h5 class="term-title">Lojistik Regresyon <span class="term-en"><i class="ri-translate-2"></i> Logistic Regression</span></h5>
+                        <p class="term-desc">Bağımlı değişkenin sürekli olmadığı, sadece iki (Evet/Hayır, Yaşıyor/Öldü) ya da birkaç kategoriden oluştuğu durumlarda, olayların "gerçekleşme olasılıklarını (odds)" tahmin etmek için kullanılan, normallik gerektirmeyen gelişmiş regresyon modelidir.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: M ================== -->
+                <div id="letter-M" class="letter-group">
+                    <h2 class="letter-header"><span>M</span></h2>
+
+                    <div class="term-box search-item" data-term="Mahalanobis Uzaklığı Distance Uç değer">
+                        <h5 class="term-title">Mahalanobis Uzaklığı <span class="term-en"><i class="ri-translate-2"></i> Mahalanobis Distance</span></h5>
+                        <p class="term-desc">Çok değişkenli analizlerde, veri noktalarının merkeze (vektörel ortalamaya) olan standartlaşmış uzaklıklarını ölçerek çok değişkenli aykırı değerleri (multivariate outliers) yakalamada kullanılan ölçüttür.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Mann-Whitney U Testi Wilcoxon Rank Sum">
+                        <h5 class="term-title">Mann-Whitney U Testi <span class="term-en"><i class="ri-translate-2"></i> Mann-Whitney U Test</span></h5>
+                        <p class="term-desc">İki "bağımsız" grubun puanlarının aynı evren dağılımından gelip gelmediğini, verilerin ham değerleri yerine onları sıraya dizerek (rank) test eden, Bağımsız Örneklemler t-Testi'nin parametrik olmayan en güçlü alternatifidir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Merkezi Eğilim Ölçümleri Ortalama Medyan Mod Central Tendency">
+                        <h5 class="term-title">Merkezi Eğilim Ölçümleri <span class="term-en"><i class="ri-translate-2"></i> Measures of Central Tendency</span></h5>
+                        <p class="term-desc">Bir veri setindeki yığılmanın veya toplanma merkezinin neresi olduğunu tek bir sayı ile özetleyen değerlerdir. En yaygın olanları Aritmetik Ortalama, Medyan (Ortanca) ve Mod'dur.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: N ================== -->
+                <div id="letter-N" class="letter-group">
+                    <h2 class="letter-header"><span>N</span></h2>
+
+                    <div class="term-box search-item" data-term="Normal Dağılım Çan Eğrisi Gaussian Distribution">
+                        <h5 class="term-title">Normal Dağılım <span class="term-en"><i class="ri-translate-2"></i> Normal Distribution</span></h5>
+                        <p class="term-desc">Ortalama etrafında simetrik, çan şeklinde olan, Ortalama = Medyan = Mod eşitliğine sahip olan, evrendeki pek çok doğal fenomenin dağılım şeklidir. Sürekli veriler için t-test, ANOVA gibi parametrik tekniklerin kullanılması verilerin normal dağılım göstermesi varsayımına (sayıltısına) dayanır.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: O ================== -->
+                <div id="letter-O" class="letter-group">
+                    <h2 class="letter-header"><span>O</span></h2>
+
+                    <div class="term-box search-item" data-term="Olasılık Değeri P-Value Probability">
+                        <h5 class="term-title">Olasılık Değeri (P-Değeri) <span class="term-en"><i class="ri-translate-2"></i> P-Value</span></h5>
+                        <p class="term-desc">Null hipotezinin ($H_0$) doğru olduğu varsayımı altında, testte hesaplanan veya ondan daha uç bir istatistiği şans eseri elde etme olasılığıdır. $\alpha$ (0.05) seviyesinden küçük olması bulgunun şans olmadığını, anlamlı olduğunu gösterir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Oran Ölçeği Ratio Scale">
+                        <h5 class="term-title">Oran Ölçeği <span class="term-en"><i class="ri-translate-2"></i> Ratio Scale</span></h5>
+                        <p class="term-desc">Mutlak bir "Gerçek Sıfır" noktası bulunan, bu sayede veriler arasında "iki katı, yarısı" gibi oransal mantıkların (çarpma/bölme) kurulabildiği en üst düzey ölçme seviyesidir (Örn: Ağırlık, Boy, Yaş).</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Ortalama Mean Aritmetik">
+                        <h5 class="term-title">Ortalama <span class="term-en"><i class="ri-translate-2"></i> Mean</span></h5>
+                        <p class="term-desc">Bir dağılımdaki tüm puanların toplanıp gözlem sayısına bölünmesiyle elde edilen denge (merkez) noktasıdır. Çarpık dağılımlarda ve uç değerlerden fazlasıyla etkilenerek kolayca kayabilir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Ortanca Medyan Median">
+                        <h5 class="term-title">Ortanca (Medyan) <span class="term-en"><i class="ri-translate-2"></i> Median</span></h5>
+                        <p class="term-desc">Büyüklük sırasına göre küçükten büyüğe dizilmiş bir veri setini tam ortadan ikiye ayıran, ölçümlerin %50'sini altında %50'sini üstünde tutan değerdir. Uç değerlerden etkilenmez, çarpık dağılımlar için en güvenilir merkezi ölçüdür.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: Ö ================== -->
+                <div id="letter-Ö" class="letter-group">
+                    <h2 class="letter-header"><span>Ö</span></h2>
+
+                    <div class="term-box search-item" data-term="Ölçek Sınıflama Sıralama Aralık Oran Scale">
+                        <h5 class="term-title">Ölçek Türleri <span class="term-en"><i class="ri-translate-2"></i> Scale Types</span></h5>
+                        <p class="term-desc">Değişkenlerin veri tipini ve taşıdığı matematiksel gücü belirten seviyelerdir. Dört gruba ayrılır: Sınıflama (Nominal), Sıralama (Ordinal), Eşit Aralıklı (Interval) ve Oranlı (Ratio).</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Örneklem Sample Evren">
+                        <h5 class="term-title">Örneklem <span class="term-en"><i class="ri-translate-2"></i> Sample</span></h5>
+                        <p class="term-desc">Ulaşılması zor olan devasa bir Evrenin (Popülasyon) özelliklerini istatistiksel genellemeler yoluyla anlamak için, o evrenden bilimsel kurallara göre çekilen daha küçük, ulaşılabilir ve temsil yeteneği olan gruptur.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Örnekleme Hatası Sampling Error Dalgalanması">
+                        <h5 class="term-title">Örnekleme Hatası <span class="term-en"><i class="ri-translate-2"></i> Sampling Error</span></h5>
+                        <p class="term-desc">Aynı evrenden çekilseler bile, istatistiklerin şans faktörü yüzünden örneklemden örnekleme farklılık (dalgalanma) göstermesidir. Evren parametresi ile elde edilen örneklem istatistiği arasındaki doğal matematiksel farklılıktır.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: P ================== -->
+                <div id="letter-P" class="letter-group">
+                    <h2 class="letter-header"><span>P</span></h2>
+
+                    <div class="term-box search-item" data-term="Parametrik Olmayan Non-Parametric Distribution-free Test Dağılımsız">
+                        <h5 class="term-title">Parametrik Olmayan Test <span class="term-en"><i class="ri-translate-2"></i> Non-Parametric Test</span></h5>
+                        <p class="term-desc">Verilerin normal dağılım göstermesi gibi zorunlu evren parametre varsayımları gerektirmeyen "Dağılımsız" istatistiksel tekniklerdir (Örn: Mann-Whitney, Kruskal-Wallis, Wilcoxon). Verileri sıralamaya dönüştürerek çalışırlar.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Parametrik Test Parametric Test">
+                        <h5 class="term-title">Parametrik Test <span class="term-en"><i class="ri-translate-2"></i> Parametric Test</span></h5>
+                        <p class="term-desc">Verilerin "Aralık" veya "Oran" ölçeğinde olmasını, evrende "Normal Dağılım" göstermesini ve grup varyanslarının eşit olmasını zorunlu kılan, istatistiksel gücü çok yüksek hipotez testleridir (Örn: t-test, ANOVA).</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: R ================== -->
+                <div id="letter-R" class="letter-group">
+                    <h2 class="letter-header"><span>R</span></h2>
+
+                    <div class="term-box search-item" data-term="Ranj Range Açıklık">
+                        <h5 class="term-title">Ranj (Açıklık) <span class="term-en"><i class="ri-translate-2"></i> Range</span></h5>
+                        <p class="term-desc">Bir veri setindeki en kaba değişim (dağılım) ölçüsüdür. Sadece serideki en büyük değerden en küçük değerin çıkarılmasıyla bulunur. Uç değerlerden aşırı etkilenir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Reddetme Bölgesi Kritik Rejection Region">
+                        <h5 class="term-title">Reddetme (Kritik) Bölgesi <span class="term-en"><i class="ri-translate-2"></i> Rejection Region</span></h5>
+                        <p class="term-desc">Standart normal (veya test) dağılımı eğrisinin uç noktalarında yer alan, eğer hesaplanan test istatistiği bu bölgenin içine düşerse Null ($H_0$) hipotezinin tereddütsüz olarak reddedileceği karar aralığıdır. Büyüklüğü $\alpha$ ile belirlenir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Regresyon Doğrusu Regression Line Eşitliği">
+                        <h5 class="term-title">Regresyon Doğrusu <span class="term-en"><i class="ri-translate-2"></i> Regression Line</span></h5>
+                        <p class="term-desc">X ve Y değişkenlerinin birleşimlerini gösteren saçılma diyagramı üzerindeki nokta bulutunun içinden, tüm noktalara "en yakın" mesafeden geçecek şekilde matematiksel (En Küçük Kareler) olarak çizilen yordama (tahmin) doğrusudur.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: S ================== -->
+                <div id="letter-S" class="letter-group">
+                    <h2 class="letter-header"><span>S</span></h2>
+
+                    <div class="term-box search-item" data-term="Sıfır Hipotezi Null Yokluk H0">
+                        <h5 class="term-title">Sıfır (Yokluk) Hipotezi <span class="term-en"><i class="ri-translate-2"></i> Null Hypothesis</span></h5>
+                        <p class="term-desc">$H_0$ sembolü ile gösterilen ve her zaman test edilen asıl hipotezdir. İstatistikte peşin olarak "Gruplar arasında fark yoktur", "İki değişken arasında ilişki yoktur" savını öne sürer ve deney verileriyle aksinin kanıtlanması beklenir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Sınıflama Ölçeği Nominal Scale Kategorik">
+                        <h5 class="term-title">Sınıflama Ölçeği <span class="term-en"><i class="ri-translate-2"></i> Nominal Scale</span></h5>
+                        <p class="term-desc">Değişkenleri yalnızca özelliklerine göre isimlendirip ayırmaya yarayan (Cinsiyet, Kan Grubu, Renk) en alt düzey ölçektir. Bu ölçekteki rakamların (1=Kadın, 2=Erkek) büyüklük/küçüklük veya matematiksel işlem değeri kesinlikle yoktur.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Sıralama Ölçeği Ordinal Scale">
+                        <h5 class="term-title">Sıralama Ölçeği <span class="term-en"><i class="ri-translate-2"></i> Ordinal Scale</span></h5>
+                        <p class="term-desc">Gözlemlerin belli bir özelliğe göre büyükten küçüğe dizilebildiği, ancak dizilen değerler arasındaki birimsel uzaklıkların "eşit" olmadığı ölçek türüdür. (Örn: Rütbeler, Eğitim düzeyi: İlkokul, Lise, Üniversite).</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Standart Hata Ortalama Standard Error">
+                        <h5 class="term-title">Standart Hata <span class="term-en"><i class="ri-translate-2"></i> Standard Error</span></h5>
+                        <p class="term-desc">Bir evrenden seçilecek örneklemlerin vereceği sonuçların kendi içlerindeki dalgalanmasını gösteren, teorik bir örneklem dağılımının standart sapmasıdır. Örneklem hacmi ($n$) büyüdükçe küçülür.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Standart Sapma Standard Deviation Varyans">
+                        <h5 class="term-title">Standart Sapma <span class="term-en"><i class="ri-translate-2"></i> Standard Deviation</span></h5>
+                        <p class="term-desc">Örneklemdeki verilerin Aritmetik Ortalama'dan ortalama olarak ne kadar saptığını (uzaklaştığını) gösteren en yaygın değişim ölçüsüdür. Varyansın karekökü alınarak formülüze edilir. Evren parametresi $\sigma$, örneklem istatistiği ise $S$ ile gösterilir.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: T ================== -->
+                <div id="letter-T" class="letter-group">
+                    <h2 class="letter-header"><span>T</span></h2>
+
+                    <div class="term-box search-item" data-term="t Dağılımı Testi Student t-Distribution">
+                        <h5 class="term-title">t Dağılımı <span class="term-en"><i class="ri-translate-2"></i> Student's t Distribution</span></h5>
+                        <p class="term-desc">Evrenin varyansının bilinmediği ve örneklem sayısının düşük olduğu durumlarda normal dağılım yerine kullanılan simetrik istatistiksel dağılımdır. Örneklem büyüdükçe (serbestlik derecesi arttıkça) normal Z dağılımına dönüşür.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Tek-Yönlü Test Directional One-tailed">
+                        <h5 class="term-title">Tek-Yönlü Test <span class="term-en"><i class="ri-translate-2"></i> One-Tailed Test</span></h5>
+                        <p class="term-desc">Kurulan alternatif hipotezin ($H_1$) farkın "yönünü" kesin olarak belirttiği durumlarda (örn: "A, B'den büyüktür"), standart olasılık dağılımının sadece belirtilen tek bir ucundaki reddetme bölgesi ($\alpha$) ile yapılan testtir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Tek-Yönlü Varyans Analizi One Way ANOVA">
+                        <h5 class="term-title">Tek-Yönlü Varyans Analizi <span class="term-en"><i class="ri-translate-2"></i> One-Way ANOVA</span></h5>
+                        <p class="term-desc">Yalnızca "tek bir bağımsız kategorik değişkenin" ikiden fazla düzeyi (grubu) arasındaki ortalamaların, bir bağımlı değişkene göre istatistiksel olarak fark yaratıp yaratmadığını Toplam Kareler hesabı ile test eden tekniktir.</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Testin Gücü Power 2. Tip Hata Type II">
+                        <h5 class="term-title">Testin Gücü <span class="term-en"><i class="ri-translate-2"></i> Statistical Power</span></h5>
+                        <p class="term-desc">Gerçekte evrende var olan "Yanlış" bir $H_0$ hipotezini, analiz sonucunda testin başarıyla reddedebilme kapasitesi ve olasılığıdır. Güç = $1-\beta$ formülüyle açıklanır. Numune boyutu ($n$) arttıkça testin gücü artar.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: V ================== -->
+                <div id="letter-V" class="letter-group">
+                    <h2 class="letter-header"><span>V</span></h2>
+
+                    <div class="term-box search-item" data-term="Varyans Variance Standart Sapma">
+                        <h5 class="term-title">Varyans <span class="term-en"><i class="ri-translate-2"></i> Variance</span></h5>
+                        <p class="term-desc">Puanların aritmetik ortalamadan olan sapmalarının karelerinin toplanarak örneklem genişliğinin bir eksiğine ($n-1$) bölünmesiyle ulaşılan kareli bir yayılım (değişkenlik) ölçütüdür ($\sigma^2$ veya $S^2$).</p>
+                    </div>
+
+                    <div class="term-box search-item" data-term="Varyansın Homojenliği Homogeneity Eş Varyanslılık Levene">
+                        <h5 class="term-title">Varyansın Homojenliği <span class="term-en"><i class="ri-translate-2"></i> Homogeneity of Variance</span></h5>
+                        <p class="term-desc">Karşılaştırma yapılacak olan bağımsız grupların iç dağılımlarının (yayılımlarının) evrende birbirine eşit olduğu (homoscedasticity) teorik varsayımıdır. ANOVA testleri için en kritik kurallardan biridir.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: W ================== -->
+                <div id="letter-W" class="letter-group">
+                    <h2 class="letter-header"><span>W</span></h2>
+
+                    <div class="term-box search-item" data-term="Wilcoxon İşaretli Sıralar Testi Signed Ranks">
+                        <h5 class="term-title">Wilcoxon İşaretli Sıralar Testi <span class="term-en"><i class="ri-translate-2"></i> Wilcoxon Signed Ranks Test</span></h5>
+                        <p class="term-desc">İlişkili (bağımlı) iki veri seti veya Ön-Test/Son-Test tasarımındaki farkların anlamlılığını dağılımsız olarak sorgulayan, t-testinin "Parametrik Olmayan" versiyonudur.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: Y ================== -->
+                <div id="letter-Y" class="letter-group">
+                    <h2 class="letter-header"><span>Y</span></h2>
+
+                    <div class="term-box search-item" data-term="Yansız Seçkisiz Atama Randomization Randomisation">
+                        <h5 class="term-title">Yansız (Seçkisiz) Atama <span class="term-en"><i class="ri-translate-2"></i> Randomization</span></h5>
+                        <p class="term-desc">Deneysel bilimlerde ve örneklem çekiminde; birimlerin deney, kontrol gruplarına veya anket listelerine araştırmacının müdahalesi, yönlendirmesi (yanlılığı) olmadan tamamen olasılığa (kuraya) bağlı dağıtılması işlemidir.</p>
+                    </div>
+                </div>
+
+                <!-- ================== HARF: Z ================== -->
+                <div id="letter-Z" class="letter-group">
+                    <h2 class="letter-header"><span>Z</span></h2>
+
+                    <div class="term-box search-item" data-term="z Puan z Score Standart">
+                        <h5 class="term-title">z-Puanı <span class="term-en"><i class="ri-translate-2"></i> z-Score</span></h5>
+                        <p class="term-desc">Farklı birimlerde ölçülmüş herhangi bir ham veri serisini alıp ortalaması "0", standart sapması "1" olan tek bir evrensel ölçüye oturtan, bireysel verinin ortalamadan kaç birim uzaklaştığını gösteren standardize puandır.</p>
+                    </div>
+                </div>
+
+            </div>
+            
+            <footer class="footer-area bg-white text-center rounded-10 rounded-bottom-0 p-3 mt-4 border-top shadow-sm">
+                <p class="fs-14 text-body mb-0">© <span>StatLabseu</span> - Gelişmiş İstatistiksel Analiz Platformu</p>
+            </footer>
+
+        </div>
+    </div>
+ 
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            
+            if (localStorage.getItem('statlab_theme') === 'dark') { 
+                themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); 
+                themeIcon.classList.add('text-warning'); 
+            }
+
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); 
+                    themeIcon.classList.add('text-warning'); 
+                    themeIcon.classList.remove('text-secondary'); 
+                    localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); 
+                    themeIcon.classList.remove('text-warning'); 
+                    themeIcon.classList.add('text-secondary'); 
+                    localStorage.setItem('statlab_theme', 'light');
+                }
+            });
+
+            // Sayfa yüklendiğinde MathJax formüllerini çalıştırır.
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise().catch(()=>{});
+            }
+            
+            // Linklere smooth scroll efekti verir
+            document.querySelectorAll('.letter-link').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+
+        // Kusursuz Canlı Arama Motoru
+        function searchTerms() {
+            let input = document.getElementById('termSearch').value.toLowerCase().trim();
+            let items = document.getElementsByClassName('search-item');
+            let groups = document.getElementsByClassName('letter-group');
+            let noResults = document.getElementById('noResults');
+            let hasVisibleAny = false;
+
+            for (let item of items) {
+                let termKeywords = item.getAttribute('data-term').toLowerCase();
+                let descText = item.innerText.toLowerCase();
+                
+                if (termKeywords.includes(input) || descText.includes(input)) {
+                    item.style.display = "block";
+                } else {
+                    item.style.display = "none";
+                }
+            }
+            
+            // İçinde sonuç kalmayan Harf Başlıklarını dinamik gizle
+            for (let group of groups) {
+                let visibleItems = group.querySelectorAll('.search-item[style="display: block;"]');
+                let allItems = group.querySelectorAll('.search-item');
+                
+                if(input === '') {
+                    group.style.display = "block";
+                    for(let item of allItems) item.style.display = "block";
+                    hasVisibleAny = true;
+                } else {
+                    if (visibleItems.length === 0) {
+                        group.style.display = "none";
+                    } else {
+                        group.style.display = "block";
+                        hasVisibleAny = true;
+                    }
+                }
+            }
+
+            if(hasVisibleAny || input === '') {
+                noResults.style.display = 'none';
+            } else {
+                noResults.style.display = 'block';
+            }
+        }
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>
