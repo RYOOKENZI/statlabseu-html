@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { inlineMath: [['\\(', '\\)']], displayMath: [['$$', '$$']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    
+    <title>Binom Testi | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        @font-face {
+            font-family: 'STIX Two Math';
+            src: url('assets/fonts/STIXTwoMath-Regular.ttf') format('truetype');
+            font-weight: normal; font-style: normal;
+        }
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+        
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        
+        .param-grid-table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: center; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+        .param-grid-table th { font-size: 13px; font-weight: 700; color: #475569; background-color: #f1f5f9; padding: 12px 10px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; white-space: nowrap; vertical-align: middle; line-height: 1.4; }
+        .param-grid-table th:last-child { border-right: none; }
+        .param-grid-table td { padding: 12px 10px; font-size: 14px; color: #0f172a; border-bottom: 1px solid #edf2f7; border-right: 1px solid #edf2f7; background-color: #ffffff; vertical-align: middle; }
+        .param-grid-table td:last-child { border-right: none; }
+        .param-grid-table tr:last-child td { border-bottom: none; }
+        .param-grid-table tr:hover td { background-color: #f8fafc; }
+
+        .info-box { background: linear-gradient(135deg, rgba(47, 143, 232, 0.1), rgba(14, 165, 233, 0.05)); border-left: 4px solid #2f8fe8; padding: 15px 20px; border-radius: 8px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 15px; }
+        .info-box i { font-size: 24px; color: #2f8fe8; }
+        .info-box p { margin: 0; font-size: 14px; color: #475569; line-height: 1.6; }
+
+        .loader-spinner { width: 40px; height: 40px; border: 4px solid rgba(47, 143, 232, 0.2); border-left-color: #2f8fe8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @keyframes pulse-btn { 0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.8); } 70% { box-shadow: 0 0 0 15px rgba(14, 165, 233, 0); } 100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); } }
+        .btn-pulse { animation: pulse-btn 1.8s infinite; background: linear-gradient(135deg, #2f8fe8, #0ea5e9); border: none; color: white !important; }
+        .btn-pulse:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(14, 165, 233, 0.4); background: linear-gradient(135deg, #1d7bd1, #0284c7); }
+        .btn-action { font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; transition: all 0.3s ease; }
+
+        .decision-rule-box { background: rgba(47, 143, 232, 0.05); border: 1px solid rgba(47, 143, 232, 0.2); border-left: 4px solid #2f8fe8; color: #334155; padding: 15px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 15px; }
+
+        /* GECE MODU AYARLARI */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #f8fafc !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light, html.dark-mode .bg-body-bg { background-color: #0f172a !important; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        html.dark-mode .info-box { background: rgba(47, 143, 232, 0.1); }
+        html.dark-mode .info-box p { color: #cbd5e1; }
+        html.dark-mode .param-grid-table { border-color: #334155; }
+        html.dark-mode .param-grid-table th { background-color: #0f172a; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .param-grid-table td { background-color: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark-mode .param-grid-table tr:hover td { background-color: #0f172a !important; }
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+        html.dark-mode .gauge-track { background: #334155 !important; box-shadow: inset 0 1px 4px rgba(0,0,0,0.5) !important; }
+        html.dark-mode #gaugeAlphaLine { background-color: #f8fafc !important; }
+        html.dark-mode #gaugeMarkerIcon { color: #f8fafc !important; }
+        html.dark-mode .alert-warning-smart { background-color: rgba(245, 158, 11, 0.1); border-left-color: #fbbf24; color: #fcd34d; }
+        html.dark-mode .decision-rule-box { background: rgba(47, 143, 232, 0.1); border-color: rgba(47, 143, 232, 0.2); border-left-color: #60a5fa; color: #e2e8f0; }
+        html.dark-mode .formula-box { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+
+        .alert-warning-smart { background-color: #fffbeb; border-left: 4px solid #f59e0b; color: #b45309; }
+        .formula-box { background-color: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 15px; font-size: 15px; overflow-x: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+        
+        .input-icon-wrapper { position: relative; }
+        .input-icon-wrapper i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 18px; }
+        .input-icon-wrapper input { padding-left: 45px !important; font-size: 15px; font-weight: 600; height: 50px; }
+
+        .custom-upload-zone { border: 2px dashed #2f8fe8 !important; background-color: rgba(47, 143, 232, 0.04); transition: all 0.2s ease-in-out; }
+        .custom-upload-zone:hover { background-color: rgba(47, 143, 232, 0.08); border-color: #1d7bd1 !important; transform: translateY(-1px); }
+
+        .textarea-container { position: relative; width: 100%; }
+        .textarea-lines { position: absolute; left: 0; top: 0; bottom: 0; width: 35px; background: rgba(0,0,0,0.02); border-right: 1px solid #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px; text-align: right; padding: 10px 5px; color: #94a3b8; font-size: 12px; font-family: monospace; overflow: hidden; pointer-events: none; }
+        html.dark-mode .textarea-lines { background: rgba(255,255,255,0.02); border-color: #334155; }
+        .form-control-lined { padding-left: 45px !important; }
+
+        .toggle-btn-group .btn-check:checked + .btn { background-color: #2f8fe8; color: white !important; border-color: #2f8fe8; }
+        .toggle-btn-group .btn { color: #475569; font-weight: 600; font-size: 13px; border: none; padding: 10px; transition: all 0.3s ease; }
+        html.dark-mode .toggle-btn-group .btn { color: #cbd5e1; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border border-white shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-pie-chart-2-line align-middle me-1"></i> Binom Testi
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="main-content-container overflow-hidden">
+                
+                <div class="info-box shadow-sm">
+                    <i class="ri-information-line"></i>
+                    <div>
+                        <strong class="d-block text-dark mb-1">Binom Testi</strong>
+                        <p>İki sonuçlu (başarı/başarısızlık) bir deneyde elde edilen gözlenen başarı oranının \(\hat{p}\), beklenen teorik bir orandan \(p_0\) istatistiksel olarak farklı olup olmadığını test eder.</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- SOL PANEL: VERİ GİRİŞİ -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm">
+                            <h4 class="mb-3 fs-17 fw-semibold text-dark">Parametreler & Veri Girişi</h4>
+
+                            <div class="d-flex p-1 bg-light rounded-10 mb-4 border toggle-btn-group">
+                                <input type="radio" class="btn-check" name="entryMethod" id="methodRaw" value="raw" checked onchange="toggleEntryMethod()">
+                                <label class="btn w-50 rounded-10" for="methodRaw"><i class="ri-list-check align-middle me-1"></i> Ham Veri (1 ve 0)</label>
+
+                                <input type="radio" class="btn-check" name="entryMethod" id="methodSummary" value="summary" onchange="toggleEntryMethod()">
+                                <label class="btn w-50 rounded-10" for="methodSummary"><i class="ri-bar-chart-box-line align-middle me-1"></i> Özet İstatistik</label>
+                            </div>
+
+                            <!-- 1. YÖNTEM: HAM VERİ (1 ve 0) -->
+                            <div id="rawEntryBox" style="display: block;">
+                                <div class="alert alert-warning-smart py-2 fs-12 mb-3 border-0">
+                                    <i class="ri-error-warning-fill align-middle me-1"></i> Sadece <strong>1 (Başarı)</strong> ve <strong>0 (Başarısız)</strong> değerleri girilmelidir! Farklı karakterler kabul edilmez.
+                                </div>
+                                <div class="mb-3">
+                                    <div class="custom-upload-zone p-3 rounded-10 text-center cursor-pointer" id="uploadZone" onclick="document.getElementById('dosyaGezgini').click()">
+                                        <i class="ri-upload-cloud-2-line text-primary fs-28 d-block mb-1"></i>
+                                        <h5 class="fs-13 fw-semibold text-dark mb-1">Dosya Yükleyin</h5>
+                                        <span class="fs-11 text-muted d-block">1 ve 0 içeren tek sütun</span>
+                                        <input type="file" id="dosyaGezgini" accept=".csv, .txt, .xlsx, .xls" style="display: none;">
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label fw-bold text-primary fs-12 mb-1">Gözlem Verileri (Sadece 1 veya 0)</label>
+                                    <div class="textarea-container">
+                                        <div class="textarea-lines" id="linesRaw">1</div>
+                                        <textarea id="veriKutusuRaw" class="form-control form-control-lined bg-light border-0 p-2 fs-14 text-secondary rounded-10" rows="6" placeholder="1&#10;1&#10;0&#10;1..."></textarea>
+                                    </div>
+                                    <span class="fs-11 text-muted d-block mt-2"><i class="ri-information-line align-middle text-primary me-1"></i>Maksimum 1000 veri sınırı</span>
+                                </div>
+                            </div>
+
+                            <!-- 2. YÖNTEM: ÖZET İSTATİSTİKLER -->
+                            <div id="summaryEntryBox" style="display: none;">
+                                <div class="alert alert-info py-2 fs-12 mb-3 border-0 bg-primary-subtle text-primary">
+                                    <i class="ri-information-fill align-middle me-1"></i> Verileriniz hesaplandıysa toplam deneme ve başarı sayısını doğrudan buraya girebilirsiniz. Toplam deneme sayısında bir sınır yoktur.
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-success fs-13 mb-1">Başarı Sayısı (\(x\))</label>
+                                    <div class="input-icon-wrapper">
+                                        <i class="ri-check-double-line text-success"></i>
+                                        <input type="number" id="successInput" class="form-control bg-light border-0 rounded-10" placeholder="Örn: 7" min="0" step="1">
+                                    </div>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="form-label fw-bold text-primary fs-13 mb-1">Toplam Deneme Sayısı (\(n\))</label>
+                                    <div class="input-icon-wrapper">
+                                        <i class="ri-group-line text-primary"></i>
+                                        <input type="number" id="totalInput" class="form-control bg-light border-0 rounded-10" placeholder="Örn: 10" min="1" step="1">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="border-secondary opacity-25 my-4">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-dark fs-13 mb-1">Hipotez Oranı (\(p_0\))</label>
+                                <div class="input-icon-wrapper">
+                                    <i class="ri-percent-line"></i>
+                                    <input type="text" id="p0Input" class="form-control bg-light border border-secondary rounded-10" placeholder="Boş ise otomatik 0.50 kabul edilir">
+                                </div>
+                                <small class="text-muted fs-11 mt-1 d-block">Test etmek istediğiniz teorik veya beklenen oran.</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-medium text-secondary fs-13 mb-1">Test Yönü (Kuyruk)</label>
+                                <select id="hypType" class="form-select bg-light border-0 rounded-10 py-2 fs-13">
+                                    <option value="two-sided" selected>İki Yönlü (p ≠ p₀)</option>
+                                    <option value="greater">Sağ Kuyruk (p > p₀)</option>
+                                    <option value="less">Sol Kuyruk (p < p₀)</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-medium text-secondary fs-13 mb-1">Anlamlılık Düzeyi (\(\alpha\))</label>
+                                <select id="alfaInput" class="form-select bg-light border-0 rounded-10 py-2 fs-13">
+                                    <option value="0.05" selected>0.05 (%5 Kritik Eşik)</option>
+                                    <option value="0.01">0.01 (%1 Katı Sınır)</option>
+                                    <option value="0.10">0.10 (%10 Esnek Sınır)</option>
+                                </select>
+                            </div>
+
+                            <div class="d-flex flex-column gap-3 mt-4">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-secondary w-50 py-2 rounded-10 btn-action" onclick="ornekVeriYukle()">
+                                        <i class="ri-magic-line align-middle me-1"></i> Örnek Veri
+                                    </button>
+                                    <button class="btn btn-outline-danger w-50 py-2 rounded-10 btn-action" onclick="temizleVeri()">
+                                        <i class="ri-delete-bin-line align-middle me-1"></i> Temizle
+                                    </button>
+                                </div>
+                                <button class="btn w-100 py-3 rounded-10 btn-action btn-pulse" onclick="baslatAnalizLoading()">
+                                    <i class="ri-bar-chart-2-fill align-middle me-1 fs-18"></i> ANALİZ ET
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SAĞ PANEL: SONUÇLAR -->
+                    <div class="col-lg-8 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                            
+                            <div id="bosDurum" class="text-center py-5 my-auto">
+                                <i class="ri-pie-chart-2-line text-muted opacity-25" style="font-size: 4.5rem;"></i>
+                                <h5 class="text-muted mt-3 fs-16">Analiz Bekleniyor</h5>
+                                <p class="text-muted fs-14 mb-0">Özet istatistikleri veya ham veriyi girip analizi başlatın.</p>
+                            </div>
+
+                            <div id="loadingOverlay" class="text-center py-5 my-auto" style="display: none;">
+                                <div class="loader-spinner"></div>
+                                <h5 class="text-primary mt-4 fs-16 fw-semibold">Olasılıklar Hesaplanıyor...</h5>
+                            </div>
+
+                            <div id="aktifSonuc" style="display: none;">
+
+                                <div class="row mb-4 align-items-center">
+                                    <div class="col-md-5 text-center border-end d-flex flex-column justify-content-center px-4">
+                                        <h5 class="fs-12 fw-bold text-secondary mb-3 text-uppercase tracking-wider">Kesin P-Değeri Göstergesi</h5>
+                                        <div class="linear-gauge-wrapper w-100 mt-2 mb-4">
+                                            <div class="d-flex justify-content-between mb-2 fs-11 fw-bold text-muted px-1">
+                                                <span>0.0</span><span>0.5</span><span>1.0</span>
+                                            </div>
+                                            <div class="gauge-track position-relative rounded-pill overflow-hidden" style="height: 14px; background: #e2e8f0; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+                                                <div id="gaugeRedZone" class="position-absolute top-0 bottom-0" style="left: 0; width: 5%; background: linear-gradient(90deg, #f87171, #ef4444);"></div>
+                                                <div id="gaugeGreenZone" class="position-absolute top-0 bottom-0" style="left: 5%; right: 0; background: linear-gradient(90deg, #34d399, #10b981);"></div>
+                                                <div id="gaugeAlphaLine" class="position-absolute top-0 bottom-0 bg-dark" style="left: 5%; width: 2px; z-index: 2;"></div>
+                                            </div>
+                                            <div class="position-relative mt-1" style="height: 45px;">
+                                                <div id="gaugeMarker" class="position-absolute d-flex flex-column align-items-center" style="left: 0%; transform: translateX(-50%); transition: left 1s cubic-bezier(0.22, 1, 0.36, 1); z-index: 3;">
+                                                    <i class="ri-arrow-up-s-fill fs-24" id="gaugeMarkerIcon" style="line-height: 0.5; color: #0f172a;"></i>
+                                                    <span id="gaugeMarkerText" class="badge bg-dark mt-1 fs-12 shadow-sm font-monospace text-white">0.0000</span>
+                                                </div>
+                                                <div id="gaugeAlphaLabel" class="position-absolute fw-bold fs-12 text-center" style="left: 50%; transform: translateX(-50%); bottom: -22px; color: #ef4444; text-shadow: 0px 0px 8px rgba(239,68,68,0.5); padding: 3px 12px; border-radius: 12px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); white-space: nowrap;">
+                                                    \(\alpha\): <span id="lblAlpha">0.05</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-7">
+                                        <div class="row g-3 text-center">
+                                            <div class="col-6">
+                                                <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                                    <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Kesin P-Değeri</span>
+                                                    <h3 id="pVal" class="text-primary mb-0 fw-bold fs-24">-</h3>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                                    <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Gözlenen Oran (\(\hat{p}\))</span>
+                                                    <h3 id="obsProp" class="text-secondary mb-0 fw-bold fs-24">-</h3>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="p-2 bg-body-bg rounded-10 border border-light d-flex justify-content-around px-2">
+                                                    <div><span class="text-muted fs-12 fw-semibold">Oran Farkı (\(\hat{p} - p_0\)):</span> <span id="propDiff" class="text-dark fw-bold fs-14 ms-1">-</span></div>
+                                                    <div><span class="text-muted fs-12 fw-semibold">Test Yönü:</span> <span id="testDirection" class="text-dark fw-bold fs-13 ms-1">-</span></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h5 class="fs-14 fw-bold text-dark mb-2"><i class="ri-list-check-2 text-primary me-1"></i> Özet İstatistikler ve Test Sonucu</h5>
+                                    <div class="table-responsive rounded-3 border">
+                                        <table class="table param-grid-table m-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Toplam (\(n\))</th>
+                                                    <th class="text-success">Başarı (\(x\))</th>
+                                                    <th class="text-danger">Başarısız</th>
+                                                    <th>Gözlenen Oran</th>
+                                                    <th>Hipotez Oranı (\(p_0\))</th>
+                                                    <th>%95 Güven Aralığı</th>
+                                                    <th>Etki Büyüklüğü (\(g\))</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td id="tdN" class="fw-bold">-</td>
+                                                    <td id="tdSucc" class="text-success fw-bold">-</td>
+                                                    <td id="tdFail" class="text-danger fw-bold">-</td>
+                                                    <td id="tdObsProp" class="text-primary fw-bold">-</td>
+                                                    <td id="tdHypProp">-</td>
+                                                    <td id="tdCI" class="text-muted fw-semibold">-</td>
+                                                    <td id="tdEffect">-</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- GRAFİKLER (Alt Alta) -->
+                                <div class="row mt-4">
+                                    <div class="col-12 mb-4">
+                                        <div class="chart-container h-100 d-flex flex-column">
+                                            <h5 class="fs-14 fw-bold text-dark mb-4 text-center text-uppercase tracking-wider">Beklenen ve Gözlenen Frekanslar (Çubuk Grafiği)</h5>
+                                            <div style="position: relative; height: 320px; width: 100%;"><canvas id="barChart"></canvas></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 mb-4">
+                                        <div class="chart-container h-100 d-flex flex-column">
+                                            <h5 class="fs-14 fw-bold text-dark mb-4 text-center text-uppercase tracking-wider">Binom Dağılımı Grafiği (Olasılık Kütle Fonksiyonu)</h5>
+                                            <div style="position: relative; height: 320px; width: 100%;"><canvas id="distChart"></canvas></div>
+                                            <div class="text-center mt-2">
+                                                <span class="badge bg-danger-subtle text-danger border border-danger px-2 py-1"><i class="ri-focus-3-line"></i> Gözlenen Başarı Sayısı Kırmızı ile İşaretlenmiştir</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 mb-2">
+                                        <div class="chart-container h-100 d-flex flex-column">
+                                            <h5 class="fs-14 fw-bold text-dark mb-4 text-center text-uppercase tracking-wider">Güven Aralıklı Oran Grafiği</h5>
+                                            <div style="position: relative; height: 220px; width: 100%;"><canvas id="ciChart"></canvas></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="kararKutusu" class="alert border-0 p-4 mb-2 rounded-10 d-flex align-items-start shadow-sm mt-3">
+                                    <div class="d-flex justify-content-center mt-1 me-3"><i id="kararIkon" class="fs-28"></i></div>
+                                    <div class="flex-grow-1">
+                                        <h4 id="kararBaslik" class="mb-2 fs-16 fw-bold">-</h4>
+                                        <p id="kararAciklama" class="mb-0 fs-14 text-muted lh-base">-</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BİLGİLENDİRME BÖLÜMÜ -->
+                <div class="row">
+                    <div class="col-12 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm text-start">
+                            
+                            <h5 class="fw-bold text-dark fs-16 mb-3 border-bottom pb-2 border-secondary"><i class="ri-book-read-line align-middle me-1 text-primary"></i> Binom Testi Hakkında</h5>
+                            <p class="text-muted fs-14 lh-lg">Binom Testi, iki kategorili (başarılı/başarısız, evet/hayır, kadın/erkek vb.) verilerden oluşan tek bir örneklemde gözlenen başarı oranının \(\hat{p}\), önceden belirlenmiş teorik veya beklenen bir orana \(p_0\) eşit olup olmadığını analiz eder.</p>
+                            
+                            <p class="text-muted fs-14 lh-lg">Özellikle küçük örneklemlerde oran testi (Z-Testi) varsayımları sağlanmadığında, olasılıkları direkt Binom Dağılımı üzerinden kesin olarak hesapladığı için p-değeri milimetrik doğruluğa sahiptir.</p>
+
+                            <h5 class="fw-bold text-dark fs-16 mb-3 mt-4 border-bottom pb-2 border-secondary">Ne Zaman Kullanılır?</h5>
+                            <ul class="text-muted fs-14 lh-lg mb-4">
+                                <li>Bir madeni paranın hilesiz (\(p_0 = 0.5\)) olup olmadığını test ederken</li>
+                                <li>Bir ürünün kusur oranının fabrika standartlarından (\(p_0 = 0.02\)) sapıp sapmadığına bakılırken</li>
+                                <li>Seçim anketlerinde bir adayın oy oranının %50'yi geçip geçmediğini analiz ederken</li>
+                                <li>Örneklem çapı (\(n\)) oran testleri (Z-Testi) için çok küçük olduğunda</li>
+                            </ul>
+
+                            <h5 class="fw-bold text-dark fs-16 mb-3 mt-4 border-bottom pb-2 border-secondary">Varsayımlar</h5>
+                            <ul class="text-muted fs-14 lh-lg mb-4">
+                                <li>Deneyler birbirinden tamamen bağımsızdır.</li>
+                                <li>Deney sonucu sadece iki olası durumdan biridir (dikotomik değişken).</li>
+                                <li>Başarı olasılığı (\(p\)) tüm denemeler boyunca sabit kalır.</li>
+                                <li>Veriler rastgele seçilmiş olmalıdır.</li>
+                            </ul>
+
+                            <div class="decision-rule-box mb-2 mt-4 text-center">
+                                <strong>Karar Kuralı:</strong> <br>
+                                \(p < \alpha \rightarrow H_0 \text{ reddedilir. (Oran hipotez değerinden farklıdır)}\) <br>
+                                \(p \ge \alpha \rightarrow H_0 \text{ reddedilemez. (Oran hipotez değerine eşittir)}\)
+                            </div>
+                            
+                            <!-- AÇILIR KAPANIR TEORİK ALTYAPI -->
+                            <div class="mt-5 mb-2">
+                                <button class="btn btn-pulse w-100 py-3 d-flex justify-content-between align-items-center fs-15 fw-bold rounded-10 border-0 shadow" type="button" data-bs-toggle="collapse" data-bs-target="#teorikFormuller" aria-expanded="false" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: white;">
+                                    <span><i class="ri-function-line me-2 fs-20 align-middle"></i> Teorik Altyapı ve Matematiksel Formülleri Görüntüle</span>
+                                    <i class="ri-arrow-down-s-line fs-22"></i>
+                                </button>
+                                <div class="collapse mt-3" id="teorikFormuller">
+                                    <div class="card card-body bg-body-bg border border-light p-4 rounded-10 shadow-sm">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">1. Binom Olasılık Kütle Fonksiyonu (PMF)</strong>
+                                                    Bu, binom testinin temel formülüdür.
+                                                    $$P(X=x) = \binom{n}{x} p^x (1-p)^{\,n-x}$$
+                                                    <span class="fs-13 text-muted">
+                                                    \(X\): Başarı sayısı<br>
+                                                    \(n\): Toplam deneme sayısı<br>
+                                                    \(x\): Gözlenen başarı sayısı<br>
+                                                    \(p\): Başarı olasılığı
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">2. Kombinasyon Formülü</strong>
+                                                    Bu formül, başarıların farklı şekillerde gerçekleşebileceği olası düzenlerin sayısını verir.
+                                                    $$\binom{n}{x} = \frac{n!}{x!(n-x)!}$$
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">3. Gözlenen Başarı Oranı</strong>
+                                                    $$\hat{p} = \frac{x}{n}$$
+                                                    <span class="fs-13 text-muted">
+                                                    \(\hat{p}\): Gözlenen başarı oranı<br>
+                                                    \(x\): Başarı sayısı<br>
+                                                    \(n\): Toplam deneme sayısı
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">4. Tek Yönlü p-Değeri</strong>
+                                                    Sağ kuyruk:
+                                                    $$P(X \ge x) = \sum_{k=x}^{n}\binom{n}{k}p_0^k(1-p_0)^{n-k}$$
+                                                    Sol kuyruk:
+                                                    $$P(X \le x) = \sum_{k=0}^{x}\binom{n}{k}p_0^k(1-p_0)^{n-k}$$
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">5. Çift Yönlü Kesin p-Değeri</strong>
+                                                    Tam olarak tek bir kapalı formülü yoktur. En doğru açıklama:
+                                                    $$p = \sum P(X=k)$$
+                                                    <span class="fs-13 text-muted">
+                                                    Burada toplam, gözlenen sonuçtan eşit veya daha uç (en az gözlenen kadar düşük olasılığa sahip) tüm sonuçları kapsar.<br><br>
+                                                    <em>Not: Çift yönlü kesin binom testinde hesaplama yöntemi yazılımlar arasında küçük farklılıklar gösterebilir.</em>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">6. Beklenen Başarı Sayısı</strong>
+                                                    $$E(X) = n p$$
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">7. Varyans</strong>
+                                                    $$Var(X) = n p (1-p)$$
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">8. Standart Sapma</strong>
+                                                    $$\sigma = \sqrt{n p (1-p)}$$
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <footer class="footer-area bg-white text-center rounded-10 rounded-bottom-0 p-3 mt-4 border-top shadow-sm">
+                <p class="fs-14 text-body mb-0">© <span>StatLabseu</span> - Gelişmiş İstatistiksel Analiz Platformu</p>
+            </footer>
+
+        </div>
+    </div>
+ 
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function setTxt(id, text) { let el = document.getElementById(id); if (el) el.innerText = text; }
+        function setHTML(id, html) { let el = document.getElementById(id); if (el) el.innerHTML = html; }
+        function setClass(id, cls) { let el = document.getElementById(id); if (el) el.className = cls; }
+        function setStyle(id, prop, val) { let el = document.getElementById(id); if (el) el.style[prop] = val; }
+
+        let charts = { bar: null, dist: null, ci: null };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            if (localStorage.getItem('statlab_theme') === 'dark') { themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); }
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); themeIcon.classList.remove('text-secondary'); localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); themeIcon.classList.remove('text-warning'); themeIcon.classList.add('text-secondary'); localStorage.setItem('statlab_theme', 'light');
+                }
+                let aktifEl = document.getElementById('aktifSonuc'); if(aktifEl && aktifEl.style.display === 'block') baslatAnalizLoading();
+            });
+
+            document.getElementById('veriKutusuRaw').addEventListener('input', function() { updateLinesRaw(); });
+            document.getElementById('veriKutusuRaw').addEventListener('scroll', function() { document.getElementById('linesRaw').scrollTop = this.scrollTop; });
+        });
+
+        function updateLinesRaw() {
+            let t = document.getElementById('veriKutusuRaw');
+            let l = document.getElementById('linesRaw');
+            let linesCount = t.value.split('\n').length;
+            let linesHtml = '';
+            for(let i=1; i<=linesCount; i++) linesHtml += i + '<br>';
+            l.innerHTML = linesHtml;
+        }
+
+        function toggleEntryMethod() {
+            let isRaw = document.getElementById('methodRaw').checked;
+            if(isRaw) {
+                document.getElementById('rawEntryBox').style.display = 'block';
+                document.getElementById('summaryEntryBox').style.display = 'none';
+            } else {
+                document.getElementById('rawEntryBox').style.display = 'none';
+                document.getElementById('summaryEntryBox').style.display = 'block';
+            }
+        }
+
+        const uploadZone = document.getElementById('uploadZone');
+        if(uploadZone) {
+            uploadZone.addEventListener('dragover', function(e) { e.preventDefault(); this.classList.add('upload-drag-active'); });
+            uploadZone.addEventListener('dragleave', function(e) { e.preventDefault(); this.classList.remove('upload-drag-active'); });
+            uploadZone.addEventListener('drop', function(e) { e.preventDefault(); this.classList.remove('upload-drag-active'); handleFile(e.dataTransfer.files[0]); });
+            document.getElementById('dosyaGezgini').addEventListener('change', function(e) { handleFile(e.target.files[0]); });
+        }
+
+        async function handleFile(file) {
+            if (!file) return;
+            const ext = file.name.split('.').pop().toLowerCase();
+            try {
+                if(ext === 'csv' || ext === 'txt') { 
+                    const text = await file.text(); 
+                    document.getElementById('veriKutusuRaw').value = text;
+                    updateLinesRaw();
+                }
+                else if (ext === 'xlsx' || ext === 'xls') {
+                    const data = await file.arrayBuffer(); const workbook = XLSX.read(data);
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+                    document.getElementById('veriKutusuRaw').value = jsonData.map(row => Object.values(row)[0]).join('\n');
+                    updateLinesRaw();
+                } else { alert("Desteklenmeyen format."); }
+            } catch (err) { alert("Okuma hatası: " + err); }
+        }
+
+        function ornekVeriYukle() {
+            // Sadece Ham Veri modunu seç ve 50-250 arası 1/0 üret
+            document.getElementById('methodRaw').checked = true;
+            toggleEntryMethod();
+
+            let length = Math.floor(Math.random() * 201) + 50; // 50 ile 250 arası
+            let arr = [];
+            let p_rand = 0.4 + Math.random() * 0.2; // %40 ile %60 arası rastgele başarı olasılığı
+            
+            for(let i=0; i<length; i++) {
+                arr.push(Math.random() < p_rand ? 1 : 0);
+            }
+            
+            document.getElementById('veriKutusuRaw').value = arr.join('\n');
+            updateLinesRaw();
+            
+            document.getElementById('p0Input').value = "0.50";
+            document.getElementById('hypType').value = "two-sided";
+            document.getElementById('alfaInput').value = "0.05";
+        }
+
+        function temizleVeri() {
+            document.getElementById('veriKutusuRaw').value = '';
+            document.getElementById('successInput').value = '';
+            document.getElementById('totalInput').value = '';
+            document.getElementById('p0Input').value = '';
+            updateLinesRaw();
+            
+            setStyle('aktifSonuc', 'display', 'none'); 
+            setStyle('loadingOverlay', 'display', 'none'); 
+            setStyle('bosDurum', 'display', 'block');
+            Object.values(charts).forEach(c => { if(c) c.destroy(); });
+        }
+
+        // Devasa n sayılarında sistemin çökmesini engelleyen Faktöriyel Önbelleği (O(N) -> O(1) dönüşümü)
+        const logFactCache = [0, 0];
+        function logFactorial(n) {
+            if (n < logFactCache.length) return logFactCache[n];
+            let sum = logFactCache[logFactCache.length - 1];
+            for (let i = logFactCache.length; i <= n; i++) {
+                sum += Math.log(i);
+                logFactCache[i] = sum;
+            }
+            return logFactCache[n];
+        }
+
+        function binomPMF(x, n, p) {
+            if (p === 0) return x === 0 ? 1 : 0;
+            if (p === 1) return x === n ? 1 : 0;
+            if (x < 0 || x > n) return 0;
+            let logP = logFactorial(n) - logFactorial(x) - logFactorial(n - x) + x * Math.log(p) + (n - x) * Math.log(1 - p);
+            return Math.exp(logP);
+        }
+
+        // Wilson Güven Aralığı
+        function wilsonCI(x, n, z) {
+            let p_hat = x / n;
+            let denominator = 1 + z*z/n;
+            let center = p_hat + z*z/(2*n);
+            let margin = z * Math.sqrt((p_hat*(1-p_hat)/n) + (z*z/(4*n*n)));
+            return {
+                lower: Math.max(0, (center - margin) / denominator),
+                upper: Math.min(1, (center + margin) / denominator)
+            };
+        }
+
+        function guncelleLinearGauge(pValue, alpha) {
+            let aPct = alpha * 100;
+            setStyle('gaugeRedZone', 'width', aPct + "%"); setStyle('gaugeGreenZone', 'left', aPct + "%"); setStyle('gaugeAlphaLine', 'left', aPct + "%");
+            
+            let marker = document.getElementById('gaugeMarker');
+            if (marker) {
+                let mPos = Math.min(Math.max(pValue * 100, 1.5), 97);
+                marker.style.transition = "none"; marker.style.left = "0%"; void marker.offsetWidth;
+                marker.style.transition = "left 1.2s cubic-bezier(0.22, 1, 0.36, 1)"; marker.style.left = mPos + "%";
+            }
+            
+            let icon = document.getElementById('gaugeMarkerIcon'); let text = document.getElementById('gaugeMarkerText');
+            if(pValue > alpha) { if(icon) icon.className = "ri-arrow-up-s-fill fs-24 text-success"; if(text) text.className = "badge bg-success mt-1 fs-12 shadow-sm font-monospace text-white border border-success"; }
+            else { if(icon) icon.className = "ri-arrow-up-s-fill fs-24 text-danger"; if(text) text.className = "badge bg-danger mt-1 fs-12 shadow-sm font-monospace text-white border border-danger"; }
+
+            let st = null;
+            function step(ts) {
+                if(!st) st = ts; let pr = Math.min((ts - st) / 1200, 1); let e = 1 - Math.pow(1 - pr, 3);
+                let cur = pValue * e; setTxt('pVal', cur.toFixed(4)); if(text) text.innerText = cur.toFixed(4);
+                if(pr < 1) requestAnimationFrame(step); else { setTxt('pVal', pValue.toFixed(4)); if(text) text.innerText = pValue.toFixed(4); }
+            }
+            requestAnimationFrame(step);
+        }
+
+        function cizGrafikler(x, n, p0, p_hat, ci) {
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; const gColor = isDark ? '#334155' : '#e2e8f0';
+            Object.values(charts).forEach(c => { if(c) c.destroy(); });
+
+            let expectedSucc = n * p0;
+            let expectedFail = n * (1 - p0);
+            
+            charts.bar = new Chart(document.getElementById('barChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Başarı (1) Sayısı', 'Başarısızlık (0) Sayısı'],
+                    datasets: [
+                        { label: 'Gözlenen (Gerçekleşen)', data: [x, n - x], backgroundColor: 'rgba(56, 189, 248, 0.8)', borderColor: '#0284c7', borderWidth: 1 },
+                        { label: 'Beklenen (Hipotez)', data: [expectedSucc, expectedFail], backgroundColor: 'rgba(148, 163, 184, 0.5)', borderColor: '#64748b', borderWidth: 1, borderDash: [5, 5] }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, grid: { color: gColor }, ticks: { color: fColor } }, x: { grid: { display: false }, ticks: { color: fColor, font:{weight:'bold'} } } }
+                }
+            });
+
+            // Devasa n sayılarında bar grafiğinin donmaması için +/- 4 standart sapma aralığı çizilir
+            let mu = n * p0;
+            let sigma = Math.sqrt(n * p0 * (1 - p0));
+            let start = Math.max(0, Math.floor(mu - 4 * sigma));
+            let end = Math.min(n, Math.ceil(mu + 4 * sigma));
+            if(n < 50) { start = 0; end = n; }
+            
+            let distLabels = [];
+            let distData = [];
+            let distColors = [];
+            let distBorders = [];
+            
+            for(let i=start; i<=end; i++) {
+                distLabels.push(i);
+                distData.push(binomPMF(i, n, p0));
+                if(i === x) {
+                    distColors.push('rgba(239, 68, 68, 0.8)');
+                    distBorders.push('#b91c1c');
+                } else {
+                    distColors.push('rgba(99, 102, 241, 0.4)');
+                    distBorders.push('#6366f1');
+                }
+            }
+
+            charts.dist = new Chart(document.getElementById('distChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels: distLabels, datasets: [{ label: 'Olasılık P(X=x)', data: distData, backgroundColor: distColors, borderColor: distBorders, borderWidth: 1 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, grid: { color: gColor }, ticks: { color: fColor } }, x: { title: {display: true, text: 'Başarı Sayısı', color: fColor}, grid: { display: false }, ticks: { color: fColor } } }
+                }
+            });
+
+            charts.ci = new Chart(document.getElementById('ciChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: ['Örneklem Oranı'],
+                    datasets: [
+                        { label: 'Gözlenen Oran (p̂)', data: [p_hat], borderColor: '#10b981', backgroundColor: '#10b981', pointRadius: 8, pointHoverRadius: 10, showLine: false }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: () => `p̂ = ${p_hat.toFixed(3)} [%95 GA: ${ci.lower.toFixed(3)} - ${ci.upper.toFixed(3)}]` } } },
+                    scales: {
+                        x: { min: Math.max(0, ci.lower - 0.1), max: Math.min(1, ci.upper + 0.1), grid: { color: gColor }, ticks: { color: fColor } },
+                        y: { display: false }
+                    }
+                },
+                plugins: [{
+                    id: 'ciErrorBars',
+                    afterDraw: (chart) => {
+                        let ctx = chart.ctx; let xAxis = chart.scales.x; let yAxis = chart.scales.y;
+                        let yCenter = yAxis.getPixelForValue(0);
+                        let xLow = xAxis.getPixelForValue(ci.lower);
+                        let xHigh = xAxis.getPixelForValue(ci.upper);
+                        let xP0 = xAxis.getPixelForValue(p0);
+
+                        ctx.save();
+                        ctx.beginPath(); ctx.moveTo(xLow, yCenter); ctx.lineTo(xHigh, yCenter);
+                        ctx.lineWidth = 3; ctx.strokeStyle = '#10b981'; ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(xLow, yCenter - 10); ctx.lineTo(xLow, yCenter + 10);
+                        ctx.moveTo(xHigh, yCenter - 10); ctx.lineTo(xHigh, yCenter + 10); ctx.stroke();
+
+                        ctx.beginPath(); ctx.moveTo(xP0, chart.chartArea.top); ctx.lineTo(xP0, chart.chartArea.bottom);
+                        ctx.lineWidth = 2.5; ctx.strokeStyle = '#ef4444'; ctx.setLineDash([6,6]); ctx.stroke();
+                        ctx.fillStyle = '#ef4444'; ctx.font = 'bold 12px sans-serif'; ctx.textBaseline = 'bottom';
+                        ctx.fillText(`p₀ = ${p0}`, xP0 + 5, chart.chartArea.bottom - 5);
+                        ctx.restore();
+                    }
+                }]
+            });
+        }
+
+        function baslatAnalizLoading() {
+            let x = 0, n = 0;
+            let isRaw = document.getElementById('methodRaw').checked;
+            
+            if (isRaw) {
+                let rawText = document.getElementById('veriKutusuRaw').value.trim();
+                if (!rawText) { alert("Lütfen ham veri (1 veya 0) girin."); return; }
+                let items = rawText.split(/[\s;:\r\n,]+/).filter(v => v !== '');
+                
+                for (let val of items) {
+                    if (val === '1') x++;
+                    else if (val === '0') { /* Sadece toplam sayi(n) artiyor */ }
+                    else {
+                        alert("HATA: Ham veri modunda sadece 1 ve 0 değerleri girilebilir! Geçersiz karakter tespit edildi: " + val);
+                        return;
+                    }
+                }
+                n = items.length;
+                if (n > 1000) { alert("Sistem sağlığı için Ham Veri modunda en fazla 1000 veri girebilirsiniz."); return; }
+            } else {
+                let xStr = document.getElementById('successInput').value;
+                let nStr = document.getElementById('totalInput').value;
+                if(xStr === "" || nStr === "") { alert("Lütfen başarı ve toplam deneme sayısını eksiksiz girin."); return; }
+                x = parseInt(xStr);
+                n = parseInt(nStr);
+            }
+
+            // Hipotez oranı boş bırakılırsa otomatik 0.50 kabul etme
+            let p0Str = document.getElementById('p0Input').value.replace(',', '.');
+            let p0 = p0Str === "" ? 0.50 : parseFloat(p0Str);
+            document.getElementById('p0Input').value = p0;
+            
+            if (isNaN(x) || isNaN(n)) { alert("Lütfen verileri geçerli bir sayı formatında girin."); return; }
+            if (isNaN(p0)) { alert("Geçersiz Hipotez Oranı değeri."); return; }
+            if (x < 0 || n < 1 || x > n) { alert("HATA: Başarı sayısı (x), toplam deneme sayısından (n) büyük olamaz."); return; }
+            if (p0 <= 0 || p0 >= 1) { alert("HATA: Hipotez oranı (p₀) 0 ile 1 arasında olmalıdır."); return; }
+
+            setStyle('bosDurum', 'display', 'none'); setStyle('aktifSonuc', 'display', 'none'); setStyle('loadingOverlay', 'display', 'block');
+            setTimeout(() => analizEtBinom(x, n, p0), 800);
+        }
+
+        async function analizEtBinom(x, n, p0) {
+            try {
+                let hyp = document.getElementById('hypType').value;
+                let alfa = parseFloat(document.getElementById('alfaInput').value);
+                
+                let p_hat = x / n;
+                let diff = p_hat - p0;
+                
+                // JS Log-Factorial ile Kesin (Exact) Binom P-Değeri Hesaplama
+                let p_val_js = 0;
+                if (hyp === 'less') {
+                    for(let i=0; i<=x; i++) p_val_js += binomPMF(i, n, p0);
+                } else if (hyp === 'greater') {
+                    for(let i=x; i<=n; i++) p_val_js += binomPMF(i, n, p0);
+                } else {
+                    let prob_x = binomPMF(x, n, p0);
+                    for(let i=0; i<=n; i++) {
+                        if(binomPMF(i, n, p0) <= prob_x + 1e-10) p_val_js += binomPMF(i, n, p0);
+                    }
+                }
+                p_val_js = Math.min(1.0, p_val_js);
+
+                let p_val = p_val_js;
+                let z_for_ci = alfa === 0.01 ? 2.576 : (alfa === 0.10 ? 1.645 : 1.96);
+                let ci = wilsonCI(x, n, z_for_ci);
+                let effect_g = Math.abs(p_hat - 0.5);
+
+                // API Bağlantısı
+                try {
+                    let reqBody = { successes: x, trials: n, p_null: p0, alternative: hyp, conf_level: 1 - alfa };
+                    let istek = await fetch("https://api.statlabseu.com/test/binomial", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(reqBody)
+                    });
+                    if(istek.ok) { 
+                        let apiSonuc = await istek.json(); 
+                        if(apiSonuc.p_value !== undefined) p_val = apiSonuc.p_value; 
+                        if(apiSonuc.ci_lower !== undefined) ci = {lower: apiSonuc.ci_lower, upper: apiSonuc.ci_upper};
+                    }
+                } catch (e) { /* API bağlanamazsa hatasız JS sonuçlarını gösterir */ }
+
+                setStyle('loadingOverlay', 'display', 'none');
+                setStyle('aktifSonuc', 'display', 'block');
+                
+                setTxt('lblAlpha', alfa);
+                setTxt('obsProp', p_hat.toFixed(4));
+                let diffText = (diff > 0 ? "+" : "") + diff.toFixed(4);
+                setTxt('propDiff', diffText);
+                let dirTxt = hyp === 'two-sided' ? "İki Yönlü (p ≠ p₀)" : (hyp === 'greater' ? "Sağ Kuyruk (p > p₀)" : "Sol Kuyruk (p < p₀)");
+                setTxt('testDirection', dirTxt);
+
+                setTxt('tdN', n);
+                setTxt('tdSucc', x);
+                setTxt('tdFail', n - x);
+                setTxt('tdObsProp', p_hat.toFixed(3));
+                setTxt('tdHypProp', p0.toFixed(3));
+                setTxt('tdCI', `[${ci.lower.toFixed(3)} , ${ci.upper.toFixed(3)}]`);
+                setTxt('tdEffect', effect_g.toFixed(3));
+
+                guncelleLinearGauge(p_val, alfa);
+                cizGrafikler(x, n, p0, p_hat, ci);
+
+                // Karar Metni ve MathJax
+                let hypText = hyp === 'two-sided' ? "beklenen orandan istatistiksel olarak farklıdır" : (hyp === 'greater' ? "beklenen orandan anlamlı derecede büyüktür" : "beklenen orandan anlamlı derecede küçüktür");
+                
+                if (p_val > alfa) {
+                    setClass('kararKutusu', "alert border-0 p-4 mb-2 rounded-10 d-flex align-items-start bg-success-subtle text-success shadow-sm mt-3");
+                    setClass('kararIkon', "ri-checkbox-circle-fill text-success fs-28"); setTxt('kararBaslik', "Gözlenen Oran, Beklenene Eşittir (H₀ Reddedilemez)");
+                    setHTML('kararAciklama', `P-değeri (${p_val.toFixed(4)}) > \\(\\alpha\\) (${alfa}) olduğundan, elde edilen oran (\\(\\hat{p}\\)) ile hipotez oranı (\\(p_0\\)) arasında <strong>istatistiksel olarak anlamlı bir fark yoktur.</strong> Şans eseri oluşmuş olabilir.`);
+                } else {
+                    setClass('kararKutusu', "alert border-0 p-4 mb-2 rounded-10 d-flex align-items-start bg-danger-subtle text-danger shadow-sm mt-3");
+                    setClass('kararIkon', "ri-error-warning-fill text-danger fs-28"); setTxt('kararBaslik', "Oran Beklenenden Farklıdır (H₀ Reddedilir)");
+                    setHTML('kararAciklama', `P-değeri (${p_val.toFixed(4)}) < \\(\\alpha\\) (${alfa}) olduğundan <strong>H₁ hipotezi kabul edilir.</strong> Gözlenen oran, ${hypText}.`);
+                }
+
+                // MathJax Render
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    window.MathJax.typesetPromise([document.getElementById('aktifSonuc'), document.getElementById('teorikFormuller')]).catch(()=>{});
+                }
+                
+                setTimeout(() => document.getElementById('aktifSonuc').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+            } catch (error) { setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block'); alert("Analiz Hatası: " + error); }
+        }
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>
