@@ -150,7 +150,7 @@
         html.dark-mode #calcTableCollapse .table-responsive { background-color: #1e293b !important; border-color: #0284c7 !important; box-shadow: 0 0 15px rgba(2, 132, 199, 0.1); }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
     <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
 
@@ -199,7 +199,7 @@
                                 <div class="custom-upload-zone p-3 rounded-10 text-center cursor-pointer" id="uploadZone" onclick="document.getElementById('dosyaGezgini').click()">
                                     <i class="ri-upload-cloud-2-line text-primary fs-28 d-block mb-1"></i>
                                     <h5 class="fs-13 fw-semibold text-dark mb-1">Sürükleyin veya Seçin</h5>
-                                    <span class="fs-11 text-muted d-block">(.csv, .txt, .pdf, .xlsx)</span>
+                                    <span class="fs-11 text-muted d-block">(.csv, .txt, .pdf, .xlsx) - Maks. 1000 Veri</span>
                                     <input type="file" id="dosyaGezgini" accept=".csv, .txt, .pdf, .xlsx, .xls" style="display: none;">
                                 </div>
                             </div>
@@ -235,17 +235,17 @@
                                     </div>
                                     <div id="normParams" class="row g-2">
                                         <div class="col-6">
-                                            <label class="form-label fw-medium text-secondary fs-12 mb-1">Ortalama (<span class="math-var">&mu;</span>)</label>
+                                            <label class="form-label fw-medium text-secondary fs-12 mb-1">Ortalama ($\mu$)</label>
                                             <input type="number" id="ksMean" class="form-control bg-light border-0 rounded-10 py-2 fs-13" placeholder="örn. 100" step="any">
                                         </div>
                                         <div class="col-6">
-                                            <label class="form-label fw-medium text-secondary fs-12 mb-1">Std. Sapma (<span class="math-var">&sigma;</span>)</label>
+                                            <label class="form-label fw-medium text-secondary fs-12 mb-1">Std. Sapma ($\sigma$)</label>
                                             <input type="number" id="ksSd" class="form-control bg-light border-0 rounded-10 py-2 fs-13" placeholder="örn. 15" step="any" min="0.0001">
                                         </div>
                                     </div>
                                     <div id="expParams" class="row g-2" style="display: none;">
                                         <div class="col-12">
-                                            <label class="form-label fw-medium text-secondary fs-12 mb-1">Oran (<span class="math-var">&lambda;</span>)</label>
+                                            <label class="form-label fw-medium text-secondary fs-12 mb-1">Oran ($\lambda$)</label>
                                             <input type="number" id="ksLambda" class="form-control bg-light border-0 rounded-10 py-2 fs-13" placeholder="örn. 0.5" step="any" min="0.0001">
                                         </div>
                                     </div>
@@ -254,7 +254,7 @@
                             </div>
 
                             <div class="mb-4">
-                                <label class="form-label fw-medium text-secondary fs-13 mb-1">Anlamlılık Seviyesi (<span class="math-var">&alpha;</span>)</label>
+                                <label class="form-label fw-medium text-secondary fs-13 mb-1">Anlamlılık Seviyesi ($\alpha$)</label>
                                 <select id="alfaInput" class="form-select bg-light border-0 rounded-10 py-2 fs-13">
                                     <option value="0.05" selected>0.05 (%5 Kritik Eşik)</option>
                                     <option value="0.01">0.01 (%1 Katı Sınır)</option>
@@ -280,7 +280,7 @@
                             <h4 class="mb-3 fs-17 fw-semibold"><i class="ri-shield-check-line text-primary me-1"></i> Veri Kalitesi Raporu</h4>
                             <div class="d-flex flex-column gap-2">
                                 <div class="d-flex justify-content-between align-items-center p-2 bg-body-bg rounded-10">
-                                    <span class="text-muted fs-13 fw-semibold"><i class="ri-database-2-line me-1"></i> İşlenen Gözlem (<span class="math-var">n</span>):</span>
+                                    <span class="text-muted fs-13 fw-semibold"><i class="ri-database-2-line me-1"></i> İşlenen Gözlem ($n$):</span>
                                     <span id="validObs" class="text-dark fw-bold fs-14">-</span>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center p-2 bg-body-bg rounded-10">
@@ -333,7 +333,7 @@
                                                 </div>
                                                 
                                                 <div id="gaugeAlphaLabel" class="position-absolute fw-bold fs-12 text-center" style="left: 50%; transform: translateX(-50%); bottom: -22px; color: #ef4444; text-shadow: 0px 0px 8px rgba(239,68,68,0.5); padding: 3px 12px; border-radius: 12px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); white-space: nowrap;">
-                                                    Kritik Eşik (<span class="math-var">&alpha;</span>): 0.05
+                                                    Kritik Eşik ($\alpha$): 0.05
                                                 </div>
                                             </div>
                                         </div>
@@ -596,7 +596,16 @@ lillie.test(veri)</code></pre>
         function isleyipKutuyaYaz(text) {
             let safeText = text.replace(/,/g, '.');
             const sayilar = safeText.split(/[\s;:\r\n]+/).map(Number).filter(v => !isNaN(v));
-            if(sayilar.length >= 3) document.getElementById('veriKutusu').value = sayilar.join('\n'); else alert("Sayı bulunamadı.");
+            if(sayilar.length >= 3) {
+                if (sayilar.length > 1000) {
+                    alert(`Yüklenen dosyada ${sayilar.length} adet veri bulundu. Sistem performansı için maksimum sınır olan ilk 1000 gözlem alınıyor.`);
+                    document.getElementById('veriKutusu').value = sayilar.slice(0, 1000).join('\n');
+                } else {
+                    document.getElementById('veriKutusu').value = sayilar.join('\n');
+                }
+            } else { 
+                alert("Geçerli sayı bulunamadı (En az 3 veri gereklidir)."); 
+            }
         }
 
         function ornekVeriYukle() {
@@ -620,6 +629,8 @@ lillie.test(veri)</code></pre>
         function baslatAnalizLoading() {
             let data = document.getElementById('veriKutusu').value.replace(/,/g, '.').split(/[\s;:\r\n]+/).map(Number).filter(v => !isNaN(v));
             if (data.length < 3) { alert("Test için örneklem en az 3 olmalıdır."); return; }
+            if (data.length > 1000) { alert("Sistem sağlığı ve tarayıcı performansı için maksimum 1000 gözlem girebilirsiniz. Lütfen veri setinizi küçültün."); return; }
+            
             let tType = document.getElementById('testType').value;
             if (tType === 'ks') {
                 let dType = document.getElementById('distType').value;
@@ -799,6 +810,7 @@ lillie.test(veri)</code></pre>
                 
                 let rawData = txt.replace(/,/g, '.').split(/[\s;:\r\n]+/).map(Number).filter(v => !isNaN(v));
                 if(rawData.length < 3) return;
+                if(rawData.length > 1000) return;
 
                 setStyle('loadingOverlay', 'display', 'none');
                 let data = rawData.sort((a, b) => a - b); let n = data.length;
@@ -847,7 +859,7 @@ lillie.test(veri)</code></pre>
                 let pVal = isLillie ? lilliePvalue(D, n) : ksPvalue(D, n);
 
                 // =========================================================================
-                // YENİ EKLENEN KISIM: PYTHON API (STATSMODELS) ENTEGRASYONU (GÜVENLİ FETCH)
+                // PYTHON API (STATSMODELS) ENTEGRASYONU (GÜVENLİ FETCH)
                 // =========================================================================
                 try {
                     let payload = { data: data, test_type: isLillie ? "lilliefors" : "ks" };
@@ -862,7 +874,6 @@ lillie.test(veri)</code></pre>
                     }
                     
                     let apiSonuc = await istek.json();
-                    // Eğer API başarılı yanıt dönerse, Python Statsmodels'in %100 hassas sonuçları JavaScript'in üstüne yazılır.
                     D = apiSonuc.statistic;
                     pVal = apiSonuc.p_value;
                 } catch (e) {
