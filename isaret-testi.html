@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    
+    <title>İşaret Testi | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    </script>
+
+    <style>
+        @font-face {
+            font-family: 'STIX Two Math';
+            src: url('assets/fonts/STIXTwoMath-Regular.ttf') format('truetype');
+            font-weight: normal; font-style: normal;
+        }
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+        .math-var { font-family: 'STIX Two Math', serif !important; font-style: italic; font-weight: normal; color: inherit; display: inline-block; }
+
+        .custom-upload-zone { border: 2px dashed #2f8fe8 !important; background-color: rgba(47, 143, 232, 0.04); transition: all 0.2s ease-in-out; }
+        .custom-upload-zone:hover { background-color: rgba(47, 143, 232, 0.08); border-color: #1d7bd1 !important; transform: translateY(-1px); }
+        .custom-upload-zone.upload-drag-active { background-color: rgba(47, 143, 232, 0.15) !important; border-color: #1d7bd1 !important; transform: scale(1.02); box-shadow: 0 4px 20px rgba(47, 143, 232, 0.2); }
+
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        
+        .param-grid-table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: center; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+        .param-grid-table th { font-size: 13px; font-weight: 700; color: #475569; background-color: #f1f5f9; padding: 12px 10px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; white-space: nowrap; vertical-align: middle; line-height: 1.4; }
+        .param-grid-table th:last-child { border-right: none; }
+        .param-grid-table td { padding: 12px 10px; font-size: 14px; color: #0f172a; border-bottom: 1px solid #edf2f7; border-right: 1px solid #edf2f7; background-color: #ffffff; vertical-align: middle; }
+        .param-grid-table td:last-child { border-right: none; }
+        .param-grid-table tr:last-child td { border-bottom: none; }
+        .param-grid-table tr:hover td { background-color: #f8fafc; }
+
+        .info-box { background: linear-gradient(135deg, rgba(47, 143, 232, 0.1), rgba(14, 165, 233, 0.05)); border-left: 4px solid #2f8fe8; padding: 15px 20px; border-radius: 8px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 15px; }
+        .info-box i { font-size: 24px; color: #2f8fe8; }
+        .info-box p { margin: 0; font-size: 14px; color: #475569; line-height: 1.6; }
+
+        .loader-spinner { width: 40px; height: 40px; border: 4px solid rgba(47, 143, 232, 0.2); border-left-color: #2f8fe8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @keyframes pulse-btn { 0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.8); } 70% { box-shadow: 0 0 0 15px rgba(14, 165, 233, 0); } 100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); } }
+        .btn-pulse { animation: pulse-btn 1.8s infinite; background: linear-gradient(135deg, #2f8fe8, #0ea5e9); border: none; color: white !important; }
+        .btn-pulse:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(14, 165, 233, 0.4); background: linear-gradient(135deg, #1d7bd1, #0284c7); }
+        .btn-action { font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; transition: all 0.3s ease; }
+
+        .decision-rule-box { background: rgba(47, 143, 232, 0.05); border: 1px solid rgba(47, 143, 232, 0.2); border-left: 4px solid #2f8fe8; color: #334155; padding: 15px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 15px; }
+
+        /* GECE MODU AYARLARI */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light, html.dark-mode .bg-body-bg { background-color: #0f172a !important; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        html.dark-mode .info-box { background: rgba(47, 143, 232, 0.1); }
+        html.dark-mode .info-box p { color: #cbd5e1; }
+        html.dark-mode .param-grid-table { border-color: #334155; }
+        html.dark-mode .param-grid-table th { background-color: #0f172a; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .param-grid-table td { background-color: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark-mode .param-grid-table tr:hover td { background-color: #0f172a !important; }
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+        html.dark-mode .gauge-track { background: #334155 !important; box-shadow: inset 0 1px 4px rgba(0,0,0,0.5) !important; }
+        html.dark-mode #gaugeAlphaLine { background-color: #f8fafc !important; }
+        html.dark-mode #gaugeMarkerIcon { color: #f8fafc !important; }
+        html.dark-mode .alert-warning-smart { background-color: rgba(245, 158, 11, 0.1); border-left-color: #fbbf24; color: #fcd34d; }
+        html.dark-mode .decision-rule-box { background: rgba(47, 143, 232, 0.1); border-color: rgba(47, 143, 232, 0.2); border-left-color: #60a5fa; color: #e2e8f0; }
+        html.dark-mode .formula-box { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        html.dark-mode mjx-container { color: #e2e8f0 !important; }
+
+        .alert-warning-smart { background-color: #fffbeb; border-left: 4px solid #f59e0b; color: #b45309; }
+        .rank-table-row { transition: all 0.2s; }
+        .rank-table-row:hover { transform: scale(1.01); box-shadow: 0 4px 10px rgba(0,0,0,0.05); z-index: 10; position: relative; }
+        .formula-box { background-color: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 15px; font-size: 15px; overflow-x: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+        
+        .textarea-container { position: relative; width: 100%; }
+        .textarea-lines { position: absolute; left: 0; top: 0; bottom: 0; width: 35px; background: rgba(0,0,0,0.02); border-right: 1px solid #e2e8f0; border-top-left-radius: 10px; border-bottom-left-radius: 10px; text-align: right; padding: 10px 5px; color: #94a3b8; font-size: 12px; font-family: monospace; overflow: hidden; pointer-events: none; }
+        html.dark-mode .textarea-lines { background: rgba(255,255,255,0.02); border-color: #334155; }
+        .form-control-lined { padding-left: 45px !important; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border border-white shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-scales-3-line align-middle me-1"></i> İşaret Testi (Bağımlı İki Örneklem)
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="main-content-container overflow-hidden">
+                
+                <div class="info-box shadow-sm">
+                    <i class="ri-information-line"></i>
+                    <div>
+                        <strong class="d-block text-dark mb-1">İşaret Testi (Sign Test)</strong>
+                        <p>Eşleştirilmiş (Örn: Ön Test - Son Test) iki ölçüm arasındaki farkların büyüklüklerini tamamen göz ardı ederek, yalnızca <strong>değişimin yönünü (+ veya -)</strong> dikkate alan parametrik olmayan dağılımsız bir istatistiksel testtir.</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- SOL PANEL: VERİ HAVUZU -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm">
+                            <h4 class="mb-3 fs-17 fw-semibold text-dark">Veri Havuzu & Parametreler</h4>
+                            
+                            <div class="alert alert-warning-smart py-2 fs-12 mb-4 border-0">
+                                <i class="ri-information-fill align-middle me-1"></i> <strong>Eşleştirilmiş Gözlemler Gerekir</strong> <br> 1. Grup ve 2. Grup aynı bireylere ait ölçümleri içermelidir. Her satırdaki değerler aynı gözleme ait olmalı ve iki grupta da gözlem sayısı eşit olmalıdır.
+                            </div>
+
+                            <div id="alanHamVeri">
+                                <div class="mb-3">
+                                    <div class="custom-upload-zone p-3 rounded-10 text-center cursor-pointer" id="uploadZone" onclick="document.getElementById('dosyaGezgini').click()">
+                                        <i class="ri-upload-cloud-2-line text-primary fs-28 d-block mb-1"></i>
+                                        <h5 class="fs-13 fw-semibold text-dark mb-1">Çift Sütunlu Dosya Yükleyin</h5>
+                                        <span class="fs-11 text-muted d-block">İlk sütun 1. Gruba, ikinci sütun 2. Gruba aktarılır.</span>
+                                        <input type="file" id="dosyaGezgini" accept=".csv, .txt, .xlsx, .xls" style="display: none;">
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 mb-1">
+                                    <div class="col-6">
+                                        <label class="form-label fw-bold text-primary fs-12 mb-1">1. Grup (Ön Test / $X$)</label>
+                                        <div class="textarea-container">
+                                            <div class="textarea-lines" id="lines1">1<br>2<br>3<br>4<br>5</div>
+                                            <textarea id="veriKutusu1" class="form-control form-control-lined bg-light border-0 p-2 fs-13 text-secondary rounded-10" rows="8" placeholder="50&#10;55&#10;60..."></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label fw-bold text-success fs-12 mb-1">2. Grup (Son Test / $Y$)</label>
+                                        <div class="textarea-container">
+                                            <div class="textarea-lines" id="lines2">1<br>2<br>3<br>4<br>5</div>
+                                            <textarea id="veriKutusu2" class="form-control form-control-lined bg-light border-0 p-2 fs-13 text-secondary rounded-10" rows="8" placeholder="55&#10;62&#10;58..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-end px-1">
+                                    <span class="fs-11 text-muted d-block mb-1"><i class="ri-information-line align-middle text-primary me-1"></i>Farklar ($d_i = Y_i - X_i$) formülüyle işaretlenir.</span>
+                                    <span class="fs-11 text-muted d-block"><i class="ri-information-line align-middle text-primary me-1"></i>Maksimum 1000 gözlem sınırı</span>
+                                </div>
+                            </div>
+
+                            <hr class="border-secondary opacity-25 my-4">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-medium text-secondary fs-13 mb-1">Test Yönü (Kuyruk)</label>
+                                <select id="hypType" class="form-select bg-light border-0 rounded-10 py-2 fs-13">
+                                    <option value="two-sided" selected>İki Yönlü Fark Var ($p \neq 0.5$)</option>
+                                    <option value="greater">Sağ Kuyruk (Son Test > Ön Test)</option>
+                                    <option value="less">Sol Kuyruk (Son Test < Ön Test)</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-medium text-secondary fs-13 mb-1">Anlamlılık Düzeyi (\(\alpha\))</label>
+                                <select id="alfaInput" class="form-select bg-light border-0 rounded-10 py-2 fs-13">
+                                    <option value="0.05" selected>0.05 (%5 Kritik Eşik)</option>
+                                    <option value="0.01">0.01 (%1 Katı Sınır)</option>
+                                    <option value="0.10">0.10 (%10 Esnek Sınır)</option>
+                                </select>
+                            </div>
+
+                            <div class="d-flex flex-column gap-3 mt-4">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-secondary w-50 py-2 rounded-10 btn-action" onclick="ornekVeriYukle()">
+                                        <i class="ri-magic-line align-middle me-1"></i> Örnek Veri
+                                    </button>
+                                    <button class="btn btn-outline-danger w-50 py-2 rounded-10 btn-action" onclick="temizleVeri()">
+                                        <i class="ri-delete-bin-line align-middle me-1"></i> Temizle
+                                    </button>
+                                </div>
+                                <button class="btn w-100 py-3 rounded-10 btn-action btn-pulse" onclick="baslatAnalizLoading()">
+                                    <i class="ri-bar-chart-2-fill align-middle me-1 fs-18"></i> VERİLERİ ANALİZ ET
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm mt-4" id="veriKalitesiKutu" style="display: none;">
+                            <h4 class="mb-3 fs-17 fw-semibold text-dark"><i class="ri-shield-check-line text-primary me-1"></i> Sayım Özeti (Frekanslar)</h4>
+                            <div class="d-flex flex-column gap-2">
+                                <div class="d-flex justify-content-between align-items-center p-2 bg-body-bg rounded-10">
+                                    <span class="text-muted fs-13 fw-semibold">Toplam Çift ($N$):</span>
+                                    <span id="validObs" class="text-dark fw-bold fs-14">-</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center p-2 bg-body-bg rounded-10">
+                                    <span class="text-muted fs-13 fw-semibold" title="Farkı 0 olanlar atılır">Eşitlikler / Sıfır Farklar:</span>
+                                    <span id="zeroCount" class="badge bg-warning-subtle text-warning rounded-pill">-</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center p-2 bg-body-bg rounded-10">
+                                    <span class="text-muted fs-13 fw-semibold">Pozitif Farklar ($n_+$):</span>
+                                    <span id="posRankCount" class="text-success fw-bold fs-14">-</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center p-2 bg-body-bg rounded-10">
+                                    <span class="text-muted fs-13 fw-semibold">Negatif Farklar ($n_-$):</span>
+                                    <span id="negRankCount" class="text-danger fw-bold fs-14">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SAĞ PANEL: SONUÇLAR -->
+                    <div class="col-lg-8 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                            
+                            <div id="bosDurum" class="text-center py-5 my-auto">
+                                <i class="ri-scales-3-line text-muted opacity-25" style="font-size: 4.5rem;"></i>
+                                <h5 class="text-muted mt-3 fs-16">Analiz Bekleniyor</h5>
+                                <p class="text-muted fs-14 mb-0">Ön Test ve Son Test verilerinizi girip analizi başlatın.</p>
+                            </div>
+
+                            <div id="loadingOverlay" class="text-center py-5 my-auto" style="display: none;">
+                                <div class="loader-spinner"></div>
+                                <h5 class="text-primary mt-4 fs-16 fw-semibold">Fark İşaretleri ve Binom Olasılıkları Hesaplanıyor...</h5>
+                            </div>
+
+                            <div id="aktifSonuc" style="display: none;">
+
+                                <div class="row mb-4 align-items-center">
+                                    <div class="col-md-4 text-center border-end d-flex flex-column justify-content-center px-4">
+                                        <h5 class="fs-12 fw-bold text-secondary mb-3 text-uppercase tracking-wider">Kesin P-Değeri Göstergesi</h5>
+                                        <div class="linear-gauge-wrapper w-100 mt-2 mb-4">
+                                            <div class="d-flex justify-content-between mb-2 fs-11 fw-bold text-muted px-1">
+                                                <span>0.0</span><span>0.5</span><span>1.0</span>
+                                            </div>
+                                            <div class="gauge-track position-relative rounded-pill overflow-hidden" style="height: 14px; background: #e2e8f0; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+                                                <div id="gaugeRedZone" class="position-absolute top-0 bottom-0" style="left: 0; width: 5%; background: linear-gradient(90deg, #f87171, #ef4444);"></div>
+                                                <div id="gaugeGreenZone" class="position-absolute top-0 bottom-0" style="left: 5%; right: 0; background: linear-gradient(90deg, #34d399, #10b981);"></div>
+                                                <div id="gaugeAlphaLine" class="position-absolute top-0 bottom-0 bg-dark" style="left: 5%; width: 2px; z-index: 2;"></div>
+                                            </div>
+                                            <div class="position-relative mt-1" style="height: 45px;">
+                                                <div id="gaugeMarker" class="position-absolute d-flex flex-column align-items-center" style="left: 0%; transform: translateX(-50%); transition: left 1s cubic-bezier(0.22, 1, 0.36, 1); z-index: 3;">
+                                                    <i class="ri-arrow-up-s-fill fs-24" id="gaugeMarkerIcon" style="line-height: 0.5; color: #0f172a;"></i>
+                                                    <span id="gaugeMarkerText" class="badge bg-dark mt-1 fs-12 shadow-sm font-monospace text-white">0.0000</span>
+                                                </div>
+                                                <div id="gaugeAlphaLabel" class="position-absolute fw-bold fs-12 text-center" style="left: 50%; transform: translateX(-50%); bottom: -22px; color: #ef4444; text-shadow: 0px 0px 8px rgba(239,68,68,0.5); padding: 3px 12px; border-radius: 12px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); white-space: nowrap;">
+                                                    \(\alpha\): <span id="lblAlpha">0.05</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-8">
+                                        <div class="row g-3 text-center">
+                                            <div class="col-4">
+                                                <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                                    <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Kesin P-Değeri</span>
+                                                    <h3 id="pVal" class="text-primary mb-0 fw-bold fs-22">-</h3>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                                    <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Test İstatistiği (\(k\))</span>
+                                                    <h3 id="testStat" class="text-secondary mb-0 fw-bold fs-22">-</h3>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                                    <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Z Değeri (\(Z\))</span>
+                                                    <h3 id="zStatApprox" class="text-secondary mb-0 fw-bold fs-22">-</h3>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="p-2 bg-body-bg rounded-10 border border-light d-flex justify-content-around px-4">
+                                                    <div><span class="text-muted fs-12 fw-semibold">Geçerli Çift (\(n\)):</span> <span id="nValidVal" class="text-dark fw-bold fs-14 ms-1">-</span></div>
+                                                    <div><span class="text-muted fs-12 fw-semibold">Baskın Yön:</span> <span id="dominantDirection" class="text-primary fw-bold fs-13 ms-1">-</span></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h5 class="fs-14 fw-bold text-dark mb-2"><i class="ri-list-check-2 text-primary me-1"></i> Frekanslar (Sayım İstatistikleri)</h5>
+                                    <div class="table-responsive rounded-3 border">
+                                        <table class="table param-grid-table m-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Toplam Çift (\(N\))</th>
+                                                    <th class="text-success">Pozitif Farklar (\(n_+\))</th>
+                                                    <th class="text-danger">Negatif Farklar (\(n_-\))</th>
+                                                    <th class="text-warning">Eşitlikler (Ties)</th>
+                                                    <th>Geçerli Çift (\(n\))</th>
+                                                    <th>Kesin P-Değeri</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td id="tdN" class="fw-bold">-</td>
+                                                    <td id="tdPos" class="text-success fw-bold">-</td>
+                                                    <td id="tdNeg" class="text-danger fw-bold">-</td>
+                                                    <td id="tdTies" class="text-warning fw-bold">-</td>
+                                                    <td id="tdValidN">-</td>
+                                                    <td id="tdPval" class="text-primary fw-bold">-</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- AÇILIR KAPANIR DETAYLI HESAPLAMA TABLOSU -->
+                                <div class="mb-5">
+                                    <button class="btn btn-pulse w-100 py-3 d-flex justify-content-between align-items-center fs-14 fw-bold rounded-10 border-0 shadow" type="button" data-bs-toggle="collapse" data-bs-target="#detayliHesapTablosu" aria-expanded="false" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white;">
+                                        <span><i class="ri-magic-line me-2 fs-18 align-middle"></i> Adım Adım Hesaplama Tablosunu Görüntüle (Gözlem Farkları ve İşaretleri)</span>
+                                        <i class="ri-arrow-down-s-line fs-22"></i>
+                                    </button>
+                                    <div class="collapse mt-3" id="detayliHesapTablosu">
+                                        <div class="card card-body bg-body-bg border border-light p-3 rounded-10 shadow-sm">
+                                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                                <table class="table param-grid-table m-0 fs-13" id="rankDetailTable">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="text-center">Çift No</th>
+                                                            <th class="text-center text-primary">1. Grup ($x_i$)</th>
+                                                            <th class="text-center text-success">2. Grup ($y_i$)</th>
+                                                            <th class="text-center">Fark ($d_i = y_i - x_i$)</th>
+                                                            <th class="text-center">İşaret (Direction)</th>
+                                                            <th class="text-center">Analiz Durumu</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="rankTableBody">
+                                                        <!-- Dinamik Dolacak -->
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div class="mt-3 text-end">
+                                                <small class="text-muted"><i class="ri-information-fill align-middle text-primary"></i> Analiz esnasında sıfır ($0$) farka sahip bireyler binom olasılık hesabından atılır ve $n$ sayısından düşülür.</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- GRAFİKLER (Tam Genişlik - Alt Alta) -->
+                                <div class="row mt-4">
+                                    <div class="col-12 mb-4">
+                                        <div class="chart-container h-100 d-flex flex-column">
+                                            <h5 class="fs-14 fw-bold text-dark mb-2 text-center text-uppercase tracking-wider">İşaret Frekans Grafiği (Çubuk Grafik)</h5>
+                                            <span class="fs-12 text-muted text-center mb-4 d-block">P-değerinin anlamlılığını çubuklar arasındaki farkın büyüklüğüne bakarak anında görebilirsiniz.</span>
+                                            <div style="position: relative; height: 350px; width: 100%;"><canvas id="signBarChart"></canvas></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 mb-4">
+                                        <div class="chart-container h-100 d-flex flex-column">
+                                            <h5 class="fs-14 fw-bold text-dark mb-2 text-center text-uppercase tracking-wider">Öncesi-Sonrası Eğim Grafiği (Slopegraph)</h5>
+                                            <span class="fs-12 text-muted text-center mb-4 d-block"><i class="ri-focus-3-line text-danger me-1"></i> İşaret testi büyüklükleri önemsemez; ancak bu grafikteki aykırı (outlier) sıçramaları inceleyerek Wilcoxon yerine neden İşaret Testi seçmeniz gerektiğini değerlendirebilirsiniz.</span>
+                                            <div style="position: relative; height: 380px; width: 100%;"><canvas id="slopeChart"></canvas></div>
+                                            <div class="d-flex justify-content-center gap-4 mt-3 fs-12 fw-semibold">
+                                                <span class="text-success"><i class="ri-checkbox-blank-circle-fill me-1"></i> Artan (Pozitif +)</span>
+                                                <span class="text-danger"><i class="ri-checkbox-blank-circle-fill me-1"></i> Azalan (Negatif -)</span>
+                                                <span class="text-muted"><i class="ri-checkbox-blank-circle-fill me-1"></i> Değişimsiz (Eşitlik 0)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 mb-4">
+                                        <div class="chart-container h-100 d-flex flex-column">
+                                            <h5 class="fs-14 fw-bold text-dark mb-4 text-center text-uppercase tracking-wider">Eşleştirilmiş Kutu Grafiği (Aykırı Değer Analizi ile)</h5>
+                                            <div style="position: relative; height: 350px; width: 100%;"><canvas id="boxChart"></canvas></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="kararKutusu" class="alert border-0 p-4 mb-2 rounded-10 d-flex align-items-start shadow-sm mt-2">
+                                    <div class="d-flex justify-content-center mt-1 me-3"><i id="kararIkon" class="fs-28"></i></div>
+                                    <div class="flex-grow-1">
+                                        <h4 id="kararBaslik" class="mb-2 fs-16 fw-bold">-</h4>
+                                        <p id="kararAciklama" class="mb-0 fs-14 text-muted lh-base">-</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BİLGİLENDİRME BÖLÜMÜ -->
+                <div class="row">
+                    <div class="col-12 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm text-start">
+                            
+                            <h5 class="fw-bold text-dark fs-16 mb-3 border-bottom pb-2 border-secondary"><i class="ri-book-read-line align-middle me-1 text-primary"></i> İşaret Testi (Sign Test) Hakkında</h5>
+                            <p class="text-muted fs-14 lh-lg">İşaret Testi, bağımlı (eşleştirilmiş) iki örneklem arasındaki farkların büyüklüklerini tamamen göz ardı ederek yalnızca <strong>farkların yönüne (artı veya eksi olmasına)</strong> odaklanan en temel parametrik olmayan (non-parametrik) istatistiksel testtir.</p>
+                            
+                            <p class="text-muted fs-14 lh-lg">Bu test, bir grubun tedavi öncesi ve sonrası ölçümleri arasındaki farkların simetrik dağıldığı varsayımını dahi gerektirmez. Her bir gözlem çifti için fark ($Y_i - X_i$) hesaplanır; sıfır olanlar (değişimsizler) analizden çıkarılır. Kalan geçerli gözlemler arasında pozitif ($n_+$) veya negatif ($n_-$) farkların şans eseri (%50 olasılıkla) ortaya çıkıp çıkmadığı <strong>Binom Dağılımı</strong> üzerinden kesin (exact) olarak test edilir.</p>
+                            
+                            <div class="alert alert-info border-0 bg-primary-subtle text-primary fs-14 mt-3 mb-4">
+                                <i class="ri-information-fill align-middle me-1"></i> <strong>Neden Wilcoxon Yerine İşaret Testi?</strong> <br> Yukarıdaki Eğim Grafiği (Slopegraph) üzerinde görebileceğiniz gibi, verinizde tek bir denekte bile olağandışı bir sıçrama (outlier) olduğunda t-testi ve Wilcoxon testi bu aşırı büyüklükten etkilenebilir. İşaret testi ise 1 puanlık artış ile 1000 puanlık artışı aynı sadece "Pozitif (+)" olarak değerlendirdiği için <strong>aykırı değerlere karşı dünyadaki en dayanıklı (robust) testtir.</strong>
+                            </div>
+
+                            <h5 class="fw-bold text-dark fs-16 mb-3 mt-4 border-bottom pb-2 border-secondary">Ne Zaman Kullanılır?</h5>
+                            <ul class="text-muted fs-14 lh-lg mb-4">
+                                <li>Aynı bireylerden alınan iki ölçüm arasındaki farkların sadece yönünün (arttı/azaldı) önemli olduğu durumlarda</li>
+                                <li>Verilerin aralık veya oran ölçeğinde değil, sadece sıralama (ordinal) veya işaret ölçeğinde ölçülebildiği durumlarda</li>
+                                <li>Bağımlı t-Testi ve Wilcoxon İşaretli Sıralar testi varsayımlarının (farkların simetrik dağılımı vb.) ağır şekilde ihlal edildiği durumlarda</li>
+                                <li>Veri setinde sonuçları saptırabilecek aşırı uç/aykırı değerler (outliers) bulunduğunda</li>
+                            </ul>
+
+                            <h5 class="fw-bold text-dark fs-16 mb-3 mt-4 border-bottom pb-2 border-secondary">Varsayımlar</h5>
+                            <ul class="text-muted fs-14 lh-lg mb-4">
+                                <li>Gözlemler eşleştirilmiş (bağımlı) olmalıdır. Her satır aynı birey veya nesneye ait iki ölçümü temsil etmelidir.</li>
+                                <li>Gözlem çiftleri birbirinden tamamen bağımsız olmalıdır (Bir hastanın sonucu diğerini etkilememelidir).</li>
+                                <li>Ölçüm ölçeği en az sıralama (ordinal) düzeyinde olmalıdır; yani "Sonraki değer Öncekiden büyüktür veya küçüktür" denilebilmelidir.</li>
+                            </ul>
+
+                            <div class="decision-rule-box mb-2 mt-4 text-center">
+                                <strong>Karar Kuralı:</strong> <br>
+                                \(p < \alpha \rightarrow H_0 \text{ reddedilir. (İki ölçüm arasında anlamlı bir yönsel baskınlık/fark vardır)}\) <br>
+                                \(p \ge \alpha \rightarrow H_0 \text{ reddedilemez. (Artış ve düşüşler şans eseri oluşmuş olup anlamlı fark yoktur)}\)
+                            </div>
+                            
+                            <!-- AÇILIR KAPANIR TEORİK ALTYAPI VE FORMÜLLER BUTONU -->
+                            <div class="mt-5 mb-2">
+                                <button class="btn btn-pulse w-100 py-3 d-flex justify-content-between align-items-center fs-15 fw-bold rounded-10 border-0 shadow" type="button" data-bs-toggle="collapse" data-bs-target="#teorikFormuller" aria-expanded="false" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: white;">
+                                    <span><i class="ri-function-line me-2 fs-20 align-middle"></i> Teorik Altyapı ve Matematiksel Formülleri Görüntüle</span>
+                                    <i class="ri-arrow-down-s-line fs-22"></i>
+                                </button>
+                                <div class="collapse mt-3" id="teorikFormuller">
+                                    <div class="card card-body bg-body-bg border border-light p-4 rounded-10 shadow-sm">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">1. Farkların İşaretlenmesi</strong>
+                                                    Her bir gözlem çifti için fark hesabı yapılır ve sadece işareti dikkate alınır:
+                                                    $$d_i = y_i - x_i$$
+                                                    <span class="fs-13 text-muted">
+                                                    $d_i > 0 \rightarrow \text{Pozitif (+), sayım: } n_+$ <br>
+                                                    $d_i < 0 \rightarrow \text{Negatif (-), sayım: } n_-$ <br>
+                                                    $d_i = 0 \rightarrow \text{Eşitlik (Tie), analizden atılır}$
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">2. Geçerli Örneklem Sayısı ($n$)</strong>
+                                                    Sıfır olan farklar atıldıktan sonra kalan toplam analitik çift sayısı:
+                                                    $$n = n_+ + n_-$$
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">3. Test İstatistiği ($k$)</strong>
+                                                    İki yönlü testlerde, pozitif veya negatif sayımlardan küçük olanı test istatistiği olarak alınır:
+                                                    $$k = \min(n_+, n_-)$$
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">4. Kesin Binom P-Değeri (Exact P)</strong>
+                                                    İki yönlü test için binom olasılık kütle fonksiyonu ($p=0.5$) kullanılarak hesaplanır:
+                                                    $$P = 2 \times \sum_{i=0}^{k} \binom{n}{i} (0.5)^n$$
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <div class="formula-box h-100">
+                                                    <strong class="text-dark d-block mb-2">5. Normal Dağılım Yaklaşımlı Z-Değeri (Süreklilik Düzeltmeli)</strong>
+                                                    Geçerli örneklem sayısı büyük olduğunda ($n \ge 10$), süreklilik düzeltmesi ($\pm 0.5$) uygulanarak standart normal dağılım Z değeri hesaplanır:
+                                                    $$Z = \frac{|n_+ - 0.5n| - 0.5}{0.5\sqrt{n}}$$
+                                                    <span class="fs-13 text-muted">Burada $0.5n$ beklenen frekansı, $0.5\sqrt{n}$ ise binom dağılımının standart hatasını temsil eder.</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <footer class="footer-area bg-white text-center rounded-10 rounded-bottom-0 p-3 mt-4 border-top shadow-sm">
+                <p class="fs-14 text-body mb-0">© <span>StatLabseu</span> - Gelişmiş İstatistiksel Analiz Platformu</p>
+            </footer>
+
+        </div>
+    </div>
+ 
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function setTxt(id, text) { let el = document.getElementById(id); if (el) el.innerText = text; }
+        function setHTML(id, html) { let el = document.getElementById(id); if (el) el.innerHTML = html; }
+        function setClass(id, cls) { let el = document.getElementById(id); if (el) el.className = cls; }
+        function setStyle(id, prop, val) { let el = document.getElementById(id); if (el) el.style[prop] = val; }
+
+        let charts = { signBar: null, slope: null, box: null };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            if (localStorage.getItem('statlab_theme') === 'dark') { themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); }
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); themeIcon.classList.remove('text-secondary'); localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); themeIcon.classList.remove('text-warning'); themeIcon.classList.add('text-secondary'); localStorage.setItem('statlab_theme', 'light');
+                }
+                let aktifEl = document.getElementById('aktifSonuc'); if(aktifEl && aktifEl.style.display === 'block') baslatAnalizLoading();
+            });
+            updateLines('veriKutusu1', 'lines1');
+            updateLines('veriKutusu2', 'lines2');
+            document.getElementById('veriKutusu1').addEventListener('input', function() { updateLines('veriKutusu1', 'lines1'); });
+            document.getElementById('veriKutusu1').addEventListener('scroll', function() { document.getElementById('lines1').scrollTop = this.scrollTop; });
+            document.getElementById('veriKutusu2').addEventListener('input', function() { updateLines('veriKutusu2', 'lines2'); });
+            document.getElementById('veriKutusu2').addEventListener('scroll', function() { document.getElementById('lines2').scrollTop = this.scrollTop; });
+        });
+
+        function updateLines(tId, lId) {
+            let t = document.getElementById(tId);
+            let l = document.getElementById(lId);
+            let linesCount = t.value.split('\n').length;
+            let linesHtml = '';
+            for(let i=1; i<=linesCount; i++) linesHtml += i + '<br>';
+            l.innerHTML = linesHtml;
+        }
+
+        const uploadZone = document.getElementById('uploadZone');
+        if(uploadZone) {
+            uploadZone.addEventListener('dragover', function(e) { e.preventDefault(); this.classList.add('upload-drag-active'); });
+            uploadZone.addEventListener('dragleave', function(e) { e.preventDefault(); this.classList.remove('upload-drag-active'); });
+            uploadZone.addEventListener('drop', function(e) { e.preventDefault(); this.classList.remove('upload-drag-active'); handleFile(e.dataTransfer.files[0]); });
+            document.getElementById('dosyaGezgini').addEventListener('change', function(e) { handleFile(e.target.files[0]); });
+        }
+
+        async function handleFile(file) {
+            if (!file) return;
+            const ext = file.name.split('.').pop().toLowerCase();
+            try {
+                if(ext === 'csv' || ext === 'txt') { const text = await file.text(); parseToDoubleGroup(text); }
+                else if (ext === 'xlsx' || ext === 'xls') {
+                    const data = await file.arrayBuffer(); const workbook = XLSX.read(data);
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+                    parseToDoubleGroup(jsonData.map(row => Object.values(row).join('\t')).join('\n'));
+                } else { alert("Desteklenmeyen format."); }
+            } catch (err) { alert("Okuma hatası: " + err); }
+        }
+
+        function parseToDoubleGroup(text) {
+            let lines = text.split('\n'); 
+            let g1 = [], g2 = [];
+            lines.forEach(line => {
+                let parts = line.trim().split(/[\s,;\t]+/);
+                if(parts.length >= 2) {
+                    let v1 = parseFloat(parts[0].replace(',','.'));
+                    let v2 = parseFloat(parts[1].replace(',','.'));
+                    if(!isNaN(v1) && !isNaN(v2)) { g1.push(v1); g2.push(v2); }
+                }
+            });
+            document.getElementById('veriKutusu1').value = g1.join('\n');
+            document.getElementById('veriKutusu2').value = g2.join('\n');
+            updateLines('veriKutusu1', 'lines1'); updateLines('veriKutusu2', 'lines2');
+        }
+
+        function ornekVeriYukle() {
+            document.getElementById('hypType').value = "two-sided";
+            document.getElementById('alfaInput').value = "0.05";
+
+            let v1 = [65, 70, 68, 62, 75, 80, 58, 64, 72, 69, 74, 66, 61, 78, 67, 71, 63, 68, 70, 65];
+            let v2 = [72, 75, 74, 69, 75, 84, 65, 71, 79, 73, 78, 72, 68, 85, 71, 76, 63, 73, 76, 195]; 
+            // 20. gözlem (65 -> 195) bilinçli olarak devasa bir OUTLIER konuldu! Eğim grafiğinde muazzam görünecektir.
+            
+            document.getElementById('veriKutusu1').value = v1.join('\n');
+            document.getElementById('veriKutusu2').value = v2.join('\n');
+            updateLines('veriKutusu1', 'lines1'); updateLines('veriKutusu2', 'lines2');
+        }
+
+        function temizleVeri() {
+            document.getElementById('veriKutusu1').value = '';
+            document.getElementById('veriKutusu2').value = '';
+            if(document.getElementById('dosyaGezgini')) document.getElementById('dosyaGezgini').value = '';
+            updateLines('veriKutusu1', 'lines1'); updateLines('veriKutusu2', 'lines2');
+            
+            setStyle('aktifSonuc', 'display', 'none'); setStyle('veriKalitesiKutu', 'display', 'none'); 
+            setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block');
+            Object.values(charts).forEach(c => { if(c) c.destroy(); });
+        }
+
+        // JS'de kombinasyon ve olasılık hesabı için Log-Factorial Metodu
+        const logFactCache = [0, 0];
+        function logFactorial(n) {
+            if (n < logFactCache.length) return logFactCache[n];
+            let sum = logFactCache[logFactCache.length - 1];
+            for (let i = logFactCache.length; i <= n; i++) {
+                sum += Math.log(i);
+                logFactCache[i] = sum;
+            }
+            return logFactCache[n];
+        }
+
+        function binomPMF(k, n, p) {
+            if (p === 0) return k === 0 ? 1 : 0;
+            if (p === 1) return k === n ? 1 : 0;
+            if (k < 0 || k > n) return 0;
+            let logP = logFactorial(n) - logFactorial(k) - logFactorial(n - k) + k * Math.log(p) + (n - k) * Math.log(1 - p);
+            return Math.exp(logP);
+        }
+
+        function guncelleLinearGauge(pValue, alpha) {
+            let aPct = alpha * 100;
+            setStyle('gaugeRedZone', 'width', aPct + "%"); setStyle('gaugeGreenZone', 'left', aPct + "%"); setStyle('gaugeAlphaLine', 'left', aPct + "%");
+            
+            let marker = document.getElementById('gaugeMarker');
+            if (marker) {
+                let mPos = Math.min(Math.max(pValue * 100, 1.5), 97);
+                marker.style.transition = "none"; marker.style.left = "0%"; void marker.offsetWidth;
+                marker.style.transition = "left 1.2s cubic-bezier(0.22, 1, 0.36, 1)"; marker.style.left = mPos + "%";
+            }
+            
+            let icon = document.getElementById('gaugeMarkerIcon'); let text = document.getElementById('gaugeMarkerText');
+            if(pValue > alpha) { if(icon) icon.className = "ri-arrow-up-s-fill fs-24 text-success"; if(text) text.className = "badge bg-success mt-1 fs-12 shadow-sm font-monospace text-white border border-success"; }
+            else { if(icon) icon.className = "ri-arrow-up-s-fill fs-24 text-danger"; if(text) text.className = "badge bg-danger mt-1 fs-12 shadow-sm font-monospace text-white border border-danger"; }
+
+            let st = null;
+            function step(ts) {
+                if(!st) st = ts; let pr = Math.min((ts - st) / 1200, 1); let e = 1 - Math.pow(1 - pr, 3);
+                let cur = pValue * e; setTxt('pVal', cur.toFixed(4)); if(text) text.innerText = cur.toFixed(4);
+                if(pr < 1) requestAnimationFrame(step); else { setTxt('pVal', pValue.toFixed(4)); if(text) text.innerText = pValue.toFixed(4); }
+            }
+            requestAnimationFrame(step);
+        }
+
+        function statValues(arr) {
+            let sorted = [...arr].sort((a,b)=>a-b);
+            let n = sorted.length;
+            if(n===0) return {med:0, q1:0, q3:0, min:0, max:0, outliers:[], lowerBound:0, upperBound:0, whiskerMin:0, whiskerMax:0};
+            
+            let med = n % 2 === 0 ? (sorted[n/2 - 1] + sorted[n/2]) / 2 : sorted[Math.floor(n/2)];
+            let q1 = sorted[Math.floor(n/4)];
+            let q3 = sorted[Math.floor(n*0.75)];
+            let iqr = q3 - q1;
+            
+            let lowerBound = q1 - 1.5 * iqr;
+            let upperBound = q3 + 1.5 * iqr;
+            
+            let outliers = [];
+            let whiskerMin = sorted[0];
+            let whiskerMax = sorted[n-1];
+            
+            let nonOutliers = sorted.filter(x => x >= lowerBound && x <= upperBound);
+            if(nonOutliers.length > 0) {
+                whiskerMin = nonOutliers[0];
+                whiskerMax = nonOutliers[nonOutliers.length-1];
+            }
+            
+            outliers = sorted.filter(x => x < lowerBound || x > upperBound);
+            
+            return { med, q1, q3, min: sorted[0], max: sorted[n-1], lowerBound, upperBound, whiskerMin, whiskerMax, outliers };
+        }
+
+        function cizGrafikler(d1, d2, n_pos, n_neg, n_zero) {
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; const gColor = isDark ? '#334155' : '#e2e8f0';
+            Object.values(charts).forEach(c => { if(c) c.destroy(); });
+
+            // 1. İşaret Frekans Çubuk Grafiği
+            charts.signBar = new Chart(document.getElementById('signBarChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Pozitif Farklar (Artış +)', 'Negatif Farklar (Düşüş -)', 'Eşitlikler (Değişimsiz 0)'],
+                    datasets: [{
+                        label: 'Gözlem Sayısı (Frekans)',
+                        data: [n_pos, n_neg, n_zero],
+                        backgroundColor: ['rgba(16, 185, 129, 0.8)', 'rgba(239, 68, 68, 0.8)', 'rgba(245, 158, 11, 0.8)'],
+                        borderColor: ['#059669', '#dc2626', '#d97706'],
+                        borderWidth: 1.5,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, grid: { color: gColor }, ticks: { color: fColor, stepSize: 1 } }, x: { grid: { display: false }, ticks: { color: fColor, font:{weight:'bold', size:13} } } }
+                }
+            });
+
+            // 2. Öncesi-Sonrası Eğim Grafiği (Slopegraph)
+            let slopeDatasets = [];
+            for(let i=0; i<d1.length; i++) {
+                let color = d2[i] > d1[i] ? 'rgba(16, 185, 129, 0.5)' : (d2[i] < d1[i] ? 'rgba(239, 68, 68, 0.5)' : 'rgba(148, 163, 184, 0.4)');
+                let hoverColor = d2[i] > d1[i] ? '#10b981' : (d2[i] < d1[i] ? '#ef4444' : '#94a3b8');
+                slopeDatasets.push({
+                    data: [d1[i], d2[i]],
+                    borderColor: color,
+                    hoverBorderColor: hoverColor,
+                    borderWidth: d2[i] - d1[i] > 50 || d1[i] - d2[i] > 50 ? 3.5 : 2, // Aykırı sıçramayı daha kalın yap!
+                    pointBackgroundColor: hoverColor,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    tension: 0
+                });
+            }
+
+            charts.slope = new Chart(document.getElementById('slopeChart').getContext('2d'), {
+                type: 'line',
+                data: { labels: ['1. Grup (Ön Test)', '2. Grup (Son Test)'], datasets: slopeDatasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `Değer: ${ctx.raw}` } } },
+                    scales: {
+                        x: { ticks: {color: fColor, font:{weight:'bold', size:14}}, grid: {display: false} },
+                        y: { title: {display: true, text: 'Ölçüm Değeri', color: fColor}, ticks: {color: fColor}, grid: {color: gColor} }
+                    }
+                }
+            });
+
+            // 3. Eşleştirilmiş Kutu Grafiği
+            let st1 = statValues(d1); let st2 = statValues(d2);
+            let globalMin = Math.min(...d1, ...d2); let globalMax = Math.max(...d1, ...d2);
+            let yPadding = (globalMax - globalMin) * 0.1 || 1;
+
+            charts.box = new Chart(document.getElementById('boxChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['1. Grup (Ön Test)', '2. Grup (Son Test)'],
+                    datasets: [ { label: 'Çeyrekler Arası Aralık', data: [[st1.q1, st1.q3], [st2.q1, st2.q3]], backgroundColor: ['rgba(56, 189, 248, 0.4)', 'rgba(52, 211, 153, 0.4)'], borderColor: ['#0284c7', '#059669'], borderWidth: 1 } ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { min: globalMin - yPadding, max: globalMax + yPadding, grid: { color: gColor }, ticks: { color: fColor } }, x: { grid: { display: false }, ticks: { color: fColor, font:{weight:'bold', size:14} } } }
+                },
+                plugins: [{
+                    id: 'boxLinesPairedSign',
+                    afterDraw: (chart) => {
+                        let ctx = chart.ctx; let yScale = chart.scales.y; let meta = chart.getDatasetMeta(0);
+                        let stats = [st1, st2]; let colors = ['#0284c7', '#059669']; let textMainColor = isDark ? '#f8fafc' : '#0f172a';
+                        
+                        ctx.save();
+                        for(let i=0; i<2; i++) {
+                            let xCenter = meta.data[i].x; let s = stats[i];
+                            let yMed = yScale.getPixelForValue(s.med); let yWMin = yScale.getPixelForValue(s.whiskerMin);
+                            let yWMax = yScale.getPixelForValue(s.whiskerMax); let yQ1 = yScale.getPixelForValue(s.q1); let yQ3 = yScale.getPixelForValue(s.q3);
+                            
+                            ctx.beginPath(); ctx.moveTo(xCenter, yWMin); ctx.lineTo(xCenter, yQ1); ctx.moveTo(xCenter, yWMax); ctx.lineTo(xCenter, yQ3);
+                            ctx.strokeStyle = colors[i]; ctx.lineWidth = 2; ctx.stroke();
+                            ctx.beginPath(); ctx.moveTo(xCenter - 20, yWMin); ctx.lineTo(xCenter + 20, yWMin); ctx.moveTo(xCenter - 20, yWMax); ctx.lineTo(xCenter + 20, yWMax); ctx.stroke();
+                            ctx.beginPath(); ctx.moveTo(xCenter - 40, yMed); ctx.lineTo(xCenter + 40, yMed); ctx.lineWidth = 3.5; ctx.strokeStyle = textMainColor; ctx.stroke();
+
+                            if (s.outliers.length > 0) {
+                                ctx.fillStyle = '#ef4444'; ctx.strokeStyle = '#b91c1c'; ctx.lineWidth = 1;
+                                s.outliers.forEach(outVal => {
+                                    let yOut = yScale.getPixelForValue(outVal);
+                                    ctx.beginPath(); ctx.arc(xCenter, yOut, 5, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+                                });
+                            }
+                            if(i===1) { 
+                                ctx.fillStyle = fColor; ctx.font = 'bold 12px sans-serif'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+                                ctx.fillText('← Q3 (Üst Kenar)', xCenter + 45, yQ3); ctx.fillText('← Q1 (Alt Kenar)', xCenter + 45, yQ1);
+                                ctx.fillText('← Maks (Aykırı Hariç)', xCenter + 25, yWMax); ctx.fillText('← Min (Aykırı Hariç)', xCenter + 25, yWMin);
+                                ctx.fillStyle = textMainColor; ctx.fillText('← Medyan', xCenter + 45, yMed);
+                                if (s.outliers.length > 0) {
+                                    ctx.fillStyle = '#ef4444'; let sampleOut = yScale.getPixelForValue(s.outliers[0]);
+                                    ctx.fillText('← Aykırı Değer (Outlier)', xCenter + 15, sampleOut);
+                                }
+                            }
+                        }
+                        ctx.restore();
+                    }
+                }]
+            });
+        }
+
+        function baslatAnalizLoading() {
+            let d1 = document.getElementById('veriKutusu1').value.replace(/,/g, '.').split(/[\s;:\r\n]+/).map(Number).filter(v => !isNaN(v));
+            let d2 = document.getElementById('veriKutusu2').value.replace(/,/g, '.').split(/[\s;:\r\n]+/).map(Number).filter(v => !isNaN(v));
+            
+            if (d1.length < 2 || d2.length < 2) { alert("Analiz için her grupta en az 2 gözlem olmalıdır."); return; }
+            if (d1.length > 1000 || d2.length > 1000) { alert("Maksimum 1000 gözlem çifti girebilirsiniz."); return; }
+            if (d1.length !== d2.length) { alert(`HATA: Gruplardaki gözlem sayıları eşit değil!\n1. Grup: ${d1.length} veri\n2. Grup: ${d2.length} veri`); return; }
+
+            setStyle('bosDurum', 'display', 'none'); setStyle('aktifSonuc', 'display', 'none'); setStyle('loadingOverlay', 'display', 'block');
+            setTimeout(() => analizEtSign(), 800);
+        }
+
+        async function analizEtSign() {
+            try {
+                let alfa = parseFloat(document.getElementById('alfaInput').value);
+                let hyp = document.getElementById('hypType').value;
+                
+                let d1 = document.getElementById('veriKutusu1').value.replace(/,/g, '.').split(/[\s;:\r\n]+/).map(Number).filter(v => !isNaN(v));
+                let d2 = document.getElementById('veriKutusu2').value.replace(/,/g, '.').split(/[\s;:\r\n]+/).map(Number).filter(v => !isNaN(v));
+                
+                let nTotal = d1.length;
+                let n_pos = 0, n_neg = 0, n_zero = 0;
+                let tableHtml = "";
+
+                for(let i=0; i<nTotal; i++) {
+                    let diff = d2[i] - d1[i];
+                    let signBadge = "";
+                    let rowClass = "";
+                    
+                    if (diff > 0) {
+                        n_pos++;
+                        signBadge = '<span class="badge bg-success border border-white shadow-sm px-3 py-1 fs-13"><i class="ri-add-line align-middle"></i> Pozitif (+)</span>';
+                        rowClass = 'bg-success-subtle';
+                    } else if (diff < 0) {
+                        n_neg++;
+                        signBadge = '<span class="badge bg-danger border border-white shadow-sm px-3 py-1 fs-13"><i class="ri-subtract-line align-middle"></i> Negatif (-)</span>';
+                        rowClass = 'bg-danger-subtle';
+                    } else {
+                        n_zero++;
+                        signBadge = '<span class="badge bg-warning text-dark border border-white shadow-sm px-3 py-1 fs-13"><i class="ri-equal-line align-middle"></i> Eşitlik (0)</span>';
+                        rowClass = 'bg-warning-subtle';
+                    }
+
+                    let diffStr = diff > 0 ? `+${diff.toFixed(2)}` : diff.toFixed(2);
+                    tableHtml += `<tr class="${rowClass} rank-table-row border-bottom border-white">
+                        <td class="text-muted fw-bold align-middle">${i+1}</td>
+                        <td class="text-primary fw-bold align-middle fs-14">${d1[i]}</td>
+                        <td class="text-success fw-bold align-middle fs-14">${d2[i]}</td>
+                        <td class="align-middle fw-semibold">${diffStr}</td>
+                        <td class="align-middle">${signBadge}</td>
+                        <td class="align-middle fs-12 text-muted">${diff === 0 ? 'Analizden Atıldı' : 'Sayılıp Dahil Edildi'}</td>
+                    </tr>`;
+                }
+
+                document.getElementById('rankTableBody').innerHTML = tableHtml;
+
+                let nValid = n_pos + n_neg;
+                let pVal = 1.0;
+                let kStat = Math.min(n_pos, n_neg);
+
+                if (nValid > 0) {
+                    if (hyp === 'two-sided') {
+                        let cumProb = 0;
+                        for(let i=0; i<=kStat; i++) cumProb += binomPMF(i, nValid, 0.5);
+                        pVal = Math.min(1.0, 2 * cumProb);
+                    } else if (hyp === 'greater') {
+                        // Son test > Ön test (Pozitiflerin çokluğuna bakılır)
+                        let cumProb = 0;
+                        for(let i=n_pos; i<=nValid; i++) cumProb += binomPMF(i, nValid, 0.5);
+                        pVal = cumProb;
+                        kStat = n_pos;
+                    } else if (hyp === 'less') {
+                        // Son test < Ön test (Negatiflerin çokluğuna bakılır)
+                        let cumProb = 0;
+                        for(let i=n_neg; i<=nValid; i++) cumProb += binomPMF(i, nValid, 0.5);
+                        pVal = cumProb;
+                        kStat = n_neg;
+                    }
+                }
+
+                // Süreklilik düzeltmeli Z yaklaşımı hesabı
+                let zStat = 0;
+                if (nValid > 0) {
+                    let diff_from_expected = Math.abs(n_pos - 0.5 * nValid);
+                    let corrected_diff = Math.max(0, diff_from_expected - 0.5);
+                    zStat = corrected_diff / (0.5 * Math.sqrt(nValid));
+                    if (n_pos < 0.5 * nValid) zStat = -zStat;
+                }
+
+                // API İsteği
+                try {
+                    let reqBody = { data_1: d1, data_2: d2, alternative: hyp, conf_level: 1 - alfa };
+                    let istek = await fetch("https://api.statlabseu.com/test/sign-test", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(reqBody)
+                    });
+                    if(istek.ok) { 
+                        let apiSonuc = await istek.json(); 
+                        if(apiSonuc.p_value !== undefined) pVal = apiSonuc.p_value; 
+                        if(apiSonuc.statistic !== undefined) kStat = apiSonuc.statistic;
+                    }
+                } catch (e) { /* API bağlanamazsa hatasız JS sonuçları ekrandadır */ }
+
+                setStyle('loadingOverlay', 'display', 'none');
+                setStyle('aktifSonuc', 'display', 'block');
+                
+                // Sol ve Sağ Frekans Özetleri
+                setTxt('validObs', nTotal);
+                setTxt('zeroCount', n_zero);
+                setTxt('posRankCount', n_pos);
+                setTxt('negRankCount', n_neg);
+                setStyle('veriKalitesiKutu', 'display', 'block');
+
+                setTxt('testStat', kStat);
+                setTxt('zStatApprox', zStat.toFixed(4));
+                setTxt('nValidVal', nValid);
+                setTxt('lblAlpha', alfa);
+                
+                let domDir = n_pos > n_neg ? "Pozitif Artış Baskın (+)" : (n_neg > n_pos ? "Negatif Düşüş Baskın (-)" : "Eşit Dağılım (=)");
+                setTxt('dominantDirection', domDir);
+
+                // Ana Tablo
+                setTxt('tdN', nTotal);
+                setTxt('tdPos', n_pos);
+                setTxt('tdNeg', n_neg);
+                setTxt('tdTies', n_zero);
+                setTxt('tdValidN', nValid);
+                setTxt('tdPval', pVal.toFixed(4));
+
+                guncelleLinearGauge(pVal, alfa);
+                cizGrafikler(d1, d2, n_pos, n_neg, n_zero);
+
+                let hypText = hyp === 'two-sided' ? "iki ölçüm arasında anlamlı yönsel bir fark vardır" : (hyp === 'greater' ? "Son Test ölçümleri Ön Testten anlamlı derecede daha yüksektir (artış yönü baskındır)" : "Son Test ölçümleri Ön Testten anlamlı derecede daha düşüktür");
+                
+                if (pVal > alfa) {
+                    setClass('kararKutusu', "alert border-0 p-4 mb-2 rounded-10 d-flex align-items-start bg-success-subtle text-success shadow-sm mt-4");
+                    setClass('kararIkon', "ri-checkbox-circle-fill text-success fs-28"); setTxt('kararBaslik', "Gruplar Arası Anlamlı Yönsel Fark Yoktur (H₀ Reddedilemez)");
+                    setHTML('kararAciklama', `P-değeri (${pVal.toFixed(4)}) > \\(\\alpha\\) (${alfa}) olduğundan, pozitif ve negatif değişimler şans eseri (%50 olasılıkla) oluşmuş kabul edilir; <strong>istatistiksel olarak anlamlı bir yönsel baskınlık/fark yoktur.</strong>`);
+                } else {
+                    setClass('kararKutusu', "alert border-0 p-4 mb-2 rounded-10 d-flex align-items-start bg-danger-subtle text-danger shadow-sm mt-4");
+                    setClass('kararIkon', "ri-error-warning-fill text-danger fs-28"); setTxt('kararBaslik', "Gruplar Arası Anlamlı Yönsel Fark Vardır (H₀ Reddedilir)");
+                    setHTML('kararAciklama', `P-değeri (${pVal.toFixed(4)}) < \\(\\alpha\\) (${alfa}) olduğundan <strong>H₁ hipotezi kabul edilir.</strong> Yapılan analize göre, ${hypText}.`);
+                }
+                
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    window.MathJax.typesetPromise([document.getElementById('aktifSonuc'), document.getElementById('detayliHesapTablosu'), document.getElementById('teorikFormuller')]).catch(()=>{});
+                }
+                
+                setTimeout(() => document.getElementById('aktifSonuc').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+            } catch (error) { setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block'); alert("Analiz Hatası: " + error); }
+        }
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>
