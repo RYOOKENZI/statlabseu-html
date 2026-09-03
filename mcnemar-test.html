@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { 
+                inlineMath: [['$', '$'], ['\\(', '\\)']], 
+                displayMath: [['$$', '$$'], ['\\[', '\\]']] 
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    
+    <title>McNemar ve Bowker Testi | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        @font-face {
+            font-family: 'STIX Two Math';
+            src: url('assets/fonts/STIXTwoMath-Regular.ttf') format('truetype');
+            font-weight: normal; font-style: normal;
+        }
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+        .math-var { font-family: 'STIX Two Math', serif !important; font-style: italic; font-weight: normal; color: inherit; display: inline-block; }
+
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        
+        .param-grid-table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: center; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+        .param-grid-table th { font-size: 13px; font-weight: 700; color: #475569; background-color: #f1f5f9; padding: 12px 10px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; white-space: nowrap; vertical-align: middle; line-height: 1.4; }
+        .param-grid-table th:last-child { border-right: none; }
+        .param-grid-table td { padding: 12px 10px; font-size: 14px; color: #0f172a; border-bottom: 1px solid #edf2f7; border-right: 1px solid #edf2f7; background-color: #ffffff; vertical-align: middle; }
+        .param-grid-table td:last-child { border-right: none; }
+        .param-grid-table tr:last-child td { border-bottom: none; }
+        .param-grid-table tr:hover td { background-color: #f8fafc; }
+
+        .info-box { background: linear-gradient(135deg, rgba(47, 143, 232, 0.1), rgba(14, 165, 233, 0.05)); border-left: 4px solid #2f8fe8; padding: 15px 20px; border-radius: 8px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 15px; }
+        .info-box i { font-size: 24px; color: #2f8fe8; }
+        .info-box p { margin: 0; font-size: 14px; color: #475569; line-height: 1.6; }
+
+        .loader-spinner { width: 40px; height: 40px; border: 4px solid rgba(47, 143, 232, 0.2); border-left-color: #2f8fe8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-pulse { animation: pulse-btn 1.8s infinite; background: linear-gradient(135deg, #2f8fe8, #0ea5e9); border: none; color: white !important; }
+        .btn-pulse:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(14, 165, 233, 0.4); background: linear-gradient(135deg, #1d7bd1, #0284c7); }
+        .btn-action { font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; transition: all 0.3s ease; }
+
+        .decision-rule-box { background: rgba(47, 143, 232, 0.05); border: 1px solid rgba(47, 143, 232, 0.2); border-left: 4px solid #2f8fe8; color: #334155; padding: 15px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 15px; }
+
+        /* KÜÇÜLTÜLMÜŞ DİNAMİK TABLO İÇİN CSS */
+        .dynamic-table-container { overflow-x: auto; margin-bottom: 20px; display: flex; justify-content: center; }
+        .dyn-table { border-collapse: separate; border-spacing: 3px; min-width: max-content; }
+        .dyn-cell { padding: 2px; }
+        .dyn-header { font-weight: 600; font-size: 11px; color: #fff; background-color: #475569; border-radius: 6px; padding: 6px 8px; text-align: center; white-space: nowrap; max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
+        .dyn-input { width: 100%; min-width: 45px; max-width: 60px; padding: 8px 4px; font-size: 14px; font-weight: bold; text-align: center; border: 2px solid #e2e8f0; border-radius: 6px; background-color: #f8fafc; transition: all 0.2s; }
+        .dyn-input:focus { outline: none; border-color: #2f8fe8; background-color: #fff; }
+        .dyn-diag { border-color: rgba(16, 185, 129, 0.4); } .dyn-diag:focus { border-color: #10b981; }
+        .dyn-offdiag { border-color: rgba(239, 68, 68, 0.4); background-color: rgba(239, 68, 68, 0.03); } .dyn-offdiag:focus { border-color: #ef4444; background-color: #fff; }
+
+        /* YÜKLEME ALANI */
+        .custom-upload-zone { border: 2px dashed #2f8fe8 !important; background-color: rgba(47, 143, 232, 0.04); transition: all 0.2s ease-in-out; cursor: pointer; }
+        .custom-upload-zone:hover { background-color: rgba(47, 143, 232, 0.08); border-color: #1d7bd1 !important; transform: translateY(-1px); }
+
+        /* DİNAMİK HEATMAP İÇİN CSS */
+        .hm-wrapper { overflow-x: auto; }
+        .hm-table { border-collapse: separate; border-spacing: 4px; width: 100%; min-width: max-content; margin: 0 auto; }
+        .hm-header { font-size: 12px; font-weight: bold; color: #64748b; text-align: center; padding: 5px; }
+        .hm-box { display: flex; align-items: center; justify-content: center; height: 50px; border-radius: 6px; color: white; font-weight: bold; font-size: 16px; transition: transform 0.2s; }
+        .hm-box:hover { transform: scale(1.05); z-index: 2; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        
+        /* SANKEY */
+        .flow-container { display: flex; justify-content: space-between; align-items: center; height: 250px; position: relative; padding: 0 20px; }
+        .flow-node { width: 120px; padding: 15px 0; text-align: center; border-radius: 8px; font-weight: bold; z-index: 2; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .flow-pos { background: linear-gradient(135deg, #10b981, #059669); }
+        .flow-neg { background: linear-gradient(135deg, #94a3b8, #64748b); }
+        .flow-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        .flow-path { fill: none; transition: stroke-width 0.5s ease, stroke 0.5s ease; stroke-linecap: round; }
+        .flow-path:hover { stroke-opacity: 0.9 !important; }
+
+        /* YENİ NESİL SARI UYARI KUTUSU (Sol panel vb. için) */
+        .alert-warning-smart { 
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.03));
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-left: 4px solid #f59e0b; 
+            color: #92400e; 
+            padding: 12px 16px;
+        }
+
+        /* YENİ NESİL İNDİGO İÇGÖRÜ / YORUM KUTUSU */
+        .insight-box {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(99, 102, 241, 0.03));
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-left: 4px solid #6366f1;
+            color: #334155;
+            padding: 12px 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: flex-start;
+            margin-top: 12px;
+        }
+        .insight-box i { color: #6366f1; font-size: 20px; margin-right: 12px; margin-top: -2px; }
+        .insight-box span { font-size: 13.5px; font-weight: 600; line-height: 1.5; }
+
+        /* GECE MODU AYARLARI */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light, html.dark-mode .bg-body-bg { background-color: #0f172a !important; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        html.dark-mode .info-box { background: rgba(47, 143, 232, 0.1); }
+        html.dark-mode .info-box p { color: #cbd5e1; }
+        html.dark-mode .param-grid-table { border-color: #334155; }
+        html.dark-mode .param-grid-table th { background-color: #0f172a; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .param-grid-table td { background-color: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark-mode .param-grid-table tr:hover td { background-color: #0f172a !important; }
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+        html.dark-mode .decision-rule-box { background: rgba(47, 143, 232, 0.1); border-color: rgba(47, 143, 232, 0.2); border-left-color: #60a5fa; color: #e2e8f0; }
+        html.dark-mode .formula-box { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        html.dark-mode mjx-container { color: #e2e8f0 !important; }
+        html.dark-mode .dyn-input { background-color: #0f172a; color: #f8fafc; border-color: #334155; }
+        html.dark-mode .hm-header { color: #cbd5e1; }
+        
+        html.dark-mode .alert-warning-smart { 
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(251, 191, 36, 0.03)) !important; 
+            border: 1px solid rgba(251, 191, 36, 0.2) !important;
+            border-left: 4px solid #fbbf24 !important; 
+            color: #fef08a !important; 
+        }
+        
+        html.dark-mode .insight-box {
+            background: linear-gradient(135deg, rgba(129, 140, 248, 0.15), rgba(129, 140, 248, 0.03));
+            border-color: rgba(129, 140, 248, 0.2);
+            border-left-color: #818cf8;
+            color: #f8fafc;
+        }
+        html.dark-mode .insight-box i { color: #818cf8; }
+
+        .formula-box { background-color: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 15px; font-size: 15px; overflow-x: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+        
+        /* TABS CSS */
+        .nav-pills .nav-link { color: #475569; font-weight: 600; border-radius: 8px; }
+        .nav-pills .nav-link.active { background-color: #2f8fe8; color: white; }
+        html.dark-mode .nav-pills .nav-link { color: #cbd5e1; }
+        html.dark-mode .nav-pills .nav-link.active { background-color: #2f8fe8; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border border-white shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-layout-grid-line align-middle me-1"></i> McNemar & Bowker Testi
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="main-content-container overflow-hidden">
+                
+                <div class="info-box shadow-sm">
+                    <i class="ri-information-line"></i>
+                    <div>
+                        <strong class="d-block text-dark mb-1">McNemar ve McNemar-Bowker Testi (Eşleştirilmiş Kategorik Veriler)</strong>
+                        <p>Aynı bireylerin iki farklı zamanda verdikleri kategorik yanıtlar arasındaki değişimin anlamlılığını test eder. Kategori sayısı 2 ise <strong>McNemar</strong>, ikiden fazla ise <strong>McNemar-Bowker İçsel Simetri Testi</strong> olarak adlandırılır ve test uyuşmayan (köşegen dışı) hücrelere odaklanır.</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- SOL PANEL: VERİ GİRİŞİ -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm">
+                            
+                            <!-- SEKMELER (TABS) -->
+                            <ul class="nav nav-pills mb-3 w-100 d-flex gap-2" id="dataEntryTabs" role="tablist">
+                                <li class="nav-item flex-fill" role="presentation">
+                                    <button class="nav-link w-100 active py-2 fs-13" id="matrix-tab" data-bs-toggle="pill" data-bs-target="#matrix-pane" type="button" role="tab"><i class="ri-table-2 align-middle me-1"></i> Matris Girişi</button>
+                                </li>
+                                <li class="nav-item flex-fill" role="presentation">
+                                    <button class="nav-link w-100 py-2 fs-13" id="raw-tab" data-bs-toggle="pill" data-bs-target="#raw-pane" type="button" role="tab"><i class="ri-file-upload-line align-middle me-1"></i> Ham Veri Yükle</button>
+                                </li>
+                            </ul>
+
+                            <div class="tab-content" id="dataEntryContent">
+                                
+                                <!-- MATRİS SEKMESİ -->
+                                <div class="tab-pane fade show active" id="matrix-pane" role="tabpanel">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h4 class="fs-15 fw-semibold text-dark mb-0">Tablo Boyutu:</h4>
+                                        <select id="matrixSize" class="form-select bg-light border-0 py-1 fs-12 w-auto" onchange="window.matrixLabels=null; buildDynamicGrid()">
+                                            <option value="2" selected>2 × 2 Boyut</option>
+                                            <option value="3">3 × 3 Boyut</option>
+                                            <option value="4">4 × 4 Boyut</option>
+                                            <option value="5">5 × 5 Boyut</option>
+                                            <option value="6">6 × 6 Boyut</option>
+                                            <option value="7">7 × 7 Boyut</option>
+                                            <option value="8">8 × 8 Boyut</option>
+                                            <option value="9">9 × 9 Boyut</option>
+                                            <option value="10">10 × 10 Boyut</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="dynamic-table-container" id="gridContainer">
+                                        <!-- JS ile oluşturulacak -->
+                                    </div>
+                                </div>
+
+                                <!-- HAM VERİ SEKMESİ -->
+                                <div class="tab-pane fade" id="raw-pane" role="tabpanel">
+                                    <div class="custom-upload-zone p-3 rounded-10 text-center mb-3" onclick="document.getElementById('dosyaGezgini').click()">
+                                        <i class="ri-upload-cloud-2-line text-primary fs-28 d-block mb-1"></i>
+                                        <h5 class="fs-13 fw-semibold text-dark mb-1">Excel/CSV Dosyası Seç</h5>
+                                        <span class="fs-11 text-muted d-block">İlk sütun Önce, ikinci sütun Sonra.</span>
+                                        <input type="file" id="dosyaGezgini" accept=".csv, .txt, .xlsx, .xls" style="display: none;">
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-secondary fs-12 mb-1">Veya İki Sütunlu Ham Veriyi Buraya Yapıştırın:</label>
+                                        <textarea id="rawPastedData" class="form-control bg-light border-0 p-2 fs-13" rows="6" placeholder="A_Kategorisi    B_Kategorisi&#10;A_Kategorisi    A_Kategorisi&#10;B_Kategorisi    A_Kategorisi..."></textarea>
+                                    </div>
+                                    <div class="alert alert-warning-smart rounded-3 mb-3">
+                                        <i class="ri-information-fill align-middle me-1"></i> <strong>Sınır: 1000 Satır.</strong> Sistem verileri sayarak otomatik çapraz tablo oluşturacaktır.
+                                    </div>
+                                    <button class="btn btn-outline-primary w-100 py-2 fs-13 fw-bold rounded-10 mb-2" onclick="parsePastedData()"><i class="ri-git-pull-request-line align-middle me-1"></i> Verileri Matrise Çevir</button>
+                                </div>
+
+                            </div>
+                            
+                            <div class="text-center mb-4 mt-2">
+                                <span class="badge bg-primary-subtle text-primary px-3 py-2 fs-13 rounded-pill">Toplam Örneklem (n): <strong id="lblTotalN">0</strong></span>
+                            </div>
+
+                            <hr class="border-secondary opacity-25 my-4">
+
+                            <!-- McNemar Ayarları -->
+                            <div id="mcnemarSettings">
+                                <div class="mb-3">
+                                    <label class="form-label fw-medium text-secondary fs-13 mb-1">McNemar Yöntemi (Sadece 2x2 İçin)</label>
+                                    <select id="methodInput" class="form-select bg-light border-0 rounded-10 py-2 fs-13">
+                                        <option value="auto" selected>Otomatik (En Uygununu Seç)</option>
+                                        <option value="yates">Yates Continuity Correction (Önerilen)</option>
+                                        <option value="exact">Exact McNemar (Küçük örneklem için)</option>
+                                        <option value="classic">Continuity Correction Olmadan (Klasik)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-medium text-secondary fs-13 mb-1">Anlamlılık Düzeyi (Kritik Eşik)</label>
+                                <select id="alfaInput" class="form-select bg-light border-0 rounded-10 py-2 fs-13">
+                                    <option value="0.05" selected>0.05 (%5 Kritik Eşik)</option>
+                                    <option value="0.01">0.01 (%1 Katı Sınır)</option>
+                                    <option value="0.10">0.10 (%10 Esnek Sınır)</option>
+                                </select>
+                            </div>
+
+                            <div class="d-flex flex-column gap-3 mt-4">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-secondary w-50 py-2 rounded-10 btn-action" onclick="ornekVeriYukle()">
+                                        <i class="ri-magic-line align-middle me-1"></i> Örnek Veri
+                                    </button>
+                                    <button class="btn btn-outline-danger w-50 py-2 rounded-10 btn-action" onclick="temizleVeri()">
+                                        <i class="ri-delete-bin-line align-middle me-1"></i> Temizle
+                                    </button>
+                                </div>
+                                <button class="btn w-100 py-3 rounded-10 btn-action btn-pulse" onclick="baslatAnaliz()">
+                                    <i class="ri-bar-chart-2-fill align-middle me-1 fs-18"></i> ANALİZ ET
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SAĞ PANEL: SONUÇLAR -->
+                    <div class="col-lg-8 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                            
+                            <div id="bosDurum" class="text-center py-5 my-auto">
+                                <i class="ri-layout-grid-line text-muted opacity-25" style="font-size: 4.5rem;"></i>
+                                <h5 class="text-muted mt-3 fs-16">Analiz Bekleniyor</h5>
+                                <p class="text-muted fs-14 mb-0">Tablodaki değerleri doldurup analizi başlatın.</p>
+                            </div>
+
+                            <div id="loadingOverlay" class="text-center py-5 my-auto" style="display: none;">
+                                <div class="loader-spinner"></div>
+                                <h5 class="text-primary mt-4 fs-16 fw-semibold">Test İstatistiği Hesaplanıyor...</h5>
+                            </div>
+
+                            <div id="aktifSonuc" style="display: none;">
+
+                                <div class="row g-3 text-center mb-4">
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Uygulanan Test / Yöntem</span>
+                                            <h4 id="resMethod" class="text-primary mb-0 fw-bold fs-16">-</h4>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Test İstatistiği ($\chi^2$)</span>
+                                            <h3 id="resChi" class="text-secondary mb-0 fw-bold fs-22">-</h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">P-Değeri ($p$)</span>
+                                            <h3 id="resP" class="text-primary mb-0 fw-bold fs-22">-</h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="p-2 bg-body-bg rounded-10 border border-light d-flex justify-content-around px-2">
+                                            <div><span class="text-muted fs-12 fw-semibold">Serbestlik Derecesi ($df$):</span> <span id="resDf" class="text-dark fw-bold fs-14 ms-1">-</span></div>
+                                            <div><span class="text-muted fs-12 fw-semibold">Uyuşan (Simetrik) Gözlemler:</span> <span id="concPairs" class="text-success fw-bold fs-14 ms-1">-</span></div>
+                                            <div><span class="text-muted fs-12 fw-semibold">Uyuşmayan (Asimetrik) Gözlemler:</span> <span id="discPairs" class="text-danger fw-bold fs-14 ms-1">-</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- KARAR KUTUSU -->
+                                <div id="kararKutusu" class="alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start shadow-sm mt-3">
+                                    <div class="d-flex justify-content-center mt-1 me-3"><i id="kararIkon" class="fs-28"></i></div>
+                                    <div class="flex-grow-1">
+                                        <h4 id="kararBaslik" class="mb-2 fs-16 fw-bold">-</h4>
+                                        <p id="kararAciklama" class="mb-0 fs-14 text-muted lh-base">-</p>
+                                        
+                                        <!-- YENİ NESİL İNDİGO (MOR) AKILLI YORUM KUTUSU -->
+                                        <div id="yorumWrapper"></div>
+                                    </div>
+                                </div>
+
+                                <!-- HİPOTEZLER -->
+                                <div class="mb-4">
+                                    <h5 class="fs-14 fw-bold text-dark mb-2"><i class="ri-scales-3-line text-primary me-1"></i> Kurulan Hipotezler</h5>
+                                    <div class="p-3 bg-body-bg rounded-3 border border-light">
+                                        <p class="mb-1 text-dark fs-14"><strong>$H_0$:</strong> Kontenjans tablosu içsel olarak simetriktir (1. Ölçümden 2. Ölçüme geçişler rastgeledir).</p>
+                                        <p class="mb-0 text-dark fs-14"><strong>$H_1$:</strong> Tablo simetrik değildir (Belirli bir kategoriye doğru istatistiksel olarak anlamlı bir kayma/yönelim vardır).</p>
+                                    </div>
+                                </div>
+
+                                <!-- GRAFİKLER -->
+                                <div class="row mt-4">
+                                    
+                                    <!-- 1. DİNAMİK HEATMAP -->
+                                    <div class="col-12 mb-4">
+                                        <div class="chart-container h-100 d-flex flex-column border-primary border-opacity-25">
+                                            <h5 class="fs-14 fw-bold text-dark mb-2 text-center text-uppercase tracking-wider">Geçiş Yoğunluk Haritası (Heatmap)</h5>
+                                            <span class="fs-12 text-muted text-center mb-3 d-block">Yeşil köşegen (diyagonal) değişim yaşamayanları, kırmızı köşegen dışı hücreler ise kategori değiştiren asimetrik gözlemleri temsil eder. Test kırmızılara odaklanır.</span>
+                                            
+                                            <div class="hm-wrapper mt-3 mb-3">
+                                                <table class="hm-table" id="heatmapTable">
+                                                    <!-- JS Dolduracak -->
+                                                </table>
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                    <!-- 2. MARJİNAL ORANLAR BAR CHART -->
+                                    <div class="col-md-12 mb-4">
+                                        <div class="chart-container h-100 d-flex flex-column">
+                                            <h5 class="fs-14 fw-bold text-dark mb-2 text-center text-uppercase tracking-wider">Ölçüm 1 vs Ölçüm 2 Marjinal Oran Karşılaştırması</h5>
+                                            <span class="fs-12 text-muted text-center mb-3 d-block">Her bir kategorinin ilk ölçüm ile ikinci ölçüm arasındaki toplam yığılma oranları.</span>
+                                            <div style="position: relative; height: 300px; width: 100%;"><canvas id="propBarChart"></canvas></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 3. SÜREÇ GEÇİŞ ŞEMASI -->
+                                    <div class="col-md-12 mb-2" id="sankeyWrapper" style="display:none;">
+                                        <div class="chart-container h-100 d-flex flex-column pb-5">
+                                            <h5 class="fs-14 fw-bold text-dark mb-2 text-center text-uppercase tracking-wider">Durum Geçiş Şeması (Sankey)</h5>
+                                            <span class="fs-12 text-muted text-center mb-4 d-block">Gözlemlerin Kategoriler arası nasıl dağıldığını gösteren görsel harita.</span>
+                                            
+                                            <div class="flow-container" id="flowContainer">
+                                                <svg class="flow-svg" id="flowSvg"></svg>
+                                                
+                                                <div class="d-flex flex-column justify-content-between h-100">
+                                                    <div class="flow-node flow-pos" id="fn-t1-p"><span id="lbl-t1-1">Kat. 1</span><br><small id="fn-t1-p-val">0</small></div>
+                                                    <div class="flow-node flow-neg" id="fn-t1-n"><span id="lbl-t1-2">Kat. 2</span><br><small id="fn-t1-n-val">0</small></div>
+                                                </div>
+                                                
+                                                <div class="d-flex flex-column justify-content-between h-100">
+                                                    <div class="flow-node flow-pos" id="fn-t2-p"><span id="lbl-t2-1">Kat. 1</span><br><small id="fn-t2-p-val">0</small></div>
+                                                    <div class="flow-node flow-neg" id="fn-t2-n"><span id="lbl-t2-2">Kat. 2</span><br><small id="fn-t2-n-val">0</small></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <!-- AKORDEON: ADIM ADIM HESAPLAMALARI GÖSTER -->
+                                <div class="mt-4 mb-4">
+                                    <button class="btn w-100 py-3 d-flex justify-content-between align-items-center fs-15 fw-bold rounded-10 border-0 shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#adimAdimHesaplama" aria-expanded="false" style="background-color: #f8fafc; border: 1px solid #e2e8f0 !important; color: #0f172a;">
+                                        <span><i class="ri-calculator-line text-primary me-2 fs-20 align-middle"></i> Hesaplama Ayrıntılarını Göster</span>
+                                        <i class="ri-arrow-down-s-line fs-22 text-secondary"></i>
+                                    </button>
+                                    <div class="collapse mt-3" id="adimAdimHesaplama">
+                                        <div class="card card-body bg-white border border-light p-4 rounded-10 shadow-sm fs-14 text-dark" id="hesaplamaDetayIcerik">
+                                            <!-- JS ile Doldurulacak -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- AKORDEON: TEORİK ALTYAPI (FORMÜLLER) -->
+                                <div class="mt-4 mb-2">
+                                    <button class="btn btn-pulse w-100 py-3 d-flex justify-content-between align-items-center fs-15 fw-bold rounded-10 border-0 shadow" type="button" data-bs-toggle="collapse" data-bs-target="#teorikFormuller" aria-expanded="false" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: white;">
+                                        <span><i class="ri-function-line me-2 fs-20 align-middle"></i> Matematiksel Formülleri Görüntüle</span>
+                                        <i class="ri-arrow-down-s-line fs-22"></i>
+                                    </button>
+                                    <div class="collapse mt-3" id="teorikFormuller">
+                                        <div class="card card-body bg-body-bg border border-light p-4 rounded-10 shadow-sm">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <div class="formula-box h-100">
+                                                        <strong class="text-dark d-block mb-2">1. Klasik McNemar (2x2 Tablo)</strong>
+                                                        $$ \chi^2 = \frac{(b - c)^2}{b + c} \quad (df = 1) $$
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="formula-box h-100">
+                                                        <strong class="text-dark d-block mb-2">2. McNemar-Bowker Testi ($k \times k$ Tablo)</strong>
+                                                        İkiden fazla kategori olduğunda genel içsel simetri test edilir:
+                                                        $$ \chi^2 = \sum_{i \lt j} \frac{(n_{ij} - n_{ji})^2}{n_{ij} + n_{ji}} $$
+                                                        <span class="fs-13 text-muted">Serbestlik derecesi: $df = k(k-1)/2$</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <div class="formula-box h-100">
+                                                        <strong class="text-dark d-block mb-2">3. Exact (Kesin) McNemar Testi (Sadece 2x2)</strong>
+                                                        $b+c$ değerinin çok küçük olduğu ($b+c \lt 25$) durumlarda $\chi^2$ dağılımı yanıltıcı olabilir. Bu durumda $X \sim Binomial(b+c, 0.5)$ kullanılarak direkt olasılık hesaplanır.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="footer-area bg-white text-center rounded-10 rounded-bottom-0 p-3 mt-4 border-top shadow-sm">
+                <p class="fs-14 text-body mb-0">© <span>StatLabseu</span> - Gelişmiş İstatistiksel Analiz Platformu</p>
+            </footer>
+
+        </div>
+    </div>
+ 
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function setTxt(id, text) { let el = document.getElementById(id); if (el) el.innerText = text; }
+        function setHTML(id, html) { let el = document.getElementById(id); if (el) el.innerHTML = html; }
+        function setClass(id, cls) { let el = document.getElementById(id); if (el) el.className = cls; }
+        function setStyle(id, prop, val) { let el = document.getElementById(id); if (el) el.style[prop] = val; }
+
+        let charts = { propBar: null };
+        window.matrixLabels = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            if (localStorage.getItem('statlab_theme') === 'dark') { themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); }
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); themeIcon.classList.remove('text-secondary'); localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); themeIcon.classList.remove('text-warning'); themeIcon.classList.add('text-secondary'); localStorage.setItem('statlab_theme', 'light');
+                }
+                let aktifEl = document.getElementById('aktifSonuc'); if(aktifEl && aktifEl.style.display === 'block') baslatAnaliz();
+            });
+            window.addEventListener('resize', cizSankeyCizgileri);
+            
+            document.getElementById('dosyaGezgini').addEventListener('change', function(e) { handleFile(e.target.files[0]); });
+
+            buildDynamicGrid(); // İlk açılış
+        });
+
+        // DİNAMİK TABLO OLUŞTURMA
+        function buildDynamicGrid() {
+            let k = parseInt(document.getElementById('matrixSize').value);
+            
+            if(!window.matrixLabels || window.matrixLabels.length !== k) {
+                window.matrixLabels = [];
+                for(let i=0; i<k; i++) window.matrixLabels.push(`Kat. ${i+1}`);
+            }
+
+            let container = document.getElementById('gridContainer');
+            let html = '<table class="dyn-table"><tbody>';
+            
+            html += '<tr><td class="dyn-cell"></td>';
+            for(let j=0; j<k; j++) {
+                let lbl = window.matrixLabels[j].length > 10 ? window.matrixLabels[j].substring(0,8)+'..' : window.matrixLabels[j];
+                html += `<td class="dyn-cell"><div class="dyn-header" title="${window.matrixLabels[j]}">T2: ${lbl}</div></td>`;
+            }
+            html += '</tr>';
+
+            for(let i=0; i<k; i++) {
+                let lbl = window.matrixLabels[i].length > 10 ? window.matrixLabels[i].substring(0,8)+'..' : window.matrixLabels[i];
+                html += `<tr><td class="dyn-cell"><div class="dyn-header" title="${window.matrixLabels[i]}">T1: ${lbl}</div></td>`;
+                for(let j=0; j<k; j++) {
+                    let cClass = (i === j) ? 'dyn-diag' : 'dyn-offdiag';
+                    html += `<td class="dyn-cell"><input type="number" id="val_${i}_${j}" class="dyn-input ${cClass}" min="0" step="1" oninput="toplamHesapla()" value=""></td>`;
+                }
+                html += '</tr>';
+            }
+            html += '</tbody></table>';
+            container.innerHTML = html;
+            
+            if (k === 2) setStyle('mcnemarSettings', 'display', 'block');
+            else setStyle('mcnemarSettings', 'display', 'none');
+
+            toplamHesapla();
+        }
+
+        function toplamHesapla() {
+            let k = parseInt(document.getElementById('matrixSize').value);
+            let sum = 0;
+            for(let i=0; i<k; i++) {
+                for(let j=0; j<k; j++) {
+                    let el = document.getElementById(`val_${i}_${j}`);
+                    if (el) {
+                        el.value = el.value.replace(/[^0-9]/g, ''); 
+                        sum += parseInt(el.value) || 0;
+                    }
+                }
+            }
+            setTxt('lblTotalN', sum);
+        }
+
+        // HAM VERİ (RAW DATA) PARSER
+        async function handleFile(file) {
+            if (!file) return;
+            const ext = file.name.split('.').pop().toLowerCase();
+            try {
+                if(ext === 'csv' || ext === 'txt') { const text = await file.text(); processRawData(text); }
+                else if (ext === 'xlsx' || ext === 'xls') {
+                    const data = await file.arrayBuffer(); const workbook = XLSX.read(data);
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+                    processRawData(jsonData.map(row => Object.values(row).join('\t')).join('\n'));
+                } else { alert("Desteklenmeyen format."); }
+            } catch (err) { alert("Okuma hatası: " + err); }
+            document.getElementById('dosyaGezgini').value = ""; // reset
+        }
+
+        function parsePastedData() {
+            let text = document.getElementById('rawPastedData').value;
+            processRawData(text);
+        }
+
+        function processRawData(text) {
+            let lines = text.split('\n');
+            let d1 = [], d2 = [];
+            lines.forEach(line => {
+                let parts = line.trim().split(/[\s,;\t]+/);
+                if(parts.length >= 2 && parts[0] !== "" && parts[1] !== "") {
+                    d1.push(parts[0]); d2.push(parts[1]);
+                }
+            });
+            
+            if (d1.length === 0) { alert("Geçerli veri bulunamadı."); return; }
+            if (d1.length > 1000) {
+                d1 = d1.slice(0, 1000); d2 = d2.slice(0, 1000);
+                alert("Maksimum 1000 satır veri sınırı aşıldı. İlk 1000 satır işleme alındı.");
+            }
+            
+            // Benzersiz kategorileri bul ve sırala
+            let unique = Array.from(new Set([...d1, ...d2])).sort();
+            let k = unique.length;
+            if(k < 2) { alert("Matris oluşturabilmek için en az 2 farklı kategori olmalıdır."); return; }
+            if(k > 10) { alert("Maksimum 10 farklı kategori desteklenmektedir. Sizin verinizde " + k + " kategori bulundu."); return; }
+            
+            // Dropdown'u güncelle
+            let sizeDropdown = document.getElementById('matrixSize');
+            let optionExists = Array.from(sizeDropdown.options).some(opt => parseInt(opt.value) === k);
+            if(optionExists) sizeDropdown.value = k;
+            
+            window.matrixLabels = unique;
+            buildDynamicGrid();
+            
+            // Matrisi doldur
+            let matrix = Array(k).fill(0).map(()=>Array(k).fill(0));
+            for(let i=0; i<d1.length; i++) {
+                let r = unique.indexOf(d1[i]);
+                let c = unique.indexOf(d2[i]);
+                matrix[r][c]++;
+            }
+            
+            for(let i=0; i<k; i++) {
+                for(let j=0; j<k; j++) {
+                    document.getElementById(`val_${i}_${j}`).value = matrix[i][j];
+                }
+            }
+            toplamHesapla();
+            document.getElementById('matrix-tab').click(); // Sekmeyi değiştir
+        }
+
+        function ornekVeriYukle() {
+            document.getElementById('matrix-tab').click(); // sekme aktif olsun
+            let k = parseInt(document.getElementById('matrixSize').value);
+            for(let i=0; i<k; i++) {
+                for(let j=0; j<k; j++) {
+                    let el = document.getElementById(`val_${i}_${j}`);
+                    if (el) {
+                        if (i === j) el.value = Math.floor(Math.random() * 50) + 20; 
+                        else el.value = Math.floor(Math.random() * 15) + (i<j ? 10 : 0); 
+                    }
+                }
+            }
+            toplamHesapla();
+        }
+
+        function temizleVeri() {
+            let k = parseInt(document.getElementById('matrixSize').value);
+            for(let i=0; i<k; i++) {
+                for(let j=0; j<k; j++) {
+                    let el = document.getElementById(`val_${i}_${j}`);
+                    if (el) el.value = "";
+                }
+            }
+            document.getElementById('rawPastedData').value = "";
+            setTxt('lblTotalN', '0');
+            setStyle('aktifSonuc', 'display', 'none'); setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block');
+            Object.values(charts).forEach(c => { if(c) c.destroy(); });
+        }
+
+        // --- P-DEĞERİ HESAPLAYICILAR ---
+        function comb(n, k) {
+            if (k < 0 || k > n) return 0;
+            if (k === 0 || k === n) return 1;
+            if (k > n / 2) k = n - k;
+            let res = 1;
+            for (let i = 1; i <= k; i++) { res = res * (n - i + 1) / i; }
+            return res;
+        }
+
+        function exactBinomialP(b, c) {
+            let n = b + c; let k = Math.min(b, c);
+            let prob = 0.5; let pVal = 0;
+            for(let i=0; i<=k; i++) {
+                pVal += comb(n, i) * Math.pow(prob, i) * Math.pow(1-prob, n-i);
+            }
+            return Math.min(1.0, pVal * 2); 
+        }
+
+        function normalCDF(z) {
+            let absZ = Math.abs(z);
+            if (absZ > 8.0) return z > 0 ? 1.0 : 0.0;
+            let p = 0.2316419; let a1 = 0.31938153; let a2 = -0.356563782; let a3 = 1.781477937; let a4 = -1.821255978; let a5 = 1.330274429;
+            let t = 1.0 / (1.0 + p * absZ);
+            let d = (1.0 / Math.sqrt(2 * Math.PI)) * Math.exp(-0.5 * z * z);
+            let prob = d * t * (a1 + t * (a2 + t * (a3 + t * (a4 + t * a5))));
+            return z > 0 ? 1.0 - prob : prob;
+        }
+
+        function chiSquareP(x, df) {
+            if (x <= 0 || df < 1) return 1.0;
+            if (df === 1) return 2 * (1 - normalCDF(Math.sqrt(x)));
+            if (df === 2) return Math.exp(-x / 2);
+            let z = (Math.pow(x / df, 1/3) - (1 - 2/(9*df))) / Math.sqrt(2/(9*df));
+            return 1 - normalCDF(z);
+        }
+
+        // --- GRAFİKLER ---
+        let currentSankeyData = {};
+        function cizSankeyCizgileri() {
+            if(!currentSankeyData.a && currentSankeyData.a !== 0) return;
+            const svg = document.getElementById('flowSvg');
+            svg.innerHTML = ''; 
+            
+            let n1_p = document.getElementById('fn-t1-p'); let n1_n = document.getElementById('fn-t1-n');
+            let n2_p = document.getElementById('fn-t2-p'); let n2_n = document.getElementById('fn-t2-n');
+            
+            let p1p = {x: n1_p.offsetLeft + n1_p.offsetWidth, y: n1_p.offsetTop + n1_p.offsetHeight/2};
+            let p1n = {x: n1_n.offsetLeft + n1_n.offsetWidth, y: n1_n.offsetTop + n1_n.offsetHeight/2};
+            let p2p = {x: n2_p.offsetLeft, y: n2_p.offsetTop + n2_p.offsetHeight/2};
+            let p2n = {x: n2_n.offsetLeft, y: n2_n.offsetTop + n2_n.offsetHeight/2};
+
+            let t = currentSankeyData.n || 1;
+            let wA = Math.max(1, (currentSankeyData.a / t) * 40);
+            let wB = Math.max(1, (currentSankeyData.b / t) * 40);
+            let wC = Math.max(1, (currentSankeyData.c / t) * 40);
+            let wD = Math.max(1, (currentSankeyData.d / t) * 40);
+
+            const pColor = 'rgba(16, 185, 129, 0.4)'; const nColor = 'rgba(100, 116, 139, 0.4)';
+            const bColor = 'rgba(239, 68, 68, 0.6)'; const cColor = 'rgba(239, 68, 68, 0.6)';
+
+            function createPath(start, end, width, color) {
+                if (width <= 1 && currentSankeyData.n > 0) return; 
+                let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                let d = `M ${start.x} ${start.y} C ${(start.x+end.x)/2} ${start.y}, ${(start.x+end.x)/2} ${end.y}, ${end.x} ${end.y}`;
+                path.setAttribute('d', d); path.setAttribute('stroke', color); path.setAttribute('stroke-width', width); path.setAttribute('class', 'flow-path');
+                svg.appendChild(path);
+            }
+
+            createPath(p1p, p2p, wA, pColor); 
+            createPath(p1p, p2n, wB, bColor); 
+            createPath(p1n, p2p, wC, cColor); 
+            createPath(p1n, p2n, wD, nColor); 
+        }
+
+        function cizGrafikler(matrix, marginsT1, marginsT2) {
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; const gColor = isDark ? '#334155' : '#e2e8f0';
+            Object.values(charts).forEach(ch => { if(ch) ch.destroy(); });
+
+            let k = matrix.length;
+            let n = marginsT1.reduce((a,b)=>a+b, 0);
+
+            // 1. DİNAMİK HEATMAP OLUŞTUR
+            let hmTable = document.getElementById('heatmapTable');
+            let hmHTML = '<tbody><tr><td></td>';
+            for(let j=0; j<k; j++) {
+                let lbl = window.matrixLabels[j].length > 10 ? window.matrixLabels[j].substring(0,8)+'..' : window.matrixLabels[j];
+                hmHTML += `<td class="hm-header" title="${window.matrixLabels[j]}">T2: ${lbl}</td>`;
+            }
+            hmHTML += '</tr>';
+
+            let maxV = 1;
+            for(let i=0; i<k; i++) {
+                for(let j=0; j<k; j++) { if(matrix[i][j] > maxV) maxV = matrix[i][j]; }
+            }
+
+            for(let i=0; i<k; i++) {
+                let lbl = window.matrixLabels[i].length > 10 ? window.matrixLabels[i].substring(0,8)+'..' : window.matrixLabels[i];
+                hmHTML += `<tr><td class="hm-header text-end pe-2" title="${window.matrixLabels[i]}">T1: ${lbl}</td>`;
+                for(let j=0; j<k; j++) {
+                    let val = matrix[i][j];
+                    let opacity = 0.2 + (val/maxV)*0.8;
+                    let bg = (i === j) ? `rgba(16, 185, 129, ${opacity})` : `rgba(239, 68, 68, ${opacity})`;
+                    let border = (i !== j && val > 0) ? 'border: 2px solid #ef4444;' : '';
+                    hmHTML += `<td><div class="hm-box" style="background-color: ${bg}; ${border}">${val}</div></td>`;
+                }
+                hmHTML += '</tr>';
+            }
+            hmTable.innerHTML = hmHTML + '</tbody>';
+
+            // 2. MARJİNAL ORANLAR BAR CHART
+            let labels = []; let dataT1 = []; let dataT2 = [];
+            for(let i=0; i<k; i++) {
+                labels.push(window.matrixLabels[i]);
+                dataT1.push((marginsT1[i]/n)*100 || 0);
+                dataT2.push((marginsT2[i]/n)*100 || 0);
+            }
+
+            charts.propBar = new Chart(document.getElementById('propBarChart'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Ölçüm 1 Dağılımı (%)', data: dataT1, backgroundColor: 'rgba(47, 143, 232, 0.7)', borderColor: '#1d7bd1', borderWidth: 2, borderRadius: 4 },
+                        { label: 'Ölçüm 2 Dağılımı (%)', data: dataT2, backgroundColor: 'rgba(16, 185, 129, 0.7)', borderColor: '#059669', borderWidth: 2, borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { color: fColor } } },
+                    scales: { 
+                        y: { beginAtZero: true, max: 100, grid: { color: gColor }, ticks: { color: fColor, callback: v=>v+'%' } },
+                        x: { grid: { display: false }, ticks: { color: fColor, font: {weight: 'bold'} } }
+                    }
+                }
+            });
+
+            // 3. SANKEY FLOW
+            if (k === 2) {
+                setStyle('sankeyWrapper', 'display', 'block');
+                let a = matrix[0][0]; let b = matrix[0][1]; let c = matrix[1][0]; let d = matrix[1][1];
+                currentSankeyData = {a,b,c,d,n};
+                
+                let l1 = window.matrixLabels[0]; let l2 = window.matrixLabels[1];
+                setTxt('lbl-t1-1', l1.length > 10 ? l1.substring(0,8)+'..' : l1);
+                setTxt('lbl-t1-2', l2.length > 10 ? l2.substring(0,8)+'..' : l2);
+                setTxt('lbl-t2-1', l1.length > 10 ? l1.substring(0,8)+'..' : l1);
+                setTxt('lbl-t2-2', l2.length > 10 ? l2.substring(0,8)+'..' : l2);
+                
+                setTxt('fn-t1-p-val', a+b); setTxt('fn-t1-n-val', c+d);
+                setTxt('fn-t2-p-val', a+c); setTxt('fn-t2-n-val', b+d);
+                setTimeout(cizSankeyCizgileri, 100); 
+            } else {
+                setStyle('sankeyWrapper', 'display', 'none');
+            }
+        }
+
+        function baslatAnaliz() {
+            let k = parseInt(document.getElementById('matrixSize').value);
+            let matrix = [];
+            
+            for(let i=0; i<k; i++) {
+                let row = [];
+                for(let j=0; j<k; j++) {
+                    let valStr = document.getElementById(`val_${i}_${j}`).value;
+                    if (valStr === '') { alert("Lütfen tablodaki tüm hücreleri doldurun. Boş hücreye 0 yazın."); return; }
+                    let val = parseInt(valStr);
+                    if (val < 0) { alert("Negatif değer girilemez."); return; }
+                    row.push(val);
+                }
+                matrix.push(row);
+            }
+
+            setStyle('bosDurum', 'display', 'none'); setStyle('aktifSonuc', 'display', 'none'); setStyle('loadingOverlay', 'display', 'block');
+            setTimeout(() => hesaplaTest(matrix, k), 800);
+        }
+
+        async function hesaplaTest(matrix, k) {
+            try {
+                let alfa = parseFloat(document.getElementById('alfaInput').value);
+                
+                let n = 0; let conc = 0; let disc = 0;
+                let marginsT1 = new Array(k).fill(0);
+                let marginsT2 = new Array(k).fill(0);
+
+                let chi2 = 0;
+                let df = k * (k - 1) / 2;
+                let pVal = 0; let exactP = null;
+                let methodTxt = "";
+
+                // Matris Analizi
+                for(let i=0; i<k; i++) {
+                    for(let j=0; j<k; j++) {
+                        let val = matrix[i][j];
+                        n += val;
+                        marginsT1[i] += val;
+                        marginsT2[j] += val;
+                        if (i === j) conc += val;
+                    }
+                }
+                disc = n - conc;
+
+                if (disc === 0) {
+                    alert("Tabloda uyuşmayan (köşegen dışı) hiçbir çift yok. Bu durumda test istatistiği hesaplanamaz.");
+                    setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block'); return;
+                }
+
+                // 2x2 McNEMAR
+                if (k === 2) {
+                    let methodReq = document.getElementById('methodInput').value;
+                    let a = matrix[0][0]; let b = matrix[0][1]; let c = matrix[1][0]; let d = matrix[1][1];
+                    let usedMethod = methodReq;
+                    if (usedMethod === 'auto') {
+                        if (disc < 25) usedMethod = 'exact';
+                        else usedMethod = 'yates';
+                    }
+
+                    if (disc <= 150) exactP = exactBinomialP(b, c);
+                    else exactP = "N>150";
+
+                    if (usedMethod === 'classic') {
+                        chi2 = Math.pow(b - c, 2) / disc;
+                        pVal = chiSquareP(chi2, 1);
+                        methodTxt = "Klasik McNemar (Düzeltmesiz)";
+                    } else if (usedMethod === 'yates') {
+                        chi2 = Math.pow(Math.max(0, Math.abs(b - c) - 1), 2) / disc;
+                        pVal = chiSquareP(chi2, 1);
+                        methodTxt = "McNemar (Yates Düzeltmeli)";
+                    } else {
+                        pVal = typeof exactP === 'number' ? exactP : chiSquareP(Math.pow(Math.abs(b-c)-1, 2)/disc, 1);
+                        chi2 = Math.pow(b - c, 2) / disc; 
+                        methodTxt = "Exact McNemar (Kesin Binom)";
+                    }
+                } 
+                // kxk BOWKER
+                else {
+                    methodTxt = "McNemar-Bowker Testi";
+                    for(let i=0; i<k; i++) {
+                        for(let j=i+1; j<k; j++) {
+                            let nij = matrix[i][j];
+                            let nji = matrix[j][i];
+                            if (nij + nji > 0) {
+                                chi2 += Math.pow(nij - nji, 2) / (nij + nji);
+                            }
+                        }
+                    }
+                    pVal = chiSquareP(chi2, df);
+                }
+
+                // --- 3 SANİYE TIMEOUT İLE API İSTEĞİ ---
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000); 
+
+                try {
+                    let reqBody = { matrix: matrix, k: k };
+                    if (k === 2) reqBody.method = document.getElementById('methodInput').value;
+                    
+                    let istek = await fetch("https://api.statlabseu.com/test/mcnemar-bowker", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(reqBody), signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    if(istek.ok) { 
+                        let apiSonuc = await istek.json(); 
+                        if(apiSonuc.p_value !== undefined) pVal = apiSonuc.p_value; 
+                        if(apiSonuc.chi_square !== undefined) chi2 = apiSonuc.chi_square;
+                        if(apiSonuc.exact_p !== undefined && k === 2) exactP = apiSonuc.exact_p;
+                        if(apiSonuc.method_used !== undefined) methodTxt = apiSonuc.method_used;
+                    }
+                } catch (e) {
+                    clearTimeout(timeoutId);
+                }
+
+                // --- DOM GÜNCELLEMELERİ ---
+                setTxt('resMethod', methodTxt);
+                setTxt('resChi', (k===2 && methodTxt.includes("Exact")) ? "Binom" : chi2.toFixed(3));
+                setTxt('resP', pVal.toFixed(4));
+                setTxt('resDf', df);
+                setTxt('concPairs', conc);
+                setTxt('discPairs', disc);
+
+                // KARAR METNİ VE İNDİGO İÇGÖRÜ KUTUSU
+                let yorumWrapper = document.getElementById('yorumWrapper');
+                let yorum = "";
+                
+                yorumWrapper.className = "insight-box shadow-sm"; // Sabit elit sınıf ataması
+
+                if (pVal < alfa) {
+                    setClass('kararKutusu', "alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start bg-danger-subtle text-danger shadow-sm mt-3");
+                    setClass('kararIkon', "ri-error-warning-fill text-danger fs-28"); setTxt('kararBaslik', "H₀ Reddedilir (Anlamlı Asimetri Var)");
+                    setHTML('kararAciklama', `p $\\lt \\alpha$ olduğu için, tablo içsel olarak simetrik değildir. Belirli kategoriler arasında istatistiksel olarak anlamlı bir yönelim/değişim vardır.`);
+                    
+                    if (k === 2) {
+                        let b = matrix[0][1]; let c = matrix[1][0];
+                        if (c > b) yorum = `<span>"${window.matrixLabels[1]}" kategorisinden "${window.matrixLabels[0]}" kategorisine geçenler (c=${c}), tersi yönde değişenlerden (b=${b}) anlamlı derecede daha fazladır.</span>`;
+                        else if (b > c) yorum = `<span>"${window.matrixLabels[0]}" kategorisinden "${window.matrixLabels[1]}" kategorisine geçenler (b=${b}), tersi yönde değişenlerden (c=${c}) anlamlı derecede daha fazladır.</span>`;
+                        else yorum = `<span>İki yöndeki değişim eşit görünse de anlamlılık test edildi.</span>`;
+                    } else {
+                        yorum = `<span><strong>Önemli Asimetri:</strong> Kategoriler arası çapraz geçişlerde birbirini dengelemeyen, istatistiksel olarak çok belirgin bir akış ve kayma yönü tespit edilmiştir.</span>`;
+                    }
+                } else {
+                    setClass('kararKutusu', "alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start bg-success-subtle text-success shadow-sm mt-3");
+                    setClass('kararIkon', "ri-checkbox-circle-fill text-success fs-28"); setTxt('kararBaslik', "H₀ Reddedilemez (Anlamlı Asimetri Yok)");
+                    setHTML('kararAciklama', `p $\\ge \\alpha$ olduğu için, tablonun içsel olarak simetrik olduğu kabul edilir. Geçişlerin ve değişimlerin şans eseri olduğu söylenebilir.`);
+                    
+                    if (k === 2) {
+                        yorum = `<span>Gerçekleşen geçişler (b ve c hücreleri) istatistiksel olarak bir yönelim kanıtlamak için yeterince güçlü bir fark yaratmamıştır.</span>`;
+                    } else {
+                        yorum = `<span>Kategoriler arası çapraz geçişler birbirini dengelemektedir (İçsel simetri korunmaktadır).</span>`;
+                    }
+                }
+                setHTML('yorumWrapper', `<i class="ri-lightbulb-flash-fill"></i> ${yorum}`);
+
+                // HESAPLAMA DETAYLARI AKORDEONU
+                let calcDetHTML = `
+                    <p class="fw-bold mb-2 text-dark">Adım 1: Toplam ve Çiftler</p>
+                    <ul class="text-muted fs-13 mb-3">
+                        <li>Toplam Gözlem: $N = ${n}$</li>
+                        <li>Değişmeyen (Simetrik Köşegen) Çiftler: ${conc}</li>
+                        <li>Değişen (Asimetrik) Çiftler: ${disc}</li>
+                    </ul>
+
+                    <p class="fw-bold mb-2 text-dark">Adım 2: Test İstatistiği Hesabı</p>
+                    <div class="bg-light p-3 rounded border fs-13 text-muted mb-3">
+                        <p class="mb-1"><strong>Kullanılan Formül:</strong> ${methodTxt}</p>
+                `;
+                if (k === 2 && methodTxt.includes("Klasik")) {
+                    calcDetHTML += `<p class="mb-0">$\\chi^2 = \\frac{(${matrix[0][1]} - ${matrix[1][0]})^2}{${disc}} = ${chi2.toFixed(4)}$</p>`;
+                } else if (k === 2 && methodTxt.includes("Yates")) {
+                    calcDetHTML += `<p class="mb-0">$\\chi^2 = \\frac{(|${matrix[0][1]} - ${matrix[1][0]}| - 1)^2}{${disc}} = ${chi2.toFixed(4)}$</p>`;
+                } else if (k > 2) {
+                    calcDetHTML += `<p class="mb-0">$\\chi^2 = \\sum_{i \\lt j} \\frac{(n_{ij} - n_{ji})^2}{n_{ij} + n_{ji}} = ${chi2.toFixed(4)}$</p>`;
+                } else {
+                    calcDetHTML += `<p class="mb-0">İstatistiksel test Binom dağılımı üzerinden doğrudan Exact P olasılığı kullanılarak yapılmıştır. $X \\sim Binom(${disc}, 0.5)$</p>`;
+                }
+                calcDetHTML += `</div>
+                    <p class="fw-bold mb-2 text-dark">Adım 3: P-Değeri (Olasılık)</p>
+                    <ul class="text-muted fs-13 mb-0">
+                        <li>Serbestlik Derecesi ($df$): <strong>${df}</strong></li>
+                        <li>Asimptotik P-Değeri ($\\chi^2$ tabanlı): <strong>${chiSquareP(chi2, df).toFixed(5)}</strong></li>
+                        ${k===2 ? `<li>Exact P-Değeri (Binom): <strong>${typeof exactP === 'number' ? exactP.toFixed(5) : exactP}</strong></li>` : ''}
+                        <li class="mt-2 text-dark">Raporlanan Nihai P-Değeri: <strong>${pVal.toFixed(5)}</strong></li>
+                    </ul>
+                `;
+                setHTML('hesaplamaDetayIcerik', calcDetHTML);
+
+                // ARAYÜZÜ GÖSTER
+                setStyle('loadingOverlay', 'display', 'none'); setStyle('aktifSonuc', 'display', 'block');
+                cizGrafikler(matrix, marginsT1, marginsT2);
+
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) {
+                        MathJax.typesetClear();
+                        MathJax.typesetPromise().catch(err => console.log(err));
+                    }
+                    document.getElementById('aktifSonuc').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+
+            } catch (error) { setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block'); alert("Analiz Hatası: " + error); }
+        }
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>
