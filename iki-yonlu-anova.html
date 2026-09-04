@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { 
+                inlineMath: [['$', '$'], ['\\(', '\\)']], 
+                displayMath: [['$$', '$$'], ['\\[', '\\]']] 
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    
+    <title>İki Yönlü ANOVA | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        @font-face {
+            font-family: 'STIX Two Math';
+            src: url('assets/fonts/STIXTwoMath-Regular.ttf') format('truetype');
+            font-weight: normal; font-style: normal;
+        }
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+        .math-var { font-family: 'STIX Two Math', serif !important; font-style: italic; font-weight: normal; color: inherit; display: inline-block; }
+
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        
+        /* KUSURSUZ TABLO TASARIMI (KAYMA-KESİLME DÜZELTİLMİŞ) */
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; }
+        .param-grid-table { width: 100%; border-collapse: collapse; text-align: center; margin: 0; min-width: max-content; }
+        .param-grid-table th { font-size: 13px; font-weight: 700; color: #475569; background-color: #f1f5f9; padding: 13px 12px; border: 1px solid #e2e8f0; white-space: nowrap; vertical-align: middle; }
+        .param-grid-table td { padding: 13px 12px; font-size: 13px; color: #0f172a; border: 1px solid #e2e8f0; vertical-align: middle; white-space: nowrap; }
+        .param-grid-table tr:hover td { background-color: #f8fafc; }
+        
+        .param-grid-table tr:first-child th, .param-grid-table tr:first-child td { border-top: none; }
+        .param-grid-table tr:last-child th, .param-grid-table tr:last-child td { border-bottom: none; }
+        .param-grid-table tr th:first-child, .param-grid-table tr td:first-child { border-left: none; }
+        .param-grid-table tr th:last-child, .param-grid-table tr td:last-child { border-right: none; }
+
+        .info-box { background: linear-gradient(135deg, rgba(47, 143, 232, 0.1), rgba(14, 165, 233, 0.05)); border-left: 4px solid #2f8fe8; padding: 15px 20px; border-radius: 8px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 15px; }
+        .info-box i { font-size: 24px; color: #2f8fe8; }
+        .info-box p { margin: 0; font-size: 14px; color: #475569; line-height: 1.6; }
+
+        .loader-spinner { width: 40px; height: 40px; border: 4px solid rgba(47, 143, 232, 0.2); border-left-color: #2f8fe8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-pulse { animation: pulse-btn 1.8s infinite; background: linear-gradient(135deg, #2f8fe8, #0ea5e9); border: none; color: white !important; }
+        .btn-pulse:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(14, 165, 233, 0.4); background: linear-gradient(135deg, #1d7bd1, #0284c7); }
+        .btn-action { font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; transition: all 0.3s ease; }
+
+        /* UYARI VE İÇGÖRÜ KUTULARI (YÜKSEK KONTRAST) */
+        .alert-warning-smart { background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.03)); border: 1px solid rgba(245, 158, 11, 0.2); border-left: 4px solid #f59e0b; color: #92400e; padding: 12px 16px; }
+        
+        .insight-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #6366f1; padding: 15px 16px; border-radius: 8px; display: flex; align-items: flex-start; margin-top: 12px; }
+        .insight-box i { color: #6366f1; font-size: 22px; margin-right: 12px; margin-top: -3px; }
+        .insight-box span, .insight-box strong { font-size: 14.5px; font-weight: 600; line-height: 1.6; color: #000000 !important; }
+
+        .textarea-lines { position: absolute; left: 0; top: 0; bottom: 0; width: 35px; background: rgba(0,0,0,0.02); border-right: 1px solid #e2e8f0; border-top-left-radius: 8px; border-bottom-left-radius: 8px; text-align: right; padding: 8px 5px; color: #94a3b8; font-size: 12px; font-family: monospace; overflow: hidden; pointer-events: none; }
+        .form-control-lined { padding-left: 45px !important; font-size: 13px; white-space: nowrap; }
+
+        .formula-box { background-color: #ffffff; padding: 25px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 15px; overflow-x: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.02);}
+
+        /* GECE MODU AYARLARI */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light, html.dark-mode .bg-body-bg { background-color: #0f172a !important; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        html.dark-mode .info-box { background: rgba(47, 143, 232, 0.1); }
+        html.dark-mode .info-box p { color: #cbd5e1; }
+        
+        html.dark-mode .table-responsive { border-color: #334155; background: #1e293b; }
+        html.dark-mode .param-grid-table th { background-color: #0f172a; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .param-grid-table td { background-color: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark-mode .param-grid-table tr:hover td { background-color: #0f172a !important; }
+        
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+        html.dark-mode .formula-box { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        html.dark-mode .formula-box p { color: #cbd5e1; }
+        html.dark-mode mjx-container { color: #e2e8f0 !important; }
+        
+        html.dark-mode .textarea-lines { background: rgba(255,255,255,0.02); border-color: #334155; }
+        html.dark-mode .form-control-lined { background-color: #1e293b !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+
+        html.dark-mode .alert-warning-smart { background: rgba(245, 158, 11, 0.1) !important; border: 1px solid rgba(245, 158, 11, 0.2) !important; border-left: 4px solid #fbbf24 !important; color: #fcd34d !important; }
+        html.dark-mode .insight-box { background-color: #1e293b !important; border: 1px solid #334155 !important; border-left: 4px solid #818cf8 !important; }
+        html.dark-mode .insight-box i { color: #818cf8 !important; }
+        html.dark-mode .insight-box span, html.dark-mode .insight-box strong { color: #ffffff !important; }
+        
+        /* ÖZEL İKİ YÖNLÜ KARTLAR */
+        .anova-stat-card { padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; height: 100%; transition: all 0.3s; display: flex; flex-direction: column; justify-content: space-between; }
+        html.dark-mode .anova-stat-card { background: #1e293b; border-color: #334155; }
+        .anova-stat-card.sig { border-left: 4px solid #ef4444; }
+        .anova-stat-card.not-sig { border-left: 4px solid #10b981; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border border-white shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-bar-chart-2-fill align-middle me-1"></i> İki Yönlü ANOVA
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="main-content-container overflow-hidden">
+                
+                <div class="info-box shadow-sm">
+                    <i class="ri-information-line"></i>
+                    <div>
+                        <strong class="d-block text-dark mb-1">İki Yönlü Varyans Analizi (Two-Way ANOVA)</strong>
+                        <p class="mb-1">Sürekli bir bağımlı değişken üzerinde, <strong>iki farklı kategorik bağımsız faktörün</strong> ana etkilerini ve bu iki faktörün birbirleriyle olan <strong>etkileşimini (A × B)</strong> eş zamanlı olarak test eder.</p>
+                        <p class="mb-0 text-danger fw-semibold fs-13"><i class="ri-error-warning-fill align-middle"></i> Model: $Y = \mu + A + B + (A \times B) + \varepsilon$. Etkileşim anlamlı çıktığında, faktörlerin ana etkileri tek başına doğrudan yorumlanmamalıdır (Basit etkilere bakılmalıdır).</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- SOL PANEL: VERİ GİRİŞİ -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="fs-17 fw-semibold text-dark mb-0">Veri Girişi</h4>
+                            </div>
+                            
+                            <div class="alert alert-warning-smart py-2 fs-12 mb-3 border-0 rounded-3">
+                                <i class="ri-edit-2-fill align-middle me-1"></i> Verilerinizi <strong>Faktör A (Tab/Virgül) Faktör B (Tab/Virgül) Değer</strong> formatında alt alta giriniz. 
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between text-secondary fw-bold fs-11 px-4 mb-1">
+                                    <span>Faktör A</span><span>Faktör B</span><span>Bağımlı (Y)</span>
+                                </div>
+                                <div class="position-relative">
+                                    <div class="textarea-lines" id="lines_data">1<br>2<br>3<br>4</div>
+                                    <textarea id="val_data" class="form-control form-control-lined border-0 rounded-3 bg-light" rows="12" placeholder="Örn:&#10;Kadın    Lise    45&#10;Erkek    Üni     55..." oninput="updateLines(); calculateTotalN();" onscroll="syncScroll()"></textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mb-4 mt-2">
+                                <span class="badge bg-primary-subtle text-primary px-3 py-2 fs-13 rounded-pill">Toplam Gözlem ($N$): <strong id="lblTotalN">0</strong></span>
+                            </div>
+
+                            <hr class="border-secondary opacity-25 my-4">
+
+                            <div class="mb-4">
+                                <label class="form-label fw-medium text-secondary fs-13 mb-1">Anlamlılık Düzeyi ($\alpha$)</label>
+                                <select id="alfaInput" class="form-select bg-light border-0 rounded-10 py-2 fs-13">
+                                    <option value="0.05" selected>0.05 (%5 Kritik Eşik)</option>
+                                    <option value="0.01">0.01 (%1 Katı Sınır)</option>
+                                    <option value="0.10">0.10 (%10 Esnek Sınır)</option>
+                                </select>
+                            </div>
+
+                            <div class="d-flex flex-column gap-3 mt-4">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-secondary w-50 py-2 rounded-10 btn-action" onclick="ornekVeriYukle()">
+                                        <i class="ri-magic-line align-middle me-1"></i> Örnek Veri
+                                    </button>
+                                    <button class="btn btn-outline-danger w-50 py-2 rounded-10 btn-action" onclick="temizleVeri()">
+                                        <i class="ri-delete-bin-line align-middle me-1"></i> Temizle
+                                    </button>
+                                </div>
+                                <button class="btn w-100 py-3 rounded-10 btn-action btn-pulse" onclick="baslatAnaliz()">
+                                    <i class="ri-bar-chart-2-fill align-middle me-1 fs-18"></i> ANALİZ ET
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- SAĞ PANEL: SONUÇLAR -->
+                    <div class="col-lg-8 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                            
+                            <div id="bosDurum" class="text-center py-5 my-auto">
+                                <i class="ri-table-alt-line text-muted opacity-25" style="font-size: 4.5rem;"></i>
+                                <h5 class="text-muted mt-3 fs-16">Analiz Bekleniyor</h5>
+                                <p class="text-muted fs-14 mb-0">Sol panelden verilerinizi girip analizi başlatın.</p>
+                            </div>
+
+                            <div id="loadingOverlay" class="text-center py-5 my-auto" style="display: none;">
+                                <div class="loader-spinner"></div>
+                                <h5 class="text-primary mt-4 fs-16 fw-semibold">Model ve Etkileşimler Hesaplanıyor...</h5>
+                            </div>
+
+                            <div id="aktifSonuc" style="display: none;">
+
+                                <!-- ÜST İSTATİSTİK KARTLARI (3 ANA ETKİ/ETKİLEŞİM) -->
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-4">
+                                        <div class="anova-stat-card" id="cardA">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Ana Etki: Faktör A</span>
+                                            <div>
+                                                <div class="fs-12 text-secondary mb-1">F İstatistiği: <strong id="resFA" class="text-dark"></strong></div>
+                                                <div class="fs-12 text-secondary mb-2">p-değeri: <strong id="resPA" class="text-dark"></strong></div>
+                                            </div>
+                                            <div class="mt-auto">
+                                                <span id="badgeA" class="badge w-100 py-2">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="anova-stat-card" id="cardB">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Ana Etki: Faktör B</span>
+                                            <div>
+                                                <div class="fs-12 text-secondary mb-1">F İstatistiği: <strong id="resFB" class="text-dark"></strong></div>
+                                                <div class="fs-12 text-secondary mb-2">p-değeri: <strong id="resPB" class="text-dark"></strong></div>
+                                            </div>
+                                            <div class="mt-auto">
+                                                <span id="badgeB" class="badge w-100 py-2">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="anova-stat-card" id="cardAB">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Etkileşim (A × B)</span>
+                                            <div>
+                                                <div class="fs-12 text-secondary mb-1">F İstatistiği: <strong id="resFAB" class="text-dark"></strong></div>
+                                                <div class="fs-12 text-secondary mb-2">p-değeri: <strong id="resPAB" class="text-dark"></strong></div>
+                                            </div>
+                                            <div class="mt-auto">
+                                                <span id="badgeAB" class="badge w-100 py-2">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 1. TABLO: HÜCRE BAZINDA TANIMLAYICI İSTATİSTİKLER -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="fs-14 fw-bold text-dark mb-0"><i class="ri-layout-grid-fill text-primary me-1"></i> Hücre Bazında (A×B) Tanımlayıcı İstatistikler</h5>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table param-grid-table m-0" id="descTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Faktör A</th>
+                                                    <th>Faktör B</th>
+                                                    <th>Gözlem ($n$)</th>
+                                                    <th>Ortalama</th>
+                                                    <th>Std. Sapma</th>
+                                                    <th>Std. Hata</th>
+                                                    <th>%95 Güven Aralığı</th>
+                                                    <th>Aykırı Değer</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="descTableBody">
+                                                <!-- JS Dolduracak -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <small id="unbalancedWarning" class="text-danger fw-bold fs-11 mt-2 d-none"><i class="ri-error-warning-line me-1"></i> Dengesiz Tasarım Tespit Edildi: Hücrelerdeki gözlem sayıları (n) birbirine eşit değil. Model Tip-III Kareler Toplamı (Type III SS) kullanılarak hesaplanmıştır.</small>
+                                </div>
+
+                                <!-- 2. TABLO: VARSAYIM KONTROLLERİ -->
+                                <div class="mb-4">
+                                    <h5 class="fs-14 fw-bold text-dark mb-2"><i class="ri-shield-check-line text-primary me-1"></i> Model Varsayım Kontrolleri</h5>
+                                    <div class="table-responsive">
+                                        <table class="table param-grid-table m-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-start">Varsayım (Test)</th>
+                                                    <th>Test İstatistiği</th>
+                                                    <th>$p$-value</th>
+                                                    <th>Sonuç / Karar</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td class="text-start fw-bold">Artıkların Normalliği (Shapiro-Wilk)</td>
+                                                    <td id="assumpNormW">-</td>
+                                                    <td id="assumpNormP" class="fw-bold">-</td>
+                                                    <td id="assumpNormRes">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-start fw-bold">Varyans Homojenliği (Levene)</td>
+                                                    <td id="assumpLevW">-</td>
+                                                    <td id="assumpLevP" class="fw-bold">-</td>
+                                                    <td id="assumpLevRes">-</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- 3. TABLO: TWO-WAY ANOVA TABLOSU -->
+                                <div class="mb-4">
+                                    <h5 class="fs-14 fw-bold text-dark mb-2"><i class="ri-table-line text-primary me-1"></i> İki Yönlü ANOVA Tablosu (Varyans Analizi)</h5>
+                                    <div class="table-responsive">
+                                        <table class="table param-grid-table m-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-start">Varyans Kaynağı (Source)</th>
+                                                    <th>Kareler Toplamı ($SS$)</th>
+                                                    <th>$df$</th>
+                                                    <th>Ort. Kare ($MS$)</th>
+                                                    <th>$F$ Değeri</th>
+                                                    <th>$p$-value</th>
+                                                    <th>Kısmi $\eta_p^2$</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="anovaTableBody">
+                                                <!-- JS Dolduracak -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- 4. TABLO: POST-HOC KARŞILAŞTIRMALARI (Tukey) -->
+                                <div class="mb-4" id="posthocSection" style="display: none;">
+                                    <h5 class="fs-14 fw-bold text-dark mb-2"><i class="ri-node-tree text-primary me-1"></i> Çoklu Karşılaştırmalar (Post-Hoc: Tukey HSD)</h5>
+                                    <p class="fs-13 text-muted mb-2">Ana etkilerin anlamlı çıktığı faktörler (seviye sayısı $\ge 3$ ise) için uygulanmıştır.</p>
+                                    <div class="table-responsive">
+                                        <table class="table param-grid-table m-0" id="posthocTable">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-start">Faktör</th>
+                                                    <th class="text-start">Karşılaştırma</th>
+                                                    <th>Ortalama Farkı</th>
+                                                    <th>Alt Güven Aralığı</th>
+                                                    <th>Üst Güven Aralığı</th>
+                                                    <th>Düzeltilmiş $p$-değeri</th>
+                                                    <th>Karar</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="posthocTableBody">
+                                                <!-- JS Dolduracak -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- GRAFİKLER BÖLÜMÜ -->
+                                <div class="row mt-4">
+                                    <!-- GRAFİK 1: ETKİLEŞİM GRAFİĞİ -->
+                                    <div class="col-12 mb-4">
+                                        <div class="chart-container h-100 d-flex flex-column border-primary border-opacity-25">
+                                            <h5 class="fs-14 fw-bold text-dark mb-2 text-center text-uppercase tracking-wider">Faktör A × Faktör B Etkileşim Grafiği (Interaction Plot)</h5>
+                                            <span class="fs-12 text-muted text-center mb-3 d-block">Eğer çizgiler birbirine paralelse etkileşim (Interaction) yoktur. Çizgiler kesişiyor veya açılı şekilde ayrılıyorsa anlamlı bir etkileşim ($A \times B$) söz konusudur.</span>
+                                            <div style="position: relative; height: 380px; width: 100%;"><canvas id="interactionChart"></canvas></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- GRAFİK 2: KUTU GRAFİĞİ -->
+                                    <div class="col-12 mb-4">
+                                        <div class="chart-container h-100 d-flex flex-column border-primary border-opacity-25">
+                                            <h5 class="fs-14 fw-bold text-dark mb-2 text-center text-uppercase tracking-wider">Hücre Dağılımları (Kutu Grafiği)</h5>
+                                            <span class="fs-12 text-muted text-center mb-3 d-block">Her bir Faktör A ve Faktör B kombinasyonuna düşen verilerin dağılımı, medyanı ve aykırı değerleri gösterilir.</span>
+                                            <div style="position: relative; height: 350px; width: 100%;"><canvas id="boxChart"></canvas></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ANA KARAR VE İÇGÖRÜ KUTUSU -->
+                                <div id="kararKutusu" class="alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start shadow-sm mt-4">
+                                    <div class="d-flex justify-content-center mt-1 me-3"><i id="kararIkon" class="fs-28"></i></div>
+                                    <div class="flex-grow-1">
+                                        <h4 id="kararBaslik" class="mb-2 fs-16 fw-bold">-</h4>
+                                        <p id="kararAciklama" class="mb-0 fs-14 text-muted lh-base">-</p>
+                                        
+                                        <!-- İNDİGO AKILLI YORUM KUTUSU -->
+                                        <div id="yorumWrapper" class="insight-box shadow-sm mt-3">
+                                            <i class="ri-lightbulb-flash-fill"></i>
+                                            <div class="d-flex flex-column w-100" id="yorumText">
+                                                <!-- Yorumlar satır satır gelecek -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- AKORDEON: ADIM ADIM HESAPLAMALARI GÖSTER (TABLOLU) -->
+                                <div class="mt-4 mb-4">
+                                    <button class="btn w-100 py-3 d-flex justify-content-between align-items-center fs-15 fw-bold rounded-10 border-0 shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#adimAdimHesaplama" aria-expanded="false" style="background-color: #f8fafc; border: 1px solid #e2e8f0 !important; color: #0f172a;">
+                                        <span><i class="ri-calculator-line text-primary me-2 fs-20 align-middle"></i> Hesaplama Ayrıntılarını Göster</span>
+                                        <i class="ri-arrow-down-s-line fs-22 text-secondary"></i>
+                                    </button>
+                                    <div class="collapse mt-3" id="adimAdimHesaplama">
+                                        <div class="card card-body bg-white border border-light p-4 rounded-10 shadow-sm fs-14 text-dark" id="hesaplamaDetayIcerik">
+                                            <!-- JS TABLOLARLA DOLDURACAK -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- AKORDEON: TEORİK ALTYAPI (FORMÜLLER DÜZELTİLDİ VE GENİŞLETİLDİ) -->
+                                <div class="mt-4 mb-2">
+                                    <button class="btn btn-pulse w-100 py-3 d-flex justify-content-between align-items-center fs-15 fw-bold rounded-10 border-0 shadow" type="button" data-bs-toggle="collapse" data-bs-target="#teorikFormuller" aria-expanded="false" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: white;">
+                                        <span><i class="ri-function-line me-2 fs-20 align-middle"></i> Matematiksel Formülleri Görüntüle</span>
+                                        <i class="ri-arrow-down-s-line fs-22"></i>
+                                    </button>
+                                    <div class="collapse mt-3" id="teorikFormuller">
+                                        <div class="card card-body bg-body-bg border border-light p-4 rounded-10 shadow-sm">
+                                            <div class="row g-3">
+                                                
+                                                <div class="col-12">
+                                                    <div class="formula-box">
+                                                        <strong class="text-dark d-block mb-3 fs-15">1. Ana Etkiler ve Etkileşim İçin Kareler Toplamı (SS)</strong>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ SS_A = n_b n \sum_{i=1}^a (\bar{Y}_{i..} - \bar{Y}_{...})^2 $$<br>
+                                                            $$ SS_B = n_a n \sum_{j=1}^b (\bar{Y}_{.j.} - \bar{Y}_{...})^2 $$<br>
+                                                            $$ SS_{AB} = n \sum_{i=1}^a \sum_{j=1}^b (\bar{Y}_{ij.} - \bar{Y}_{i..} - \bar{Y}_{.j.} + \bar{Y}_{...})^2 $$<br>
+                                                            $$ SS_{Error} = \sum_{i=1}^a \sum_{j=1}^b \sum_{k=1}^n (Y_{ijk} - \bar{Y}_{ij.})^2 $$<br>
+                                                            <small class="text-muted">(Not: Bu formüller sadece dengeli (balanced) veri setleri içindir. Dengesiz tasarımlarda GLM ve Tip III marjinal SS matrisleri kullanılır.)</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="formula-box">
+                                                        <strong class="text-dark d-block mb-3 fs-15">2. Serbestlik Dereceleri ve Ortalama Kareler (MS)</strong>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ df_A = a - 1 \quad , \quad df_B = b - 1 $$<br>
+                                                            $$ df_{AB} = (a - 1)(b - 1) $$<br>
+                                                            $$ df_{Error} = N - ab $$<br><br>
+                                                            $$ MS_A = \frac{SS_A}{df_A} \quad , \quad MS_B = \frac{SS_B}{df_B} \quad , \quad MS_{AB} = \frac{SS_{AB}}{df_{AB}} $$<br>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="formula-box">
+                                                        <strong class="text-dark d-block mb-3 fs-15">3. F İstatistikleri</strong>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ F_A = \frac{MS_A}{MS_{Error}} \quad , \quad F_B = \frac{MS_B}{MS_{Error}} \quad , \quad F_{AB} = \frac{MS_{AB}}{MS_{Error}} $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="formula-box mb-0">
+                                                        <strong class="text-dark d-block mb-3 fs-15">4. Kısmi Eta Kare (Partial Effect Size - $\eta_p^2$)</strong>
+                                                        <p class="fs-14">Çoklu faktörlerin bulunduğu durumlarda, varyansın diğer faktörlerden arındırılmış saf açıklama oranını gösterir.</p>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ \eta_{p(A)}^2 = \frac{SS_A}{SS_A + SS_{Error}} $$<br>
+                                                            $$ \eta_{p(B)}^2 = \frac{SS_B}{SS_B + SS_{Error}} $$<br>
+                                                            $$ \eta_{p(AB)}^2 = \frac{SS_{AB}}{SS_{AB} + SS_{Error}} $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- VARSAYIMLAR VE UYARILAR -->
+                                <div class="mt-4">
+                                    <div class="alert bg-warning-subtle text-dark border-0 rounded-10 p-4">
+                                        <h5 class="fw-bold fs-15 text-warning mb-2"><i class="ri-alert-line me-1"></i> Araştırma ve Varsayım Uyarıları</h5>
+                                        <ul class="mb-0 fs-13 lh-lg ps-3 text-muted">
+                                            <li><strong>Bağımsızlık:</strong> Bağımsızlık varsayımı istatistiksel bir testten ziyade doğrudan sizin <em>araştırma tasarımınıza (veri toplama biçiminize)</em> bağlıdır. Her satırın farklı ve bağımsız bireyleri temsil ettiğinden emin olun.</li>
+                                            <li><strong>Normallik:</strong> İki yönlü ANOVA, hücrelerdeki ölçümlerin veya model artıklarının (residuals) normal dağılmasını gerektirir.</li>
+                                            <li><strong>Varyans Homojenliği:</strong> Levene testi p-değeri anlamlılık eşiğinin altına düştüğünde, Type I Hata riski artar.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="footer-area bg-white text-center rounded-10 rounded-bottom-0 p-3 mt-4 border-top shadow-sm">
+                <p class="fs-14 text-body mb-0">© <span>StatLabseu</span> - Gelişmiş İstatistiksel Analiz Platformu</p>
+            </footer>
+
+        </div>
+    </div>
+ 
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function setTxt(id, text) { let el = document.getElementById(id); if (el) el.innerText = text; }
+        function setHTML(id, html) { let el = document.getElementById(id); if (el) el.innerHTML = html; }
+        function setClass(id, cls) { let el = document.getElementById(id); if (el) el.className = cls; }
+        function setStyle(id, prop, val) { let el = document.getElementById(id); if (el) el.style[prop] = val; }
+
+        let charts = { interaction: null, box: null };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            if (localStorage.getItem('statlab_theme') === 'dark') { themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); }
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); themeIcon.classList.remove('text-secondary'); localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); themeIcon.classList.remove('text-warning'); themeIcon.classList.add('text-secondary'); localStorage.setItem('statlab_theme', 'light');
+                }
+                let aktifEl = document.getElementById('aktifSonuc'); if(aktifEl && aktifEl.style.display === 'block') baslatAnaliz();
+            });
+            
+            updateLines();
+        });
+
+        function updateLines() {
+            let t = document.getElementById('val_data');
+            let l = document.getElementById('lines_data');
+            if(!t || !l) return;
+            let linesCount = t.value.split('\n').length;
+            let linesHtml = '';
+            for(let i=1; i<=linesCount; i++) linesHtml += i + '<br>';
+            l.innerHTML = linesHtml;
+        }
+
+        function syncScroll() {
+            document.getElementById('lines_data').scrollTop = document.getElementById('val_data').scrollTop;
+        }
+
+        function getParsedData() {
+            let text = document.getElementById('val_data').value.trim();
+            if(!text) return [];
+            let lines = text.split('\n');
+            let dataset = [];
+            for(let i=0; i<lines.length; i++) {
+                let parts = lines[i].trim().split(/[\t, ]+/); // Split by tab, comma or space
+                if(parts.length >= 3) {
+                    let fa = parts[0]; let fb = parts[1]; let y = parseFloat(parts[2].replace(',','.'));
+                    if(!isNaN(y)) {
+                        dataset.push({ a: fa, b: fb, y: y });
+                    }
+                }
+            }
+            return dataset;
+        }
+
+        function calculateTotalN() {
+            let data = getParsedData();
+            setTxt('lblTotalN', data.length);
+        }
+
+        function ornekVeriYukle() {
+            let a_levels = ["Kadin", "Erkek"];
+            let b_levels = ["Lise", "Lisans", "YuksekLisans"];
+            let means = {
+                "Kadin_Lise": 40, "Kadin_Lisans": 55, "Kadin_YuksekLisans": 75,
+                "Erkek_Lise": 38, "Erkek_Lisans": 52, "Erkek_YuksekLisans": 60 
+            };
+            
+            let arr = [];
+            for(let i=0; i<a_levels.length; i++) {
+                for(let j=0; j<b_levels.length; j++) {
+                    let key = `${a_levels[i]}_${b_levels[j]}`;
+                    let mean = means[key];
+                    let n = 15 + Math.floor(Math.random() * 8); 
+                    for(let k=0; k<n; k++) {
+                        let u=0, v=0; while(u===0) u=Math.random(); while(v===0) v=Math.random();
+                        let rnd = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+                        let val = rnd * 5 + mean; 
+                        arr.push(`${a_levels[i]}\t${b_levels[j]}\t${val.toFixed(1)}`);
+                    }
+                }
+            }
+            
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+
+            document.getElementById('val_data').value = arr.join('\n');
+            updateLines();
+            calculateTotalN();
+            document.getElementById('alfaInput').value = "0.05";
+        }
+
+        function temizleVeri() {
+            document.getElementById('val_data').value = '';
+            updateLines();
+            calculateTotalN();
+            setStyle('aktifSonuc', 'display', 'none'); setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block');
+            Object.values(charts).forEach(c => { if(c) c.destroy(); });
+        }
+
+        // --- İSTATİSTİKSEL HESAPLAMALAR ---
+        function calcDescStats(arr) {
+            let n = arr.length; if(n === 0) return { n:0, mean:0, sd:0, se:0, var:0, min:0, max:0, q1:0, q3:0, iqr:0, median:0, outliers:[], outCount:0, ciLow:0, ciUp:0, skew:0 };
+            let sum = arr.reduce((a,b)=>a+b, 0);
+            let mean = sum / n;
+            if(n === 1) return { n:1, mean, sd:0, se:0, var:0, min:arr[0], max:arr[0], q1:arr[0], q3:arr[0], iqr:0, median:arr[0], outliers:[], outCount:0, ciLow:arr[0], ciUp:arr[0], skew:0 };
+            
+            let ss = arr.reduce((a,b)=>a+Math.pow(b-mean, 2), 0);
+            let variance = ss / (n - 1);
+            let sd = Math.sqrt(variance); 
+            let se = sd / Math.sqrt(n);
+            let ciMargin = 1.96 * se; 
+            
+            let sorted = [...arr].sort((a,b)=>a-b);
+            let min = sorted[0]; let max = sorted[n-1];
+            let q1 = sorted[Math.floor(n*0.25)]; let q3 = sorted[Math.floor(n*0.75)]; 
+            let median = n % 2 === 0 ? (sorted[n/2 - 1] + sorted[n/2]) / 2 : sorted[Math.floor(n/2)];
+            let iqr = q3 - q1;
+            
+            let lowerFence = q1 - 1.5 * iqr; let upperFence = q3 + 1.5 * iqr;
+            let outliers = sorted.filter(x => x < lowerFence || x > upperFence);
+            
+            let m3 = arr.reduce((a,b)=>a+Math.pow(b-mean, 3), 0);
+            let skew = (sd === 0 || n < 3) ? 0 : (m3 / n) / Math.pow(ss / n, 1.5);
+            
+            return { n, sum, mean, sd, se, var: variance, min, max, q1, q3, iqr, median, outliers, outCount: outliers.length, ciLow: mean-ciMargin, ciUp: mean+ciMargin, sorted, skew };
+        }
+
+        function fDistributionP(f_val, df1, df2) {
+            if (f_val <= 0 || df1 < 1 || df2 < 1) return 1.0;
+            let a = 2 / (9 * df1);
+            let b = 2 / (9 * df2);
+            let z = (Math.pow(f_val, 1/3) * (1 - b) - (1 - a)) / Math.sqrt(b * Math.pow(f_val, 2/3) + a);
+            let p = 0.5 * (1 + Math.sign(z) * Math.sqrt(1 - Math.exp(-2 * z * z / Math.PI)));
+            return Math.max(0.00001, Math.min(1.0, 1 - p));
+        }
+
+        function getUnique(arr) { return [...new Set(arr)].sort(); }
+
+        // --- CHART YARDIMCILARI ---
+        function cizGrafikler(cellsObj, levelsA, levelsB) {
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; const gColor = isDark ? '#334155' : '#e2e8f0';
+            Object.values(charts).forEach(c => { if(c) c.destroy(); });
+
+            let colors = ['#2f8fe8', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
+
+            // 1. İNTERACTİON PLOT (X=B, Lines=A)
+            let interactionDatasets = [];
+            levelsA.forEach((a_lev, i) => {
+                let dataPts = [];
+                levelsB.forEach((b_lev) => {
+                    let key = `${a_lev}_|_${b_lev}`;
+                    dataPts.push(cellsObj[key] ? cellsObj[key].mean : null);
+                });
+                interactionDatasets.push({
+                    label: a_lev,
+                    data: dataPts,
+                    borderColor: colors[i%10],
+                    backgroundColor: colors[i%10],
+                    borderWidth: 3,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    fill: false,
+                    tension: 0.1
+                });
+            });
+
+            charts.interaction = new Chart(document.getElementById('interactionChart'), {
+                type: 'line',
+                data: { labels: levelsB, datasets: interactionDatasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { color: fColor, font: {weight: 'bold'} } } },
+                    scales: { 
+                        y: { grid: { color: gColor }, ticks: { color: fColor } }, 
+                        x: { grid: { display: false }, ticks: { color: fColor, font: {weight: 'bold'} } } 
+                    }
+                }
+            });
+
+            // 2. KUTU GRAFİĞİ
+            let boxLabels = []; let boxStats = [];
+            levelsA.forEach((a_lev) => {
+                levelsB.forEach((b_lev) => {
+                    let key = `${a_lev}_|_${b_lev}`;
+                    if(cellsObj[key] && cellsObj[key].n > 0) {
+                        boxLabels.push(`${a_lev} - ${b_lev}`);
+                        boxStats.push(cellsObj[key]);
+                    }
+                });
+            });
+
+            let boxMin = Math.min(...boxStats.map(s => s.min));
+            let boxMax = Math.max(...boxStats.map(s => s.max));
+            let padding = (boxMax - boxMin) * 0.1 || 1;
+
+            charts.box = new Chart(document.getElementById('boxChart'), {
+                type: 'bar',
+                data: {
+                    labels: boxLabels,
+                    datasets: [{ label: 'Dummy', data: boxStats.map(s => [s.q1, s.q3]), backgroundColor: 'transparent', borderColor: 'transparent' }] 
+                },
+                plugins: [{
+                    id: 'customAnovaBoxPlot',
+                    afterDatasetsDraw(chart) {
+                        const ctx = chart.ctx; const xAxis = chart.scales.x; const yAxis = chart.scales.y;
+                        boxStats.forEach((st, i) => {
+                            const x = xAxis.getPixelForTick(i); const width = xAxis.width / boxStats.length * 0.5; 
+                            const yMedian = yAxis.getPixelForValue(st.median); const yMin = yAxis.getPixelForValue(st.min); 
+                            const yMax = yAxis.getPixelForValue(st.max); const yQ1 = yAxis.getPixelForValue(st.q1); const yQ3 = yAxis.getPixelForValue(st.q3);
+                            
+                            let aName = boxLabels[i].split(' - ')[0];
+                            let cIndex = levelsA.indexOf(aName);
+                            let col = colors[cIndex%10];
+
+                            ctx.save();
+                            ctx.fillStyle = col + '44'; ctx.fillRect(x - width/2, yQ3, width, yQ1 - yQ3);
+                            ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.strokeRect(x - width/2, yQ3, width, yQ1 - yQ3);
+                            ctx.beginPath(); ctx.moveTo(x - width/2, yMedian); ctx.lineTo(x + width/2, yMedian); ctx.lineWidth = 3; ctx.stroke();
+                            ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, yQ3); ctx.lineTo(x, yMax); ctx.moveTo(x, yQ1); ctx.lineTo(x, yMin); ctx.stroke();
+                            const capW = width * 0.3; ctx.beginPath(); ctx.moveTo(x - capW/2, yMax); ctx.lineTo(x + capW/2, yMax); ctx.moveTo(x - capW/2, yMin); ctx.lineTo(x + capW/2, yMin); ctx.stroke();
+
+                            st.outliers.forEach(outVal => {
+                                const yOut = yAxis.getPixelForValue(outVal);
+                                ctx.beginPath(); ctx.arc(x, yOut, 4, 0, 2 * Math.PI); ctx.fillStyle = '#ef4444'; ctx.fill();
+                            });
+                            ctx.restore();
+                        });
+                    }
+                }],
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: boxMin - padding, max: boxMax + padding, grid: { color: gColor }, ticks: { color: fColor } }, x: { grid: { display: false }, ticks: { color: fColor, font: {weight: 'bold'} } } } }
+            });
+        }
+
+        function baslatAnaliz() {
+            let data = getParsedData();
+            if (data.length < 4) { alert("Analiz için yeterli geçerli veri yok (En az 4 gözlem gereklidir). Lütfen FaktörA, FaktörB, Y formatında veri girdiğinizden emin olun."); return; }
+            if (data.length > 5000) { alert("Sistemin donmaması için veri sınırını aştınız. Lütfen veri setini küçültün."); return; }
+
+            setStyle('bosDurum', 'display', 'none'); setStyle('aktifSonuc', 'display', 'none'); setStyle('loadingOverlay', 'display', 'block');
+            setTimeout(() => hesaplaTwoWayAnova(data), 800);
+        }
+
+        async function hesaplaTwoWayAnova(data) {
+            try {
+                let alfa = parseFloat(document.getElementById('alfaInput').value);
+                let N = data.length;
+                
+                let levA = getUnique(data.map(d=>d.a)); let a_k = levA.length;
+                let levB = getUnique(data.map(d=>d.b)); let b_k = levB.length;
+
+                if (a_k < 2 || b_k < 2) {
+                    alert("Two-Way ANOVA için Faktör A ve Faktör B'nin en az 2'şer farklı seviyesi olmalıdır.");
+                    setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block'); return;
+                }
+
+                // HÜCRE VERİLERİ (CELLS)
+                let cellsRaw = {};
+                data.forEach(d => {
+                    let k = `${d.a}_|_${d.b}`;
+                    if(!cellsRaw[k]) cellsRaw[k] = [];
+                    cellsRaw[k].push(d.y);
+                });
+
+                let isBalanced = true; let targetN = -1;
+                let cellsObj = {}; let descTBody = '';
+                
+                for(let i=0; i<a_k; i++) {
+                    for(let j=0; j<b_k; j++) {
+                        let k = `${levA[i]}_|_${levB[j]}`;
+                        let arr = cellsRaw[k] || [];
+                        let st = calcDescStats(arr);
+                        cellsObj[k] = st;
+                        
+                        if (targetN === -1) targetN = st.n;
+                        if (st.n !== targetN) isBalanced = false;
+
+                        if (st.n > 0) {
+                            descTBody += `<tr>
+                                <td class="text-start fw-bold text-primary">${levA[i]}</td>
+                                <td class="text-start fw-bold text-secondary">${levB[j]}</td>
+                                <td>${st.n}</td>
+                                <td class="fw-bold">${st.mean.toFixed(3)}</td>
+                                <td>${st.sd.toFixed(3)}</td>
+                                <td>${st.se.toFixed(3)}</td>
+                                <td class="text-muted">[${st.ciLow.toFixed(2)} , ${st.ciUp.toFixed(2)}]</td>
+                                <td><span class="badge ${st.outCount > 0 ? 'bg-danger' : 'bg-success'}">${st.outCount} Tespit</span></td>
+                            </tr>`;
+                        }
+                    }
+                }
+                setHTML('descTableBody', descTBody);
+
+                if(!isBalanced) {
+                    document.getElementById('unbalancedWarning').classList.remove('d-none');
+                    document.getElementById('unbalancedWarning').classList.add('d-block');
+                } else {
+                    document.getElementById('unbalancedWarning').classList.add('d-none');
+                    document.getElementById('unbalancedWarning').classList.remove('d-block');
+                }
+
+                // JS FALLBACK BALANCED HESAPLAMA YEDEĞİ
+                let grandMean = data.reduce((s,d)=>s+d.y,0) / N;
+                let SSA=0, SSB=0, SSAB=0, SSE=0, SST=0;
+                let dfA = a_k-1, dfB = b_k-1, dfAB = (a_k-1)*(b_k-1), dfE = N - (a_k*b_k);
+                let MSA=0, MSB=0, MSAB=0, MSE=0;
+                let FA=0, FB=0, FAB=0;
+                let pA=1, pB=1, pAB=1;
+                let etaA=0, etaB=0, etaAB=0;
+
+                let apiSuccess = false;
+                let posthocHTML = ''; let posthocPerformed = false; let posthocName = '';
+                let normP = 0, levP = 0; let normW = 0, levW = 0;
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 4000); 
+
+                try {
+                    let reqBody = { a: data.map(d=>d.a), b: data.map(d=>d.b), y: data.map(d=>d.y) };
+                    let istek = await fetch("https://api.statlabseu.com/test/two-way-anova", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(reqBody), signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    
+                    if(istek.ok) { 
+                        let rData = await istek.json(); 
+                        apiSuccess = true;
+                        
+                        SSA = rData.anova.A.ss; dfA = rData.anova.A.df; MSA = rData.anova.A.ms; FA = rData.anova.A.f; pA = rData.anova.A.p; etaA = rData.anova.A.eta_p;
+                        SSB = rData.anova.B.ss; dfB = rData.anova.B.df; MSB = rData.anova.B.ms; FB = rData.anova.B.f; pB = rData.anova.B.p; etaB = rData.anova.B.eta_p;
+                        SSAB = rData.anova.AB.ss; dfAB = rData.anova.AB.df; MSAB = rData.anova.AB.ms; FAB = rData.anova.AB.f; pAB = rData.anova.AB.p; etaAB = rData.anova.AB.eta_p;
+                        SSE = rData.anova.Error.ss; dfE = rData.anova.Error.df; MSE = rData.anova.Error.ms;
+                        SST = SSA + SSB + SSAB + SSE;
+
+                        normW = rData.assumptions.shapiro.w_stat; normP = rData.assumptions.shapiro.p_value;
+                        levW = rData.assumptions.levene.w_stat; levP = rData.assumptions.levene.p_value;
+
+                        if (rData.posthoc.performed) {
+                            posthocPerformed = true; posthocName = rData.posthoc.test_name;
+                            rData.posthoc.results.forEach(ph => {
+                                let isSig = ph.p_adj < alfa;
+                                posthocHTML += `<tr>
+                                    <td class="text-start fw-bold text-primary">${ph.factor}</td>
+                                    <td class="text-start fw-bold">${ph.group1} <i class="ri-arrow-left-right-line px-1 text-muted"></i> ${ph.group2}</td>
+                                    <td>${ph.mean_diff.toFixed(3)}</td>
+                                    <td class="text-muted">${ph.ci_low.toFixed(3)}</td>
+                                    <td class="text-muted">${ph.ci_up.toFixed(3)}</td>
+                                    <td class="fw-bold ${isSig ? 'text-danger' : 'text-secondary'}">${ph.p_adj.toFixed(4)}</td>
+                                    <td><span class="badge ${isSig ? 'bg-danger' : 'bg-secondary'}">${isSig ? 'Anlamlı Fark' : 'Fark Yok'}</span></td>
+                                </tr>`;
+                            });
+                        }
+                    }
+                } catch (e) {
+                    clearTimeout(timeoutId);
+                    
+                    data.forEach(d => { SST += Math.pow(d.y - grandMean, 2); });
+                    let meanA = {}; levA.forEach(a=>{ let arr = data.filter(d=>d.a===a).map(d=>d.y); meanA[a] = arr.reduce((x,y)=>x+y,0)/arr.length; });
+                    let meanB = {}; levB.forEach(b=>{ let arr = data.filter(d=>d.b===b).map(d=>d.y); meanB[b] = arr.reduce((x,y)=>x+y,0)/arr.length; });
+
+                    levA.forEach(a => { SSA += data.filter(d=>d.a===a).length * Math.pow(meanA[a] - grandMean, 2); });
+                    levB.forEach(b => { SSB += data.filter(d=>d.b===b).length * Math.pow(meanB[b] - grandMean, 2); });
+                    
+                    let SSCell = 0;
+                    for(let k in cellsObj) { SSCell += cellsObj[k].n * Math.pow(cellsObj[k].mean - grandMean, 2); }
+                    SSAB = SSCell - SSA - SSB;
+                    if(SSAB < 0) SSAB = 0;
+                    SSE = SST - SSCell;
+
+                    MSA = SSA/dfA; MSB = SSB/dfB; MSAB = SSAB/dfAB; MSE = SSE/dfE;
+                    FA = MSA/(MSE||1e-10); FB = MSB/(MSE||1e-10); FAB = MSAB/(MSE||1e-10);
+                    
+                    pA = fDistributionP(FA, dfA, dfE); pB = fDistributionP(FB, dfB, dfE); pAB = fDistributionP(FAB, dfAB, dfE);
+                    etaA = SSA / (SSA+SSE); etaB = SSB / (SSB+SSE); etaAB = SSAB / (SSAB+SSE);
+                }
+
+                // ANOVA TABLOSUNU DOLDUR
+                let aTBody = `
+                    <tr><td class="text-start fw-bold text-primary">Faktör A</td><td>${SSA.toFixed(2)}</td><td>${dfA}</td><td>${MSA.toFixed(2)}</td><td class="fw-bold text-dark">${FA.toFixed(3)}</td><td class="fw-bold ${pA<alfa?'text-danger':'text-secondary'}">${pA.toFixed(4)}</td><td class="text-dark">${etaA.toFixed(3)}</td></tr>
+                    <tr><td class="text-start fw-bold text-success">Faktör B</td><td>${SSB.toFixed(2)}</td><td>${dfB}</td><td>${MSB.toFixed(2)}</td><td class="fw-bold text-dark">${FB.toFixed(3)}</td><td class="fw-bold ${pB<alfa?'text-danger':'text-secondary'}">${pB.toFixed(4)}</td><td class="text-dark">${etaB.toFixed(3)}</td></tr>
+                    <tr><td class="text-start fw-bold text-warning">Etkileşim (A × B)</td><td>${SSAB.toFixed(2)}</td><td>${dfAB}</td><td>${MSAB.toFixed(2)}</td><td class="fw-bold text-dark">${FAB.toFixed(3)}</td><td class="fw-bold ${pAB<alfa?'text-danger':'text-secondary'}">${pAB.toFixed(4)}</td><td class="text-dark">${etaAB.toFixed(3)}</td></tr>
+                    <tr><td class="text-start text-muted">Hata (Error)</td><td class="text-muted">${SSE.toFixed(2)}</td><td class="text-muted">${dfE}</td><td class="text-muted">${MSE.toFixed(2)}</td><td></td><td></td><td></td></tr>
+                    <tr class="bg-light"><td class="text-start fw-bold text-dark">Toplam</td><td class="fw-bold text-dark">${SST.toFixed(2)}</td><td class="fw-bold text-dark">${N-1}</td><td></td><td></td><td></td><td></td></tr>
+                `;
+                setHTML('anovaTableBody', aTBody);
+
+                // VARSAYIMLAR
+                if(apiSuccess) {
+                    setTxt('assumpNormW', normW.toFixed(3)); setTxt('assumpNormP', normP.toFixed(4));
+                    setTxt('assumpNormRes', normP >= alfa ? "Normal (Uygun)" : "Saptı (İhlal)"); setClass('assumpNormRes', normP >= alfa ? "text-success fw-bold" : "text-danger fw-bold");
+                    
+                    setTxt('assumpLevW', levW.toFixed(3)); setTxt('assumpLevP', levP.toFixed(4));
+                    setTxt('assumpLevRes', levP >= alfa ? "Homojen (Uygun)" : "Homojen Değil (İhlal)"); setClass('assumpLevRes', levP >= alfa ? "text-success fw-bold" : "text-danger fw-bold");
+                } else {
+                    setHTML('assumpNormW', "-"); setHTML('assumpNormP', "-"); setHTML('assumpNormRes', "API Gerekli");
+                    setHTML('assumpLevW', "-"); setHTML('assumpLevP', "-"); setHTML('assumpLevRes', "API Gerekli");
+                }
+
+                // POST-HOC TABLOSU
+                if (posthocPerformed) {
+                    setTxt('posthocName', posthocName);
+                    setHTML('posthocTableBody', posthocHTML);
+                    setStyle('posthocSection', 'display', 'block');
+                } else {
+                    setStyle('posthocSection', 'display', 'none');
+                }
+
+                // KARTLAR
+                function fillCard(id, f, p) {
+                    setTxt(`resF${id}`, f.toFixed(3)); setTxt(`resP${id}`, p.toFixed(4));
+                    let badge = document.getElementById(`badge${id}`); let card = document.getElementById(`card${id}`);
+                    if(p < alfa) { badge.className = "badge bg-danger w-100 py-2"; badge.innerText = "Anlamlı Etki Var"; card.className = "anova-stat-card sig"; }
+                    else { badge.className = "badge bg-success w-100 py-2"; badge.innerText = "Anlamlı Etki Yok"; card.className = "anova-stat-card not-sig"; }
+                }
+                fillCard('A', FA, pA); fillCard('B', FB, pB); fillCard('AB', FAB, pAB);
+
+                // KARAR METNİ VE İNDİGO (YORUM) KUTUSU
+                let kBaslik = "", kAcik = "";
+                let yorumlar = [];
+                
+                if (pAB < alfa) {
+                    kBaslik = "Etkileşim Anlamlı (H₀ Reddedilir)";
+                    kAcik = "Faktör A ile Faktör B arasında istatistiksel olarak anlamlı bir etkileşim ($A \\times B$) bulunmuştur. Bu nedenle ana etkiler tek başına doğrudan yorumlanmamalıdır.";
+                    setClass('kararKutusu', "alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start bg-danger-subtle text-danger shadow-sm mt-4");
+                    setClass('kararIkon', "ri-error-warning-fill text-danger fs-28");
+                    
+                    yorumlar.push(`<span><strong>Kritik Uyarı:</strong> Faktör A ve Faktör B'nin bağımlı değişken üzerindeki etkisi birbirine bağlıdır ($p = ${pAB.toFixed(4)}$). Diğer bir deyişle, bir faktörün etkisi diğer faktörün seviyesine göre değişiklik göstermektedir. Yukarıdaki "Etkileşim Grafiği"nde çizgilerin kesiştiğini veya paralel olmadığını görebilirsiniz.</span>`);
+                } else {
+                    kBaslik = "Etkileşim Anlamlı Değil (Ana Etkiler Geçerli)";
+                    kAcik = "Faktör A ile Faktör B arasında anlamlı bir etkileşim bulunamamıştır. İki faktör birbirinden bağımsız çalışmaktadır, ana etkiler doğrudan yorumlanabilir.";
+                    setClass('kararKutusu', "alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start bg-success-subtle text-success shadow-sm mt-4");
+                    setClass('kararIkon', "ri-checkbox-circle-fill text-success fs-28");
+
+                    if(pA < alfa) yorumlar.push(`<span><strong>Faktör A Ana Etkisi:</strong> İstatistiksel olarak anlamlı bulunmuştur ($p = ${pA.toFixed(4)}$). Bu faktörün bağımlı değişken üzerinde net bir etkisi vardır.</span>`);
+                    else yorumlar.push(`<span><strong>Faktör A Ana Etkisi:</strong> İstatistiksel olarak anlamlı DEĞİLDİR ($p = ${pA.toFixed(4)}$). Bu faktör seviyeleri arasında fark yoktur.</span>`);
+                    
+                    if(pB < alfa) yorumlar.push(`<span><strong>Faktör B Ana Etkisi:</strong> İstatistiksel olarak anlamlı bulunmuştur ($p = ${pB.toFixed(4)}$). Bu faktörün bağımlı değişken üzerinde net bir etkisi vardır.</span>`);
+                    else yorumlar.push(`<span><strong>Faktör B Ana Etkisi:</strong> İstatistiksel olarak anlamlı DEĞİLDİR ($p = ${pB.toFixed(4)}$). Bu faktör seviyeleri arasında fark yoktur.</span>`);
+                }
+
+                setTxt('kararBaslik', kBaslik);
+                setHTML('kararAciklama', kAcik);
+                setHTML('yorumText', yorumlar.join('<hr class="my-2 border-secondary opacity-10">'));
+
+                // ADIM ADIM TABLOLU HESAPLAMALAR
+                let calcDetHTML = `
+                    <h6 class="fw-bold mb-3 text-dark"><i class="ri-function-add-line align-middle me-1"></i> Adım 1: Kareler Toplamı (Sum of Squares) Hesaplamaları</h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table param-grid-table m-0">
+                            <thead>
+                                <tr><th class="text-start">Parametre</th><th>Formül / Yaklaşım</th><th>Hesaplanan Değer</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="text-start fw-bold text-dark">Genel Ortalama ($\\bar{X}_G$)</td><td>$\\frac{\\sum Y}{N}$</td><td><span class="badge bg-primary fs-13">${grandMean.toFixed(3)}</span></td></tr>
+                                <tr><td class="text-start fw-bold">Faktör A ($SS_A$)</td><td>$\\sum n_A (\\bar{X}_A - \\bar{X}_G)^2$</td><td class="fw-bold text-dark">${SSA.toFixed(3)}</td></tr>
+                                <tr><td class="text-start fw-bold">Faktör B ($SS_B$)</td><td>$\\sum n_B (\\bar{X}_B - \\bar{X}_G)^2$</td><td class="fw-bold text-dark">${SSB.toFixed(3)}</td></tr>
+                                <tr><td class="text-start fw-bold text-warning">Etkileşim ($SS_{AB}$)</td><td>$SS_{H\\ddot{u}cre} - SS_A - SS_B$</td><td class="fw-bold text-dark">${SSAB.toFixed(3)}</td></tr>
+                                <tr><td class="text-start fw-bold text-danger">Hata ($SS_{Error}$)</td><td>$SS_{Total} - SS_{H\\ddot{u}cre}$</td><td class="fw-bold text-dark">${SSE.toFixed(3)}</td></tr>
+                                <tr class="bg-light"><td class="text-start fw-bold text-dark">Toplam ($SS_{Total}$)</td><td>$\\sum (Y - \\bar{X}_G)^2$</td><td class="fw-bold text-dark">${SST.toFixed(3)}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6 class="fw-bold mb-3 text-dark"><i class="ri-divide-line align-middle me-1"></i> Adım 2: Serbestlik Dereceleri ve Ortalama Kareler (MS)</h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table param-grid-table m-0">
+                            <thead>
+                                <tr><th class="text-start">Bileşen</th><th>Serbestlik Derecesi ($df$)</th><th>Ortalama Kare Formülü</th><th>$MS$ Sonucu</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="text-start fw-bold">Faktör A</td><td>$a - 1 = ${a_k} - 1 = ${dfA}$</td><td>$SS_A / df_A = ${SSA.toFixed(2)} / ${dfA}$</td><td class="fw-bold text-primary">${MSA.toFixed(3)}</td></tr>
+                                <tr><td class="text-start fw-bold">Faktör B</td><td>$b - 1 = ${b_k} - 1 = ${dfB}$</td><td>$SS_B / df_B = ${SSB.toFixed(2)} / ${dfB}$</td><td class="fw-bold text-success">${MSB.toFixed(3)}</td></tr>
+                                <tr><td class="text-start fw-bold text-warning">Etkileşim (A×B)</td><td>$(a-1)(b-1) = ${dfA} \\times ${dfB} = ${dfAB}$</td><td>$SS_{AB} / df_{AB} = ${SSAB.toFixed(2)} / ${dfAB}$</td><td class="fw-bold text-warning">${MSAB.toFixed(3)}</td></tr>
+                                <tr><td class="text-start fw-bold text-danger">Hata (Error)</td><td>$N - ab = ${N} - ${a_k*b_k} = ${dfE}$</td><td>$SS_{Error} / df_{Error} = ${SSE.toFixed(2)} / ${dfE}$</td><td class="fw-bold text-danger">${MSE.toFixed(3)}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6 class="fw-bold mb-3 text-dark"><i class="ri-percent-line align-middle me-1"></i> Adım 3: F İstatistiği ve P-Değeri Sonuçları</h6>
+                    <div class="table-responsive">
+                        <table class="table param-grid-table m-0">
+                            <thead>
+                                <tr><th class="text-start">Test Edilen Etki</th><th>F Formülü</th><th>Hesaplanan $F$</th><th>$p$-değeri</th><th>Karar</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="text-start fw-bold">Faktör A</td><td>$MS_A / MS_{Error}$</td><td class="fw-bold text-dark">${FA.toFixed(4)}</td><td class="fw-bold ${pA<alfa?'text-danger':'text-dark'}">${pA.toFixed(5)}</td><td><span class="badge ${pA<alfa?'bg-danger':'bg-secondary'}">${pA<alfa?'Anlamlı':'Anlamsız'}</span></td></tr>
+                                <tr><td class="text-start fw-bold">Faktör B</td><td>$MS_B / MS_{Error}$</td><td class="fw-bold text-dark">${FB.toFixed(4)}</td><td class="fw-bold ${pB<alfa?'text-danger':'text-dark'}">${pB.toFixed(5)}</td><td><span class="badge ${pB<alfa?'bg-danger':'bg-secondary'}">${pB<alfa?'Anlamlı':'Anlamsız'}</span></td></tr>
+                                <tr><td class="text-start fw-bold text-warning">Etkileşim (A×B)</td><td>$MS_{AB} / MS_{Error}$</td><td class="fw-bold text-dark">${FAB.toFixed(4)}</td><td class="fw-bold ${pAB<alfa?'text-danger':'text-dark'}">${pAB.toFixed(5)}</td><td><span class="badge ${pAB<alfa?'bg-danger':'bg-secondary'}">${pAB<alfa?'Anlamlı':'Anlamsız'}</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                setHTML('hesaplamaDetayIcerik', calcDetHTML);
+
+                setStyle('loadingOverlay', 'display', 'none'); setStyle('aktifSonuc', 'display', 'block');
+                cizGrafikler(cellsObj, levA, levB);
+
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) {
+                        MathJax.typesetClear();
+                        MathJax.typesetPromise().catch(err => console.log(err));
+                    }
+                    document.getElementById('aktifSonuc').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+
+            } catch (error) { setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block'); alert("Analiz Hatası: " + error); }
+        }
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>
