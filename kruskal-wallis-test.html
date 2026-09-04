@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { 
+                inlineMath: [['$', '$'], ['\\(', '\\)']], 
+                displayMath: [['$$', '$$'], ['\\[', '\\]']] 
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    
+    <title>Kruskal-Wallis H Testi | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        @font-face {
+            font-family: 'STIX Two Math';
+            src: url('assets/fonts/STIXTwoMath-Regular.ttf') format('truetype');
+            font-weight: normal; font-style: normal;
+        }
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+        .math-var { font-family: 'STIX Two Math', serif !important; font-style: italic; font-weight: normal; color: inherit; display: inline-block; }
+
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        
+        /* KUSURSUZ TABLO TASARIMI */
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; }
+        .param-grid-table { width: 100%; border-collapse: collapse; text-align: center; margin: 0; min-width: max-content; }
+        .param-grid-table th { font-size: 13px; font-weight: 700; color: #475569; background-color: #f1f5f9; padding: 13px 12px; border: 1px solid #e2e8f0; white-space: nowrap; vertical-align: middle; }
+        .param-grid-table td { padding: 13px 12px; font-size: 13px; color: #0f172a; border: 1px solid #e2e8f0; vertical-align: middle; white-space: nowrap; }
+        .param-grid-table tr:hover td { background-color: #f8fafc; }
+        
+        /* ÇİZGİ ÇAKIŞMASINI ÖNLEME */
+        .param-grid-table tr:first-child th, .param-grid-table tr:first-child td { border-top: none; }
+        .param-grid-table tr:last-child th, .param-grid-table tr:last-child td { border-bottom: none; }
+        .param-grid-table tr th:first-child, .param-grid-table tr td:first-child { border-left: none; }
+        .param-grid-table tr th:last-child, .param-grid-table tr td:last-child { border-right: none; }
+
+        .info-box { background: linear-gradient(135deg, rgba(47, 143, 232, 0.1), rgba(14, 165, 233, 0.05)); border-left: 4px solid #2f8fe8; padding: 15px 20px; border-radius: 8px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 15px; }
+        .info-box i { font-size: 24px; color: #2f8fe8; }
+        .info-box p { margin: 0; font-size: 14px; color: #475569; line-height: 1.6; }
+
+        .loader-spinner { width: 40px; height: 40px; border: 4px solid rgba(47, 143, 232, 0.2); border-left-color: #2f8fe8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-pulse { animation: pulse-btn 1.8s infinite; background: linear-gradient(135deg, #2f8fe8, #0ea5e9); border: none; color: white !important; }
+        .btn-pulse:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(14, 165, 233, 0.4); background: linear-gradient(135deg, #1d7bd1, #0284c7); }
+        .btn-action { font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; transition: all 0.3s ease; }
+
+        .alert-warning-smart { background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.03)); border: 1px solid rgba(245, 158, 11, 0.2); border-left: 4px solid #f59e0b; color: #92400e; padding: 12px 16px; }
+        
+        .insight-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #6366f1; padding: 15px 16px; border-radius: 8px; display: flex; align-items: flex-start; margin-top: 12px; }
+        .insight-box i { color: #6366f1; font-size: 22px; margin-right: 12px; margin-top: -3px; }
+        .insight-box span, .insight-box strong { font-size: 14.5px; font-weight: 600; line-height: 1.6; color: #000000 !important; }
+
+        .group-card { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 15px; position: relative; transition: all 0.2s; }
+        .group-card:hover { border-color: #cbd5e1; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .group-name-input { border: none; background: transparent; font-weight: bold; font-size: 14px; color: #0f172a; padding: 0; width: 60%; }
+        .group-name-input:focus { outline: none; border-bottom: 1px dashed #2f8fe8; }
+        .btn-remove-group { color: #ef4444; background: rgba(239, 68, 68, 0.1); border: none; border-radius: 4px; padding: 4px 8px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+        .btn-remove-group:hover { background: rgba(239, 68, 68, 0.2); }
+        .textarea-lines { position: absolute; left: 0; top: 0; bottom: 0; width: 35px; background: rgba(0,0,0,0.02); border-right: 1px solid #e2e8f0; border-top-left-radius: 8px; border-bottom-left-radius: 8px; text-align: right; padding: 8px 5px; color: #94a3b8; font-size: 12px; font-family: monospace; overflow: hidden; pointer-events: none; }
+        .form-control-lined { padding-left: 45px !important; font-size: 13px; }
+
+        .formula-box { background-color: #ffffff; padding: 25px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 15px; overflow-x: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.02);}
+
+        /* GECE MODU AYARLARI */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light, html.dark-mode .bg-body-bg { background-color: #0f172a !important; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        html.dark-mode .info-box { background: rgba(47, 143, 232, 0.1); }
+        html.dark-mode .info-box p { color: #cbd5e1; }
+        
+        html.dark-mode .table-responsive { border-color: #334155; background: #1e293b; }
+        html.dark-mode .param-grid-table th { background-color: #0f172a; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .param-grid-table td { background-color: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark-mode .param-grid-table tr:hover td { background-color: #0f172a !important; }
+        
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+        html.dark-mode .formula-box { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        html.dark-mode .formula-box p { color: #cbd5e1; }
+        html.dark-mode mjx-container { color: #e2e8f0 !important; }
+        
+        html.dark-mode .group-card { background-color: #0f172a; border-color: #334155; }
+        html.dark-mode .group-name-input { color: #f8fafc; }
+        html.dark-mode .textarea-lines { background: rgba(255,255,255,0.02); border-color: #334155; }
+        html.dark-mode .form-control-lined { background-color: #1e293b !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+
+        html.dark-mode .alert-warning-smart { background: rgba(245, 158, 11, 0.1) !important; border: 1px solid rgba(245, 158, 11, 0.2) !important; border-left: 4px solid #fbbf24 !important; color: #fcd34d !important; }
+        html.dark-mode .insight-box { background: #1e293b !important; border: 1px solid #334155 !important; border-left: 4px solid #818cf8 !important; }
+        html.dark-mode .insight-box i { color: #818cf8 !important; }
+        html.dark-mode .insight-box span, html.dark-mode .insight-box strong { color: #ffffff !important; }
+
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border border-white shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-bar-chart-horizontal-line align-middle me-1"></i> Kruskal-Wallis Testi
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="main-content-container overflow-hidden">
+                
+                <div class="info-box shadow-sm">
+                    <i class="ri-information-line"></i>
+                    <div>
+                        <strong class="d-block text-dark mb-1">Kruskal-Wallis H Testi (Non-Parametrik ANOVA)</strong>
+                        <p class="mb-1">Tek Yönlü ANOVA'nın parametrik olmayan alternatifidir. Verilerin normal dağılmadığı veya varyansların homojen olmadığı durumlarda 3 veya daha fazla bağımsız grubun <strong>medyanlarını (sıra ortalamalarını)</strong> karşılaştırır.</p>
+                        <p class="mb-0 text-danger fw-semibold fs-13"><i class="ri-error-warning-fill align-middle"></i> Uyarı: Analiz sonuçları ham ortalamalara değil, verilerin sıralanmasıyla elde edilen <em>Sıra Ortalamalarına (Mean Ranks)</em> dayanır.</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- SOL PANEL: VERİ GİRİŞİ -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="fs-17 fw-semibold text-dark mb-0">Bağımsız Gruplar</h4>
+                                <button class="btn btn-sm btn-primary rounded-pill px-3 fw-bold" onclick="addGroup()"><i class="ri-add-line align-middle"></i> Grup Ekle</button>
+                            </div>
+                            
+                            <div class="alert alert-warning-smart py-2 fs-12 mb-3 border-0 rounded-3">
+                                <i class="ri-edit-2-fill align-middle me-1"></i> Verilerinizi <strong>satır satır, virgülle veya boşlukla</strong> ayırarak girebilirsiniz. Her grup için sınır <strong>1000</strong> veridir.
+                            </div>
+
+                            <!-- DİNAMİK GRUP LİSTESİ -->
+                            <div id="dynamicGroupsContainer" style="max-height: 500px; overflow-y: auto; padding-right: 5px;">
+                                <!-- Gruplar JS ile buraya eklenecek -->
+                            </div>
+                            
+                            <div class="text-center mb-4 mt-3">
+                                <span class="badge bg-primary-subtle text-primary px-3 py-2 fs-13 rounded-pill">Toplam Örneklem ($N$): <strong id="lblTotalN">0</strong></span>
+                            </div>
+
+                            <hr class="border-secondary opacity-25 my-4">
+
+                            <div class="mb-4">
+                                <label class="form-label fw-medium text-secondary fs-13 mb-1">Anlamlılık Düzeyi ($\alpha$)</label>
+                                <select id="alfaInput" class="form-select bg-light border-0 rounded-10 py-2 fs-13">
+                                    <option value="0.05" selected>0.05 (%5 Kritik Eşik)</option>
+                                    <option value="0.01">0.01 (%1 Katı Sınır)</option>
+                                    <option value="0.10">0.10 (%10 Esnek Sınır)</option>
+                                </select>
+                            </div>
+
+                            <div class="d-flex flex-column gap-3 mt-4">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-secondary w-50 py-2 rounded-10 btn-action" onclick="ornekVeriYukle()">
+                                        <i class="ri-magic-line align-middle me-1"></i> Örnek Veri
+                                    </button>
+                                    <button class="btn btn-outline-danger w-50 py-2 rounded-10 btn-action" onclick="temizleVeri()">
+                                        <i class="ri-delete-bin-line align-middle me-1"></i> Temizle
+                                    </button>
+                                </div>
+                                <button class="btn w-100 py-3 rounded-10 btn-action btn-pulse" onclick="baslatAnaliz()">
+                                    <i class="ri-bar-chart-2-fill align-middle me-1 fs-18"></i> ANALİZ ET
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SAĞ PANEL: SONUÇLAR -->
+                    <div class="col-lg-8 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                            
+                            <div id="bosDurum" class="text-center py-5 my-auto">
+                                <i class="ri-bar-chart-horizontal-line text-muted opacity-25" style="font-size: 4.5rem;"></i>
+                                <h5 class="text-muted mt-3 fs-16">Analiz Bekleniyor</h5>
+                                <p class="text-muted fs-14 mb-0">Gruplarınızı doldurup testi başlatın.</p>
+                            </div>
+
+                            <div id="loadingOverlay" class="text-center py-5 my-auto" style="display: none;">
+                                <div class="loader-spinner"></div>
+                                <h5 class="text-primary mt-4 fs-16 fw-semibold">Sıra Ortalamaları (Ranks) Hesaplanıyor...</h5>
+                            </div>
+
+                            <div id="aktifSonuc" style="display: none;">
+
+                                <!-- ÜST İSTATİSTİK KARTLARI -->
+                                <div class="row g-3 text-center mb-4">
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Uygulanan Test</span>
+                                            <h4 class="text-primary mb-0 fw-bold fs-16">Kruskal-Wallis</h4>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Test İstatistiği ($H$ / $\chi^2$)</span>
+                                            <h3 id="resH" class="text-secondary mb-0 fw-bold fs-22">-</h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">P-Değeri ($p$)</span>
+                                            <h3 id="resP" class="text-primary mb-0 fw-bold fs-22">-</h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="p-2 bg-body-bg rounded-10 border border-light d-flex justify-content-around px-2 align-items-center">
+                                            <div><span class="text-muted fs-12 fw-semibold">Serbestlik Derecesi ($df$):</span> <span id="resDf" class="text-dark fw-bold fs-14 ms-1">-</span></div>
+                                            <div><span class="text-muted fs-12 fw-semibold">Epsilon Kare ($\varepsilon^2$):</span> <span id="resEpsilon" class="text-dark fw-bold fs-14 ms-1">-</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 1. TABLO: TANIMLAYICI VE SIRA İSTATİSTİKLERİ (TRANSPOZE) -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="fs-14 fw-bold text-dark mb-0"><i class="ri-file-text-line text-primary me-1"></i> Tanımlayıcı İstatistikler ve Sıra Ortalamaları</h5>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table param-grid-table m-0" id="descTable">
+                                            <!-- JS Dolduracak -->
+                                        </table>
+                                    </div>
+                                    <small class="text-muted fs-11 mt-2 d-block"><i class="ri-information-fill text-primary me-1"></i>Sıra Ortalaması (Mean Rank) değerleri testin asıl karar mekanizmasıdır.</small>
+                                </div>
+
+                                <!-- 2. TABLO: POST-HOC (Çoklu Karşılaştırma) -->
+                                <div class="mb-4" id="posthocSection" style="display: none;">
+                                    <h5 class="fs-14 fw-bold text-dark mb-2"><i class="ri-node-tree text-primary me-1"></i> Çoklu Karşılaştırmalar (Post-Hoc: Mann-Whitney U)</h5>
+                                    <p class="fs-13 text-muted mb-2">Hangi gruplar arasında anlamlı fark olduğunu tespit etmek için <strong class="text-dark">Bonferroni düzeltmeli Mann-Whitney U</strong> testi uygulanmıştır.</p>
+                                    <div class="table-responsive">
+                                        <table class="table param-grid-table m-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-start">Karşılaştırılan Çift (Grup A vs B)</th>
+                                                    <th>Sıra Ortalaması Farkı</th>
+                                                    <th>Düzeltilmemiş $p$</th>
+                                                    <th>Düzeltilmiş $p$ (Bonferroni)</th>
+                                                    <th>Karar</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="posthocTableBody">
+                                                <!-- JS Dolduracak -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- GRAFİKLER BÖLÜMÜ -->
+                                <div class="row mt-4">
+                                    <!-- GRAFİK 1: KUTU GRAFİĞİ (BOXPLOT) -->
+                                    <div class="col-12 mb-4">
+                                        <div class="chart-container h-100 d-flex flex-column border-primary border-opacity-25">
+                                            <h5 class="fs-14 fw-bold text-dark mb-2 text-center text-uppercase tracking-wider">Grupların Dağılımı (Kutu Grafiği)</h5>
+                                            <span class="fs-12 text-muted text-center mb-3 d-block">Non-parametrik testlerde ortalama yerine medyanların (kutu içindeki çizgi) ve çeyreklik dağılımlarının incelenmesi daha uygundur.</span>
+                                            <div style="position: relative; height: 350px; width: 100%;"><canvas id="boxChart"></canvas></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ANA KARAR VE İÇGÖRÜ KUTUSU -->
+                                <div id="kararKutusu" class="alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start shadow-sm mt-4">
+                                    <div class="d-flex justify-content-center mt-1 me-3"><i id="kararIkon" class="fs-28"></i></div>
+                                    <div class="flex-grow-1">
+                                        <h4 id="kararBaslik" class="mb-2 fs-16 fw-bold">-</h4>
+                                        <p id="kararAciklama" class="mb-0 fs-14 text-muted lh-base">-</p>
+                                        
+                                        <!-- İNDİGO AKILLI YORUM KUTUSU -->
+                                        <div id="yorumWrapper" class="insight-box shadow-sm mt-3">
+                                            <i class="ri-lightbulb-flash-fill"></i>
+                                            <div class="d-flex flex-column w-100" id="yorumText">
+                                                <!-- Yorumlar satır satır gelecek -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- AKORDEON: ADIM ADIM HESAPLAMALARI GÖSTER (TABLOLU) -->
+                                <div class="mt-4 mb-4">
+                                    <button class="btn w-100 py-3 d-flex justify-content-between align-items-center fs-15 fw-bold rounded-10 border-0 shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#adimAdimHesaplama" aria-expanded="false" style="background-color: #f8fafc; border: 1px solid #e2e8f0 !important; color: #0f172a;">
+                                        <span><i class="ri-calculator-line text-primary me-2 fs-20 align-middle"></i> Hesaplama Ayrıntılarını Göster</span>
+                                        <i class="ri-arrow-down-s-line fs-22 text-secondary"></i>
+                                    </button>
+                                    <div class="collapse mt-3" id="adimAdimHesaplama">
+                                        <div class="card card-body bg-white border border-light p-4 rounded-10 shadow-sm fs-14 text-dark" id="hesaplamaDetayIcerik">
+                                            <!-- JS TABLOLARLA DOLDURACAK -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- AKORDEON: TEORİK ALTYAPI (FORMÜLLER) -->
+                                <div class="mt-4 mb-2">
+                                    <button class="btn btn-pulse w-100 py-3 d-flex justify-content-between align-items-center fs-15 fw-bold rounded-10 border-0 shadow" type="button" data-bs-toggle="collapse" data-bs-target="#teorikFormuller" aria-expanded="false" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: white;">
+                                        <span><i class="ri-function-line me-2 fs-20 align-middle"></i> Matematiksel Formülleri Görüntüle</span>
+                                        <i class="ri-arrow-down-s-line fs-22"></i>
+                                    </button>
+                                    <div class="collapse mt-3" id="teorikFormuller">
+                                        <div class="card card-body bg-body-bg border border-light p-4 rounded-10 shadow-sm">
+                                            <div class="row g-3">
+                                                
+                                                <div class="col-12">
+                                                    <div class="formula-box">
+                                                        <strong class="text-dark d-block mb-3 fs-15">1. Kruskal-Wallis H İstatistiği (Ties Olmadan)</strong>
+                                                        <p class="fs-14">Tüm veriler küçükten büyüğe sıralanıp (1'den N'e kadar) Sıra Numarası (Rank) verilir. Her grubun sıra toplamı ($R_i$) alınarak istatistik hesaplanır.</p>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ H = \frac{12}{N(N+1)} \sum_{i=1}^k \frac{R_i^2}{n_i} - 3(N+1) $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="formula-box">
+                                                        <strong class="text-dark d-block mb-3 fs-15">2. Eşit Veriler (Ties) İçin Düzeltme Faktörü</strong>
+                                                        <p class="fs-14">Eğer aynı değere sahip birden fazla veri (tie) varsa, onlara aynı sıra numarası (ortalaması) verilir ve formül şu katsayı ($C$) ile düzeltilir:</p>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ C = 1 - \frac{\sum (t_j^3 - t_j)}{N^3 - N} $$<br>
+                                                            $$ H_{D\ddot{u}zeltilmi\c{s}} = \frac{H}{C} $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="formula-box mb-0">
+                                                        <strong class="text-dark d-block mb-3 fs-15">3. Etki Büyüklüğü ($\varepsilon^2$)</strong>
+                                                        <p class="fs-14">Hesaplanan $H$ değerinin, teorik maksimum $H$ değerine oranıdır. Değerin $0$ ile $1$ arasında olmasını sağlar.</p>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ \varepsilon^2 = \frac{H}{\frac{N^2 - 1}{N + 1}} = \frac{H}{N - 1} $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="footer-area bg-white text-center rounded-10 rounded-bottom-0 p-3 mt-4 border-top shadow-sm">
+                <p class="fs-14 text-body mb-0">© <span>StatLabseu</span> - Gelişmiş İstatistiksel Analiz Platformu</p>
+            </footer>
+
+        </div>
+    </div>
+ 
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function setTxt(id, text) { let el = document.getElementById(id); if (el) el.innerText = text; }
+        function setHTML(id, html) { let el = document.getElementById(id); if (el) el.innerHTML = html; }
+        function setClass(id, cls) { let el = document.getElementById(id); if (el) el.className = cls; }
+        function setStyle(id, prop, val) { let el = document.getElementById(id); if (el) el.style[prop] = val; }
+
+        let charts = { box: null };
+        let globalGroupId = 0; 
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            if (localStorage.getItem('statlab_theme') === 'dark') { themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); }
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); themeIcon.classList.remove('text-secondary'); localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); themeIcon.classList.remove('text-warning'); themeIcon.classList.add('text-secondary'); localStorage.setItem('statlab_theme', 'light');
+                }
+                let aktifEl = document.getElementById('aktifSonuc'); if(aktifEl && aktifEl.style.display === 'block') baslatAnaliz();
+            });
+            
+            addGroup(); addGroup(); addGroup();
+        });
+
+        // DİNAMİK GRUP YÖNETİMİ
+        function addGroup() {
+            let activeIds = getActiveGroupIds();
+            if (activeIds.length >= 10) { alert("Maksimum 10 grup ekleyebilirsiniz."); return; }
+            
+            globalGroupId++;
+            let gId = `g_${globalGroupId}`;
+            
+            let existingInputs = Array.from(document.querySelectorAll('.group-name-input')).map(inp => inp.value);
+            let maxVal = 0;
+            existingInputs.forEach(val => {
+                let match = val.match(/^Grup\s+(\d+)$/i);
+                if (match) {
+                    let num = parseInt(match[1]);
+                    if (num > maxVal) maxVal = num;
+                }
+            });
+            let nextNum = maxVal + 1;
+
+            let html = `
+                <div class="group-card" id="card_${gId}">
+                    <div class="group-header">
+                        <input type="text" class="group-name-input" id="name_${gId}" value="Grup ${nextNum}">
+                        <button class="btn-remove-group" id="btn_rem_${gId}" onclick="removeGroup('${gId}')"><i class="ri-close-line"></i> Sil</button>
+                    </div>
+                    <div class="position-relative">
+                        <div class="textarea-lines" id="lines_${gId}">1<br>2<br>3<br>4</div>
+                        <textarea id="val_${gId}" class="form-control form-control-lined border-0 rounded-3" rows="4" placeholder="Maksimum 1000 Veri (virgül, boşluk veya alt alta)" oninput="updateLines('${gId}'); calculateTotalN();" onscroll="syncScroll('${gId}')"></textarea>
+                    </div>
+                </div>
+            `;
+            document.getElementById('dynamicGroupsContainer').insertAdjacentHTML('beforeend', html);
+            updateRemoveButtons();
+        }
+
+        function removeGroup(gId) {
+            let activeIds = getActiveGroupIds();
+            if (activeIds.length <= 3) { alert("Kruskal-Wallis için en az 3 grup önerilir."); return; }
+            document.getElementById(`card_${gId}`).remove();
+            calculateTotalN();
+            updateRemoveButtons();
+        }
+        
+        function updateRemoveButtons() {
+            let activeIds = getActiveGroupIds();
+            activeIds.forEach(id => {
+                let btn = document.getElementById(`btn_rem_${id}`);
+                if(btn) {
+                    if(activeIds.length <= 3) btn.style.display = 'none';
+                    else btn.style.display = 'inline-block';
+                }
+            });
+        }
+
+        function updateLines(gId) {
+            let t = document.getElementById(`val_${gId}`);
+            let l = document.getElementById(`lines_${gId}`);
+            if(!t || !l) return;
+            let linesCount = t.value.split('\n').length;
+            let linesHtml = '';
+            for(let i=1; i<=linesCount; i++) linesHtml += i + '<br>';
+            l.innerHTML = linesHtml;
+        }
+
+        function syncScroll(gId) {
+            document.getElementById(`lines_${gId}`).scrollTop = document.getElementById(`val_${gId}`).scrollTop;
+        }
+
+        function getActiveGroupIds() {
+            let container = document.getElementById('dynamicGroupsContainer');
+            let ids = [];
+            for(let i=0; i<container.children.length; i++) {
+                ids.push(container.children[i].id.replace('card_', ''));
+            }
+            return ids;
+        }
+
+        function parseDataText(text) {
+            return text.replace(/,/g, ' ').split(/[\s\r\n]+/).map(Number).filter(v => !isNaN(v));
+        }
+
+        function calculateTotalN() {
+            let ids = getActiveGroupIds();
+            let total = 0;
+            ids.forEach(id => {
+                let text = document.getElementById(`val_${id}`).value;
+                let arr = parseDataText(text);
+                total += arr.length;
+            });
+            setTxt('lblTotalN', total);
+        }
+
+        function ornekVeriYukle() {
+            let ids = getActiveGroupIds();
+            let baseMedians = [15, 25, 12, 30, 18, 28, 14, 22, 16, 26]; // Non-parametric veriler
+            
+            for(let i=0; i<ids.length; i++) {
+                let id = ids[i];
+                let med = baseMedians[i % baseMedians.length];
+                let n = 20 + Math.floor(Math.random() * 10);
+                let arr = [];
+                for(let j=0; j<n; j++) {
+                    // Log-normal distribution for skewness (Non-parametric need)
+                    let u = Math.random();
+                    let val = Math.exp(Math.random() * 0.8) * (med / 1.5) + (Math.random() * 5); 
+                    arr.push(val.toFixed(1)); 
+                }
+                document.getElementById(`val_${id}`).value = arr.join('\n');
+                updateLines(id);
+            }
+            calculateTotalN();
+            document.getElementById('alfaInput').value = "0.05";
+        }
+
+        function temizleVeri() {
+            let ids = getActiveGroupIds();
+            ids.forEach(id => {
+                document.getElementById(`val_${id}`).value = '';
+                updateLines(id);
+            });
+            calculateTotalN();
+            setStyle('aktifSonuc', 'display', 'none'); setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block');
+            Object.values(charts).forEach(c => { if(c) c.destroy(); });
+        }
+
+        // --- YEREL JS HESAPLAMALAR ---
+        function calcDescStats(arr) {
+            let n = arr.length; if(n === 0) return { n:0, mean:0, min:0, max:0, q1:0, q3:0, iqr:0, median:0, outliers:[], outCount:0 };
+            let sum = arr.reduce((a,b)=>a+b, 0);
+            let mean = sum / n;
+            
+            let sorted = [...arr].sort((a,b)=>a-b);
+            let min = sorted[0]; let max = sorted[n-1];
+            let q1 = sorted[Math.floor(n*0.25)]; let q3 = sorted[Math.floor(n*0.75)]; 
+            let median = n % 2 === 0 ? (sorted[n/2 - 1] + sorted[n/2]) / 2 : sorted[Math.floor(n/2)];
+            let iqr = q3 - q1;
+            
+            let lowerFence = q1 - 1.5 * iqr; let upperFence = q3 + 1.5 * iqr;
+            let outliers = sorted.filter(x => x < lowerFence || x > upperFence);
+            
+            return { n, sum, mean, min, max, q1, q3, iqr, median, outliers, outCount: outliers.length };
+        }
+
+        // Approximate Chi-Square CDF (Wilson-Hilferty)
+        function normalCDF(z) {
+            let absZ = Math.abs(z);
+            if (absZ > 8.0) return z > 0 ? 1.0 : 0.0;
+            let p = 0.2316419; let a1 = 0.31938153; let a2 = -0.356563782; let a3 = 1.781477937; let a4 = -1.821255978; let a5 = 1.330274429;
+            let t = 1.0 / (1.0 + p * absZ);
+            let d = (1.0 / Math.sqrt(2 * Math.PI)) * Math.exp(-0.5 * z * z);
+            let prob = d * t * (a1 + t * (a2 + t * (a3 + t * (a4 + t * a5))));
+            return z > 0 ? 1.0 - prob : prob;
+        }
+
+        function chiSquareP(x, df) {
+            if (x <= 0 || df < 1) return 1.0;
+            if (df === 1) return 2 * (1 - normalCDF(Math.sqrt(x)));
+            if (df === 2) return Math.exp(-x / 2);
+            let z = (Math.pow(x / df, 1/3) - (1 - 2/(9*df))) / Math.sqrt(2/(9*df));
+            return 1 - normalCDF(z);
+        }
+
+        function cizGrafikler(groupsData, stats) {
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; const gColor = isDark ? '#334155' : '#e2e8f0';
+            Object.values(charts).forEach(c => { if(c) c.destroy(); });
+
+            let labels = groupsData.map(g => g.name);
+            let colors = ['#2f8fe8', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
+
+            let boxMin = Math.min(...stats.map(s => s.min));
+            let boxMax = Math.max(...stats.map(s => s.max));
+            let padding = (boxMax - boxMin) * 0.1 || 1;
+
+            charts.box = new Chart(document.getElementById('boxChart'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{ label: 'Dummy', data: stats.map(s => [s.q1, s.q3]), backgroundColor: 'transparent', borderColor: 'transparent' }] 
+                },
+                plugins: [{
+                    id: 'customBoxPlot',
+                    afterDatasetsDraw(chart) {
+                        const ctx = chart.ctx; const xAxis = chart.scales.x; const yAxis = chart.scales.y;
+                        stats.forEach((st, i) => {
+                            const x = xAxis.getPixelForTick(i); const width = xAxis.width / stats.length * 0.5; 
+                            const yMedian = yAxis.getPixelForValue(st.median); const yMin = yAxis.getPixelForValue(st.min); 
+                            const yMax = yAxis.getPixelForValue(st.max); const yQ1 = yAxis.getPixelForValue(st.q1); const yQ3 = yAxis.getPixelForValue(st.q3);
+                            
+                            let col = colors[i%10];
+                            ctx.save();
+                            ctx.fillStyle = col + '33'; ctx.fillRect(x - width/2, yQ3, width, yQ1 - yQ3);
+                            ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.strokeRect(x - width/2, yQ3, width, yQ1 - yQ3);
+                            ctx.beginPath(); ctx.moveTo(x - width/2, yMedian); ctx.lineTo(x + width/2, yMedian); ctx.lineWidth = 3; ctx.stroke();
+                            ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, yQ3); ctx.lineTo(x, yMax); ctx.moveTo(x, yQ1); ctx.lineTo(x, yMin); ctx.stroke();
+                            const capW = width * 0.3; ctx.beginPath(); ctx.moveTo(x - capW/2, yMax); ctx.lineTo(x + capW/2, yMax); ctx.moveTo(x - capW/2, yMin); ctx.lineTo(x + capW/2, yMin); ctx.stroke();
+
+                            st.outliers.forEach(outVal => {
+                                const yOut = yAxis.getPixelForValue(outVal);
+                                ctx.beginPath(); ctx.arc(x, yOut, 4, 0, 2 * Math.PI); ctx.fillStyle = '#ef4444'; ctx.fill();
+                            });
+                            ctx.restore();
+                        });
+                    }
+                }],
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: boxMin - padding, max: boxMax + padding, grid: { color: gColor }, ticks: { color: fColor } }, x: { grid: { display: false }, ticks: { color: fColor, font: {weight: 'bold'} } } } }
+            });
+        }
+
+        function baslatAnaliz() {
+            let ids = getActiveGroupIds();
+            if (ids.length < 2) { alert("Analiz için en az 2 grup olmalıdır (Önerilen 3+)."); return; }
+            
+            let groupsData = [];
+            for(let i=0; i<ids.length; i++) {
+                let id = ids[i];
+                let text = document.getElementById(`val_${id}`).value;
+                let name = document.getElementById(`name_${id}`).value || `Grup ${i+1}`;
+                let arr = parseDataText(text);
+                
+                if (arr.length < 2) { alert(`Hata: '${name}' grubunda en az 2 sayısal veri olmalıdır.`); return; }
+                if (arr.length > 1000) { alert(`Hata: '${name}' grubu 1000 veri sınırını aştı.`); return; }
+                
+                groupsData.push({ id: id, name: name, data: arr });
+            }
+
+            setStyle('bosDurum', 'display', 'none'); setStyle('aktifSonuc', 'display', 'none'); setStyle('loadingOverlay', 'display', 'block');
+            setTimeout(() => hesaplaKruskal(groupsData), 800);
+        }
+
+        async function hesaplaKruskal(groupsData) {
+            try {
+                let alfa = parseFloat(document.getElementById('alfaInput').value);
+                let k = groupsData.length;
+                let df = k - 1;
+                
+                // 1. TÜM VERİLERİ BİRLEŞTİR VE RANK (SIRA) HESAPLA (JS FALLBACK)
+                let allData = [];
+                groupsData.forEach((g, i) => { g.data.forEach(val => { allData.push({ val: val, group: i }); }); });
+                
+                allData.sort((a,b) => a.val - b.val);
+                let N = allData.length;
+                
+                let idx = 0; let tiesList = [];
+                while(idx < N) {
+                    let j = idx;
+                    while(j < N && allData[j].val === allData[idx].val) j++;
+                    let count = j - idx;
+                    let rankSum = 0;
+                    for(let x=idx; x<j; x++) rankSum += (x + 1);
+                    let avgRank = rankSum / count;
+                    for(let x=idx; x<j; x++) allData[x].rank = avgRank;
+                    if(count > 1) tiesList.push(count);
+                    idx = j;
+                }
+
+                let sumR = new Array(k).fill(0);
+                allData.forEach(d => { sumR[d.group] += d.rank; });
+
+                let stats = []; let descTBody = '';
+                let H_term = 0;
+                
+                groupsData.forEach((g, i) => {
+                    let st = calcDescStats(g.data);
+                    st.meanRank = sumR[i] / st.n;
+                    st.sumRank = sumR[i];
+                    stats.push(st);
+                    H_term += Math.pow(st.sumRank, 2) / st.n;
+                });
+
+                // H Calculation
+                let H_stat = (12 / (N * (N + 1))) * H_term - 3 * (N + 1);
+                let correction = 1.0;
+                if(tiesList.length > 0) {
+                    let tieSum = 0;
+                    tiesList.forEach(t => { tieSum += (Math.pow(t, 3) - t); });
+                    correction = 1.0 - (tieSum / (Math.pow(N, 3) - N));
+                    H_stat = H_stat / correction;
+                }
+
+                let p_val = chiSquareP(H_stat, df);
+                let epsilonSq = H_stat / (N - 1);
+
+                let final_H = H_stat; let final_p = p_val; let final_eps = epsilonSq;
+                let apiSuccess = false; let posthocRes = [];
+
+                // 2. API İSTEĞİ (KESİN HESAPLAMALAR VE MWU)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3500); 
+
+                try {
+                    let reqBody = { groups: groupsData.map(g => g.data), group_names: groupsData.map(g => g.name) };
+                    let istek = await fetch("https://api.statlabseu.com/test/kruskal-wallis", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(reqBody), signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    
+                    if(istek.ok) { 
+                        let data = await istek.json(); 
+                        apiSuccess = true;
+                        
+                        final_H = data.h_stat;
+                        final_p = data.p_value;
+                        final_eps = data.epsilon_sq;
+                        
+                        if(final_p < alfa && data.posthoc.performed) {
+                            posthocRes = data.posthoc.results;
+                        }
+                    }
+                } catch (e) {
+                    clearTimeout(timeoutId);
+                    // API YOKSA: Kaba JS Post-Hoc (Z-test on ranks)
+                    if(final_p < alfa) {
+                        let comparisons = k * (k - 1) / 2;
+                        for(let i=0; i<k; i++) {
+                            for(let j=i+1; j<k; j++) {
+                                let rDiff = Math.abs(stats[i].meanRank - stats[j].meanRank);
+                                let se = Math.sqrt((N*(N+1)/12) * (1/stats[i].n + 1/stats[j].n));
+                                let z = rDiff / se;
+                                let pRaw = 2 * (1 - normalCDF(z));
+                                let pAdj = Math.min(1.0, pRaw * comparisons);
+                                posthocRes.push({ g1: groupsData[i].name, g2: groupsData[j].name, diff: (stats[i].meanRank - stats[j].meanRank), p_raw: pRaw, p_adj: pAdj });
+                            }
+                        }
+                    }
+                }
+
+                // EKRAN GÜNCELLEMELERİ
+                setTxt('resH', final_H.toFixed(3));
+                setTxt('resP', final_p.toFixed(4));
+                setTxt('resDf', df);
+                setTxt('resEpsilon', final_eps.toFixed(3));
+
+                // TRANSPOZE TANIMLAYICI TABLOSU
+                let descHTML = `<thead><tr><th class="text-start">Metrik / İstatistik</th>`;
+                groupsData.forEach(g => descHTML += `<th>${g.name}</th>`);
+                descHTML += `<th class="text-primary">Genel Sistem</th></tr></thead><tbody>`;
+
+                descHTML += `<tr><td class="fw-bold text-start ps-3">Gözlem Sayısı ($n$)</td>`;
+                stats.forEach(st => descHTML += `<td>${st.n}</td>`);
+                descHTML += `<td class="fw-bold text-primary">${N}</td></tr>`;
+
+                descHTML += `<tr><td class="fw-bold text-start ps-3">Medyan (Ortanca)</td>`;
+                stats.forEach(st => descHTML += `<td>${st.median.toFixed(2)}</td>`);
+                descHTML += `<td>-</td></tr>`;
+
+                descHTML += `<tr><td class="fw-bold text-start ps-3">IQR (Çeyrekler Açıklığı)</td>`;
+                stats.forEach(st => descHTML += `<td>${st.iqr.toFixed(2)}</td>`);
+                descHTML += `<td>-</td></tr>`;
+
+                descHTML += `<tr><td class="fw-bold text-start ps-3">Sıra Ortalaması (Mean Rank)</td>`;
+                stats.forEach(st => descHTML += `<td class="text-success fw-bold">${st.meanRank.toFixed(2)}</td>`);
+                descHTML += `<td>-</td></tr>`;
+
+                descHTML += `<tr class="bg-light"><td class="fw-bold text-start ps-3">Sıra Toplamı (Sum of Ranks)</td>`;
+                stats.forEach(st => descHTML += `<td>${st.sumRank.toFixed(1)}</td>`);
+                descHTML += `<td>-</td></tr></tbody>`;
+                setHTML('descTable', descHTML);
+
+                // POST-HOC TABLOSU
+                if (final_p < alfa && posthocRes.length > 0) {
+                    let phHTML = '';
+                    posthocRes.forEach(ph => {
+                        let isSig = ph.p_adj < alfa;
+                        phHTML += `<tr>
+                            <td class="text-start fw-bold">${ph.g1} <i class="ri-arrow-left-right-line px-1 text-muted"></i> ${ph.g2}</td>
+                            <td class="fw-semibold">${ph.diff.toFixed(3)}</td>
+                            <td class="text-muted">${ph.p_raw.toFixed(4)}</td>
+                            <td class="fw-bold ${isSig ? 'text-danger' : 'text-secondary'}">${ph.p_adj.toFixed(4)}</td>
+                            <td><span class="badge ${isSig ? 'bg-danger' : 'bg-secondary'}">${isSig ? 'Anlamlı Fark' : 'Fark Yok'}</span></td>
+                        </tr>`;
+                    });
+                    setStyle('posthocSection', 'display', 'block');
+                    setHTML('posthocTableBody', phHTML);
+                } else {
+                    setStyle('posthocSection', 'display', 'none');
+                }
+
+                // KARAR VE İNDİGO (YORUM) KUTUSU
+                let yorum = "";
+                if (final_p < alfa) {
+                    setClass('kararKutusu', "alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start bg-danger-subtle text-danger shadow-sm mt-4");
+                    setClass('kararIkon', "ri-error-warning-fill text-danger fs-28"); setTxt('kararBaslik', "H₀ Reddedilir (Anlamlı Fark Var)");
+                    setHTML('kararAciklama', `p $\\lt \\alpha$ olduğu için, grupların dağılımları (sıra ortalamaları) arasında istatistiksel olarak anlamlı bir farklılık bulunmaktadır.`);
+                    
+                    yorum = `<span><strong>İstatistiksel Yorum:</strong> Kruskal-Wallis H testi sonucunda, grupların sıra ortalamaları (medyan dağılımları) arasında istatistiksel olarak anlamlı bir fark bulunmuştur, $\\chi^2(${df}) = ${final_H.toFixed(2)}$, $p = ${final_p.toFixed(4)}$. Farklılığın hangi gruplardan kaynaklandığını görmek için Çoklu Karşılaştırmalar tablosuna bakabilirsiniz.</span>`;
+                } else {
+                    setClass('kararKutusu', "alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start bg-success-subtle text-success shadow-sm mt-4");
+                    setClass('kararIkon', "ri-checkbox-circle-fill text-success fs-28"); setTxt('kararBaslik', "H₀ Reddedilemez (Anlamlı Fark Yok)");
+                    setHTML('kararAciklama', `p $\\ge \\alpha$ olduğu için, grupların dağılımları (sıra ortalamaları) arasında istatistiksel olarak anlamlı bir fark olduğuna dair kanıt bulunamamıştır.`);
+                    
+                    yorum = `<span><strong>İstatistiksel Yorum:</strong> Kruskal-Wallis H testi sonucunda, grupların sıra ortalamaları arasında istatistiksel olarak anlamlı bir farklılık tespit edilememiştir, $\\chi^2(${df}) = ${final_H.toFixed(2)}$, $p = ${final_p.toFixed(4)}$. Gruplar arası gözlenen medyan farkları şans eseri oluşmuş olabilir.</span>`;
+                }
+                setHTML('yorumText', yorum);
+
+                // ADIM ADIM TABLOLU HESAPLAMALAR
+                let calcDetHTML = `
+                    <h6 class="fw-bold mb-3 text-dark"><i class="ri-function-add-line align-middle me-1"></i> Adım 1: Sıra (Rank) Hesaplamaları</h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table param-grid-table m-0">
+                            <thead>
+                                <tr><th class="text-start">Grup</th><th>Gözlem Sayısı ($n_i$)</th><th>Sıra Toplamı ($R_i$)</th><th>$R_i^2 / n_i$</th></tr>
+                            </thead>
+                            <tbody>
+                `;
+                let sumR2_n = 0;
+                stats.forEach((st, i) => {
+                    let r2_n = Math.pow(st.sumRank, 2) / st.n;
+                    sumR2_n += r2_n;
+                    calcDetHTML += `<tr><td class="text-start fw-bold">${groupsData[i].name}</td><td>${st.n}</td><td>${st.sumRank.toFixed(1)}</td><td class="text-primary fw-bold">${r2_n.toFixed(2)}</td></tr>`;
+                });
+                calcDetHTML += `
+                                <tr class="bg-light"><td colspan="3" class="text-end fw-bold text-dark">Toplam ($\\sum R_i^2 / n_i$)</td><td class="fw-bold text-dark">${sumR2_n.toFixed(2)}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6 class="fw-bold mb-3 text-dark"><i class="ri-divide-line align-middle me-1"></i> Adım 2: Formül ve Düzeltme Katsayısı</h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table param-grid-table m-0">
+                            <thead>
+                                <tr><th class="text-start">Parametre</th><th>Açıklama</th><th>Değer</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="text-start fw-bold">Toplam Gözlem ($N$)</td><td>Tüm gruplardaki veri sayısı</td><td class="fw-bold text-dark">${N}</td></tr>
+                                <tr><td class="text-start fw-bold">Eşitlik Katsayısı ($C$)</td><td>Aynı verilerin (ties) yarattığı sapmayı düzeltir</td><td class="fw-bold text-primary">${correction.toFixed(4)}</td></tr>
+                                <tr><td class="text-start fw-bold">Serbestlik Derecesi ($df$)</td><td>$k - 1$</td><td class="fw-bold text-dark">${df}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                setHTML('hesaplamaDetayIcerik', calcDetHTML);
+
+                setStyle('loadingOverlay', 'display', 'none'); setStyle('aktifSonuc', 'display', 'block');
+                cizGrafikler(groupsData, stats);
+
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) {
+                        MathJax.typesetClear();
+                        MathJax.typesetPromise().catch(err => console.log(err));
+                    }
+                    document.getElementById('aktifSonuc').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+
+            } catch (error) { setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block'); alert("Analiz Hatası: " + error); }
+        }
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>
