@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { 
+                inlineMath: [['$', '$'], ['\\(', '\\)']], 
+                displayMath: [['$$', '$$'], ['\\[', '\\]']] 
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <!-- EXCEL (XLSX) DOSYALARINI OKUMAK İÇİN SHEETJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <title>Spearman Korelasyon Analizi | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        @font-face {
+            font-family: 'STIX Two Math';
+            src: url('assets/fonts/STIXTwoMath-Regular.ttf') format('truetype');
+            font-weight: normal; font-style: normal;
+        }
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+        .math-var { font-family: 'STIX Two Math', serif !important; font-style: italic; font-weight: normal; color: inherit; display: inline-block; }
+
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        
+        /* STANDART SONUÇ TABLOLARI */
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; }
+        .param-grid-table { width: 100%; border-collapse: collapse; text-align: center; margin: 0; min-width: max-content; }
+        .param-grid-table th { font-size: 13px; font-weight: 700; color: #475569; background-color: #f1f5f9; padding: 13px 12px; border: 1px solid #e2e8f0; white-space: nowrap; vertical-align: middle; }
+        .param-grid-table td { padding: 13px 12px; font-size: 13px; color: #0f172a; border: 1px solid #e2e8f0; vertical-align: middle; white-space: nowrap; }
+        .param-grid-table tr:hover td { background-color: #f8fafc; }
+        
+        .param-grid-table tr:first-child th, .param-grid-table tr:first-child td { border-top: none; }
+        .param-grid-table tr:last-child th, .param-grid-table tr:last-child td { border-bottom: none; }
+        .param-grid-table tr th:first-child, .param-grid-table tr td:first-child { border-left: none; }
+        .param-grid-table tr th:last-child, .param-grid-table tr td:last-child { border-right: none; }
+
+        .info-box { background: linear-gradient(135deg, rgba(47, 143, 232, 0.1), rgba(14, 165, 233, 0.05)); border-left: 4px solid #2f8fe8; padding: 15px 20px; border-radius: 8px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 15px; }
+        .info-box i { font-size: 24px; color: #2f8fe8; }
+        .info-box p { margin: 0; font-size: 14px; color: #475569; line-height: 1.6; }
+
+        .loader-spinner { width: 40px; height: 40px; border: 4px solid rgba(47, 143, 232, 0.2); border-left-color: #2f8fe8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-pulse { animation: pulse-btn 1.8s infinite; background: linear-gradient(135deg, #2f8fe8, #0ea5e9); border: none; color: white !important; }
+        .btn-pulse:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(14, 165, 233, 0.4); background: linear-gradient(135deg, #1d7bd1, #0284c7); }
+        .btn-action { font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; transition: all 0.3s ease; }
+
+        .alert-warning-smart { background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.03)); border: 1px solid rgba(245, 158, 11, 0.2); border-left: 4px solid #f59e0b; color: #92400e; padding: 12px 16px; }
+        .insight-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #6366f1; padding: 15px 16px; border-radius: 8px; display: flex; align-items: flex-start; margin-top: 12px; }
+        .insight-box i { color: #6366f1; font-size: 22px; margin-right: 12px; margin-top: -3px; }
+        .insight-box span, .insight-box strong { font-size: 14.5px; font-weight: 600; line-height: 1.6; color: #000000 !important; }
+
+        .formula-box { background-color: #ffffff; padding: 25px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 15px; overflow-x: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.02);}
+
+        .hm-cell { padding: 15px; font-weight: bold; border-radius: 6px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); font-size: 15px; border: 1px solid rgba(0,0,0,0.1); }
+        .hm-diag { background-color: #94a3b8; color: #fff; }
+
+        .custom-upload-zone { border: 2px dashed #2f8fe8 !important; background-color: rgba(47, 143, 232, 0.04); transition: all 0.2s ease-in-out; cursor: pointer; }
+        .custom-upload-zone:hover { background-color: rgba(47, 143, 232, 0.08); border-color: #1d7bd1 !important; transform: translateY(-1px); }
+
+        .var-chip { font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; color: #475569; transition: all 0.2s; user-select: none; display: inline-flex; align-items: center; gap: 5px; }
+        .var-chip.active { background: #2f8fe8; color: #fff; border-color: #2f8fe8; }
+        .var-chip i { font-size: 14px; }
+        .var-chip:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        /* YENİ NESİL EXCEL BENZERİ GRİD (STICKY) */
+        .excel-container { max-height: 350px; overflow: auto; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; position: relative; }
+        .excel-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: max-content; }
+        .excel-table th { position: sticky; top: 0; z-index: 10; background: #f1f5f9; border-bottom: 1px solid #cbd5e1; border-right: 1px solid #cbd5e1; padding: 8px 10px; font-size: 13px; color: #334155; font-weight: 700; user-select: none; }
+        .excel-table th.draggable { cursor: grab; }
+        .excel-table th.draggable:active { cursor: grabbing; background-color: #e2e8f0; }
+        .excel-table th.dragging { opacity: 0.5; background-color: #cbd5e1; }
+        .excel-table td { border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 0; position: relative; }
+        
+        .excel-table td:first-child, .excel-table th:first-child { position: sticky; left: 0; z-index: 11; background: #f8fafc; border-right: 1px solid #cbd5e1; width: 40px; text-align: center; font-weight: bold; color: #64748b; font-size: 12px; }
+        .excel-table th:first-child { z-index: 12; top: 0; left: 0; }
+
+        .excel-input { width: 100%; height: 100%; min-height: 35px; border: none; outline: none; background: transparent; text-align: right; padding: 5px 10px; font-size: 14px; font-family: inherit; color: #0f172a; transition: all 0.2s; }
+        .excel-input:focus { background-color: #eff6ff; box-shadow: inset 0 0 0 2px #3b82f6; }
+        .excel-input.error { background-color: #fee2e2 !important; color: #b91c1c; font-weight: bold; }
+        
+        .header-edit { background: transparent; border: none; outline: none; font-weight: 700; color: inherit; width: 100%; text-align: center; cursor: text; }
+        .header-edit:focus { border-bottom: 1px dashed #3b82f6; }
+        
+        .btn-grid-action { border: 1px dashed #cbd5e1; background: transparent; color: #64748b; font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 6px; transition: all 0.2s; }
+        .btn-grid-action:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
+
+        /* GECE MODU AYARLARI */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light, html.dark-mode .bg-body-bg { background-color: #0f172a !important; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        html.dark-mode .info-box { background: rgba(47, 143, 232, 0.1); }
+        html.dark-mode .info-box p { color: #cbd5e1; }
+        
+        html.dark-mode .table-responsive { border-color: #334155; background: #1e293b; }
+        html.dark-mode .param-grid-table th { background-color: #0f172a; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .param-grid-table td { background-color: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark-mode .param-grid-table tr:hover td { background-color: #0f172a !important; }
+        
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+        html.dark-mode .formula-box { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        html.dark-mode .formula-box p { color: #cbd5e1; }
+        html.dark-mode mjx-container { color: #e2e8f0 !important; }
+        
+        html.dark-mode .alert-warning-smart { background: rgba(245, 158, 11, 0.1) !important; border: 1px solid rgba(245, 158, 11, 0.2) !important; border-left: 4px solid #fbbf24 !important; color: #fcd34d !important; }
+        html.dark-mode .insight-box { background-color: #1e293b !important; border: 1px solid #334155 !important; border-left: 4px solid #818cf8 !important; }
+        html.dark-mode .insight-box i { color: #818cf8 !important; }
+        html.dark-mode .insight-box span, html.dark-mode .insight-box strong { color: #ffffff !important; }
+
+        html.dark-mode .var-chip { background: #1e293b; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .var-chip.active { background: #0ea5e9; color: #0f172a; border-color: #0ea5e9; }
+        html.dark-mode select.bg-light { background-color: #0f172a !important; color: #cbd5e1; border: 1px solid #334155 !important; }
+
+        /* GRID GECE MODU */
+        html.dark-mode .excel-container { border-color: #334155; background: #1e293b; }
+        html.dark-mode .excel-table th { background: #0f172a; border-color: #334155; color: #cbd5e1; }
+        html.dark-mode .excel-table td { border-color: #334155; }
+        html.dark-mode .excel-table td:first-child, html.dark-mode .excel-table th:first-child { background: #1e293b; border-color: #334155; color: #94a3b8; }
+        html.dark-mode .excel-input { color: #e2e8f0; }
+        html.dark-mode .excel-input:focus { background-color: #0f172a; box-shadow: inset 0 0 0 2px #0ea5e9; }
+        html.dark-mode .excel-input.error { background-color: #7f1d1d !important; color: #fca5a5; }
+        html.dark-mode .btn-grid-action { border-color: #475569; color: #94a3b8; }
+        html.dark-mode .btn-grid-action:hover { border-color: #0ea5e9; color: #0ea5e9; background: rgba(14, 165, 233, 0.1); }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border border-white shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-bar-chart-grouped-line align-middle me-1"></i> Spearman Korelasyonu
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="main-content-container overflow-hidden">
+                
+                <div class="info-box shadow-sm">
+                    <i class="ri-information-line"></i>
+                    <div>
+                        <strong class="d-block text-dark mb-1">Spearman Sıra Korelasyon Testi ($\rho$ / $r_s$)</strong>
+                        <p class="mb-1">İki veya daha fazla değişken arasındaki <strong>monotonik (sürekli artan veya sürekli azalan)</strong> ilişkinin yönünü ve gücünü ölçer. Verilerin ham değerleri yerine <strong>sıra numaraları (Ranks)</strong> kullanılır.</p>
+                        <p class="mb-0 text-danger fw-semibold fs-13"><i class="ri-error-warning-fill align-middle"></i> Kritik Uyarı: Pearson'un aksine verilerin normal dağılması gerekmez ve aykırı değerlere (outliers) karşı çok daha dirençlidir. Ancak korelasyon yine de nedensellik göstermez.</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- SOL PANEL: VERİ GİRİŞİ VE KALİTE YÖNETİMİ -->
+                    <div class="col-lg-5 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm">
+                            
+                            <h4 class="fs-16 fw-bold text-dark mb-3"><i class="ri-table-2 align-middle text-primary me-1"></i> Veri Matrisi</h4>
+
+                            <!-- HIZLI YÜKLEME BUTONU -->
+                            <div class="custom-upload-zone p-2 rounded-10 text-center mb-3" onclick="document.getElementById('dosyaGezgini').click()">
+                                <h5 class="fs-13 fw-semibold text-primary mb-0"><i class="ri-upload-cloud-2-line fs-18 align-middle me-1"></i> Excel (.xlsx) veya CSV Yükle</h5>
+                                <input type="file" id="dosyaGezgini" accept=".csv, .txt, .xlsx, .xls" style="display: none;">
+                            </div>
+
+                            <div class="alert alert-warning-smart py-2 fs-12 mb-3 border-0 rounded-3">
+                                <i class="ri-edit-2-fill align-middle me-1"></i> Hücrelere tıklayıp değer girebilir, Excel'den doğrudan kopyalayıp buraya <strong>yapıştırabilirsiniz (Ctrl+V)</strong>. Sütun başlıklarını sürükleyerek yerlerini değiştirebilirsiniz.
+                            </div>
+
+                            <div id="gridErrorMsg" class="text-danger fw-bold fs-12 mb-2 d-none"><i class="ri-error-warning-line align-middle"></i> Hata: Kırmızı renkli hücrelerdeki geçersiz verileri düzeltin! Sadece sayı ve boşluk kabul edilir.</div>
+
+                            <!-- YENİ NESİL EXCEL GRİDİ -->
+                            <div class="excel-container mb-3" id="excelWrapper">
+                                <table class="excel-table" id="excelGrid">
+                                    <thead>
+                                        <tr id="gridHeaderRow">
+                                            <th></th>
+                                            <th draggable="true" data-col="1" class="draggable">
+                                                <input type="text" class="header-edit" value="Degisken_1" onblur="updateVarChips()">
+                                            </th>
+                                            <th draggable="true" data-col="2" class="draggable">
+                                                <input type="text" class="header-edit" value="Degisken_2" onblur="updateVarChips()">
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="gridBody">
+                                        <!-- Satırlar JS ile oluşturulacak -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="d-flex gap-2 mb-3">
+                                <button class="btn-grid-action w-50" onclick="addRow()"><i class="ri-add-line"></i> Satır (Gözlem) Ekle</button>
+                                <button class="btn-grid-action w-50" onclick="addCol()"><i class="ri-add-column-line"></i> Sütun (Değişken) Ekle</button>
+                            </div>
+
+                            <!-- VERİ KALİTE ÖZETİ (DİNAMİK) -->
+                            <div id="dataQualityBox" class="bg-light p-3 rounded-3 border mb-3">
+                                <h6 class="fs-13 fw-bold text-dark mb-2"><i class="ri-bar-chart-box-line text-primary me-1"></i>Veri Kalite Özeti</h6>
+                                <div class="d-flex justify-content-between fs-12 mb-1"><span>Toplam Satır:</span> <strong id="dqTotal">0</strong></div>
+                                <div class="d-flex justify-content-between fs-12 mb-1"><span>Geçerli Gözlem (N):</span> <strong id="dqValid" class="text-success">0</strong></div>
+                                <div class="d-flex justify-content-between fs-12 mb-2"><span>Eksik Verili Satır (Çıkarılacak):</span> <strong id="dqMissing" class="text-danger">0</strong></div>
+                            </div>
+
+                            <!-- DEĞİŞKEN SEÇİMİ VE YÖNETİMİ -->
+                            <div id="variableManagerBox" class="mb-3">
+                                <hr class="border-secondary opacity-25 my-3">
+                                
+                                <label class="form-label fw-bold text-secondary fs-12 mb-2">1. Analize Dahil Edilecek Değişkenler</label>
+                                <div id="varCheckboxes" class="d-flex flex-wrap gap-2 mb-3 bg-light p-2 rounded-3 border">
+                                    <!-- Dinamik Çipler Gelecek -->
+                                </div>
+
+                                <label class="form-label fw-bold text-secondary fs-12 mb-2">2. Ana Analiz Odak Çifti (X ve Y)</label>
+                                <div class="d-flex gap-2">
+                                    <div class="w-50">
+                                        <span class="fs-11 text-muted d-block mb-1">Değişken X</span>
+                                        <select id="xVarSelect" class="form-select bg-light border-0 fs-12"></select>
+                                    </div>
+                                    <div class="w-50">
+                                        <span class="fs-11 text-muted d-block mb-1">Değişken Y</span>
+                                        <select id="yVarSelect" class="form-select bg-light border-0 fs-12"></select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="border-secondary opacity-25 my-3">
+
+                            <div class="row g-2 mb-4">
+                                <div class="col-6">
+                                    <label class="form-label fw-bold text-secondary fs-11 mb-1">Anlamlılık ($\alpha$)</label>
+                                    <select id="alfaInput" class="form-select bg-light border-0 rounded-10 py-1 fs-12">
+                                        <option value="0.05" selected>0.05 (%95 Güven)</option>
+                                        <option value="0.01">0.01 (%99 Güven)</option>
+                                        <option value="0.10">0.10 (%90 Güven)</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label fw-bold text-secondary fs-11 mb-1">Çoklu Karş. Düzeltme</label>
+                                    <select id="methodInput" class="form-select bg-light border-0 rounded-10 py-1 fs-12">
+                                        <option value="holm" selected>Holm-Bonferroni</option>
+                                        <option value="bonferroni">Bonferroni</option>
+                                        <option value="none">Düzeltme Yok</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-column gap-3 mt-4">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-secondary w-50 py-2 rounded-10 btn-action" onclick="ornekVeriYukle()">
+                                        <i class="ri-magic-line align-middle me-1"></i> Örnek Veri
+                                    </button>
+                                    <button class="btn btn-outline-danger w-50 py-2 rounded-10 btn-action" onclick="temizleVeri()">
+                                        <i class="ri-delete-bin-line align-middle me-1"></i> Temizle
+                                    </button>
+                                </div>
+                                <button class="btn w-100 py-3 rounded-10 btn-action btn-pulse" onclick="baslatAnaliz()" id="btnAnaliz">
+                                    <i class="ri-bar-chart-2-fill align-middle me-1 fs-18"></i> ANALİZ ET
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- PEARSON KARŞILAŞTIRMA BİLGİ KUTUSU -->
+                        <div class="mt-4">
+                            <div class="card bg-white border-0 rounded-10 p-4 shadow-sm">
+                                <h5 class="fw-bold fs-14 text-dark mb-3"><i class="ri-arrow-left-right-fill text-primary me-1"></i> Pearson vs Spearman</h5>
+                                <div class="table-responsive">
+                                    <table class="table param-grid-table m-0">
+                                        <thead>
+                                            <tr><th>Özellik</th><th class="text-primary">Spearman $\rho$</th><th class="text-muted">Pearson $r$</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td class="text-start fw-bold">Ölçtüğü İlişki</td><td>Monotonik (Sürekli artış/azalış)</td><td class="text-muted">Doğrusal (Çizgisel)</td></tr>
+                                            <tr><td class="text-start fw-bold">Temel Yaklaşım</td><td>Sıra (Rank) değerleri üzerinden</td><td class="text-muted">Gerçek/Ham veri değerleri üzerinden</td></tr>
+                                            <tr><td class="text-start fw-bold">Aykırı Değer Etkisi</td><td class="text-success fw-bold">Çok daha düşük (Dirençli)</td><td class="text-danger">Çok yüksek (Hassas)</td></tr>
+                                            <tr><td class="text-start fw-bold">Normallik Şartı</td><td class="text-success fw-bold">Gerekli Değil</td><td class="text-danger">Özellikle p-değeri için önemli</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- SAĞ PANEL: SONUÇLAR -->
+                    <div class="col-lg-7 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                            
+                            <div id="bosDurum" class="text-center py-5 my-auto">
+                                <i class="ri-bar-chart-horizontal-line text-muted opacity-25" style="font-size: 4.5rem;"></i>
+                                <h5 class="text-muted mt-3 fs-16">Analiz Bekleniyor</h5>
+                                <p class="text-muted fs-14 mb-0">Sol panelden veri matrisini doldurup testi başlatın.</p>
+                            </div>
+
+                            <div id="loadingOverlay" class="text-center py-5 my-auto" style="display: none;">
+                                <div class="loader-spinner"></div>
+                                <h5 class="text-primary mt-4 fs-16 fw-semibold">Sıralar ve Monotonik İlişkiler Hesaplanıyor...</h5>
+                            </div>
+
+                            <div id="aktifSonuc" style="display: none;">
+
+                                <!-- ÜST İSTATİSTİK KARTLARI -->
+                                <div class="row g-3 text-center mb-4" id="topCardsRow">
+                                    <div class="col-md-3">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Spearman $\rho$</span>
+                                            <h3 id="resR" class="text-primary mb-0 fw-bold fs-22">-</h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">P-Değeri ($p$)</span>
+                                            <h3 id="resP" class="text-secondary mb-0 fw-bold fs-22">-</h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Sıra Varyansı ($\rho^2$)</span>
+                                            <h3 id="resR2" class="text-dark mb-0 fw-bold fs-22">-</h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">İlişki Gücü</span>
+                                            <h4 id="resStrength" class="text-dark mb-0 fw-bold fs-15">-</h4>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="p-2 bg-body-bg rounded-10 border border-light d-flex justify-content-around px-2 align-items-center">
+                                            <div><span class="text-muted fs-12 fw-semibold">Gözlem ($n$):</span> <span id="resN" class="text-dark fw-bold fs-14 ms-1">-</span></div>
+                                            <div><span class="text-muted fs-12 fw-semibold">Güven Aralığı (CI):</span> <span id="resCI" class="badge bg-primary ms-1">-</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 1. TABLO: TANIMLAYICI İSTATİSTİKLER (TRANSPOZE) -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="fs-14 fw-bold text-dark mb-0"><i class="ri-file-text-line text-primary me-1"></i> Seçilen Değişkenlerin Tanımlayıcı İstatistikleri</h5>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table param-grid-table m-0" id="descTable">
+                                            <!-- JS Dolduracak -->
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- 2. KORELASYON MATRİSİ (ÇOKLU DEĞİŞKEN) -->
+                                <div class="mb-4" id="matrixSection" style="display:none;">
+                                    <h5 class="fs-14 fw-bold text-dark mb-2"><i class="ri-grid-fill text-primary me-1"></i> Spearman Korelasyon Matrisi (Isı Haritası)</h5>
+                                    <div class="table-responsive">
+                                        <table class="table param-grid-table m-0" id="corrMatrixTable">
+                                            <!-- JS Dolduracak -->
+                                        </table>
+                                    </div>
+                                    <small class="text-muted fs-11 mt-2 d-block"><i class="ri-information-fill text-primary me-1"></i>Hücrelerde üstte <strong>Spearman $\rho$</strong> değeri, altta <strong>p-değeri</strong> (düzeltilmiş) yer alır. Renk yoğunluğu ilişkinin gücünü (Mavi=Pozitif, Kırmızı=Negatif) gösterir.</small>
+                                </div>
+
+                                <!-- 3. ÇOKLU KARŞILAŞTIRMALAR TABLOSU (ÇOKLU DEĞİŞKEN) -->
+                                <div class="mb-4" id="multiPairSection" style="display: none;">
+                                    <h5 class="fs-14 fw-bold text-dark mb-2"><i class="ri-list-check-2 text-primary me-1"></i> İkili İlişki Sonuçları</h5>
+                                    <div class="table-responsive">
+                                        <table class="table param-grid-table m-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-start">Değişken Çifti</th>
+                                                    <th>Spearman $\rho$</th>
+                                                    <th>Güven Aralığı (Alt-Üst)</th>
+                                                    <th>Ham $p$</th>
+                                                    <th>Düz. $p$</th>
+                                                    <th>Karar</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="multiPairBody">
+                                                <!-- JS Dolduracak -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- GRAFİKLER BÖLÜMÜ -->
+                                <div class="row mt-4">
+                                    <!-- SIRA (RANK) SAÇILIM GRAFİĞİ -->
+                                    <div class="col-12 mb-4">
+                                        <div class="chart-container h-100 d-flex flex-column border-primary border-opacity-25">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <h5 class="fs-14 fw-bold text-dark mb-0 text-uppercase tracking-wider">Sıralı Veri Saçılım Grafiği (Ranked Scatter Plot)</h5>
+                                                <select id="scatterPairSelect" class="form-select bg-light border-0 py-1 fs-12 w-auto" onchange="updateScatterPlot()"></select>
+                                            </div>
+                                            <span class="fs-12 text-muted mb-3 d-block">Spearman korelasyonu ham veriler üzerinde DEĞİL, her bir değişkenin içindeki <strong>sıra numaraları (Ranks)</strong> üzerinde çalışır. Bu grafik, ilişkinin gücünü sıralar üzerinden görselleştirir. Mükemmel bir doğrusal hat $r_s = 1.0$ veya $-1.0$ demektir.</span>
+                                            <div style="position: relative; height: 380px; width: 100%;"><canvas id="scatterChart"></canvas></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ANA KARAR VE İÇGÖRÜ KUTUSU -->
+                                <div id="kararKutusu" class="alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start shadow-sm mt-2">
+                                    <div class="d-flex justify-content-center mt-1 me-3"><i id="kararIkon" class="fs-28"></i></div>
+                                    <div class="flex-grow-1">
+                                        <h4 id="kararBaslik" class="mb-2 fs-16 fw-bold">-</h4>
+                                        <p id="kararAciklama" class="mb-0 fs-14 text-muted lh-base">-</p>
+                                        
+                                        <!-- İNDİGO AKILLI YORUM KUTUSU -->
+                                        <div id="yorumWrapper" class="insight-box shadow-sm mt-3">
+                                            <i class="ri-lightbulb-flash-fill"></i>
+                                            <div class="d-flex flex-column w-100" id="yorumText">
+                                                <!-- Yorumlar satır satır gelecek -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- AKORDEON: ADIM ADIM HESAPLAMALARI GÖSTER -->
+                                <div class="mt-4 mb-4">
+                                    <button class="btn w-100 py-3 d-flex justify-content-between align-items-center fs-15 fw-bold rounded-10 border-0 shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#adimAdimHesaplama" aria-expanded="false" style="background-color: #f8fafc; border: 1px solid #e2e8f0 !important; color: #0f172a;">
+                                        <span><i class="ri-calculator-line text-primary me-2 fs-20 align-middle"></i> Hesaplama Ayrıntılarını Göster (Odak Çift İçin)</span>
+                                        <i class="ri-arrow-down-s-line fs-22 text-secondary"></i>
+                                    </button>
+                                    <div class="collapse mt-3" id="adimAdimHesaplama">
+                                        <div class="card card-body bg-white border border-light p-4 rounded-10 shadow-sm fs-14 text-dark" id="hesaplamaDetayIcerik">
+                                            <!-- JS TABLOLARLA DOLDURACAK -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- AKORDEON: TEORİK ALTYAPI (FORMÜLLER) -->
+                                <div class="mt-4 mb-2">
+                                    <button class="btn btn-pulse w-100 py-3 d-flex justify-content-between align-items-center fs-15 fw-bold rounded-10 border-0 shadow" type="button" data-bs-toggle="collapse" data-bs-target="#teorikFormuller" aria-expanded="false" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: white;">
+                                        <span><i class="ri-function-line me-2 fs-20 align-middle"></i> Matematiksel Formülleri Görüntüle</span>
+                                        <i class="ri-arrow-down-s-line fs-22"></i>
+                                    </button>
+                                    <div class="collapse mt-3" id="teorikFormuller">
+                                        <div class="card card-body bg-body-bg border border-light p-4 rounded-10 shadow-sm">
+                                            <div class="row g-3">
+                                                
+                                                <div class="col-12">
+                                                    <div class="formula-box">
+                                                        <strong class="text-dark d-block mb-3 fs-15">1. Spearman Korelasyon Katsayısı ($\rho$ / $r_s$) (Bağlı Değer Yoksa)</strong>
+                                                        <p class="fs-14">Tüm veriler küçükten büyüğe sıralanır. $X$ ve $Y$'nin sıra numaraları arasındaki fark ($d_i$) kullanılarak hesaplanır. Ancak veri setinde eşit değerler (ties) varsa bu formül hatalı sonuç verebilir.</p>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ \rho = 1 - \frac{6 \sum_{i=1}^n d_i^2}{n(n^2 - 1)} \quad , \quad d_i = Rank(X_i) - Rank(Y_i) $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="formula-box">
+                                                        <strong class="text-dark d-block mb-3 fs-15">2. Kesin (Exact) Spearman Katsayısı (Bağlı Değerler Varsayılanı)</strong>
+                                                        <p class="fs-14">İstatistiksel yazılımlar (SciPy, SPSS vb.), eşit değerler (ties) sorununu çözmek için ham verileri sıraladıktan sonra, bu <em>sıra numaraları</em> üzerinde standart Pearson formülünü uygularlar.</p>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ r_s = \frac{\sum (R_X - \bar{R}_X)(R_Y - \bar{R}_Y)}{\sqrt{\sum (R_X - \bar{R}_X)^2 \sum (R_Y - \bar{R}_Y)^2}} $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="formula-box mb-0">
+                                                        <strong class="text-dark d-block mb-3 fs-15">3. Fisher $z$ Dönüşümü ve Güven Aralığı (CI)</strong>
+                                                        <p class="fs-14">Spearman katsayısının güven aralığı hesaplanırken, Pearson gibi Fisher $z$ dönüşümü yapılır. Ancak Spearman'ın varyansı biraz daha fazla olduğu için standart hata formülü farklıdır ($n-3$ yerine yaklaşık $(n-3)/1.06$).</p>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ z = \frac{1}{2} \ln \left( \frac{1 + r_s}{1 - r_s} \right) \quad , \quad SE_z \approx \frac{1.03}{\sqrt{n - 3}} $$<br>
+                                                            $$ CI_z = z \pm (Z_{kritik} \times SE_z) $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <div class="alert bg-warning-subtle text-dark border-0 rounded-10 p-4">
+                                        <h5 class="fw-bold fs-15 text-warning mb-2"><i class="ri-alert-line me-1"></i> Varsayımlar ve Kritik Uyarılar</h5>
+                                        <ul class="mb-0 fs-13 lh-lg ps-3 text-muted">
+                                            <li><strong>Monotoniklik:</strong> Spearman, doğrusal değil <em>monotonik (sürekli artan veya sürekli azalan)</em> ilişkileri ölçer. Değişkenler U şeklinde veya çok dalgalıysa $\rho \approx 0$ çıkabilir.</li>
+                                            <li><strong>Sıralama (Ranks):</strong> Analiz edilen değişkenler "Aralık/Oran" ölçeğinde olsalar dahi (Boy, Kilo, Gelir vb.), Spearman bu verileri "Sıralı" ölçeğe (1., 2., 3...) indirger. Bu nedenle bilgi kaybı yaşanır ancak test aykırı değerlere karşı son derece dirençli hale gelir.</li>
+                                            <li><strong>Nedensellik YANILGISI:</strong> Korelasyonun yüksek veya anlamlı çıkması <strong>ASLA</strong> "X, Y'ye sebep olur" anlamına gelmez. Sadece sıraların paralel hareket ettiğini gösterir.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="footer-area bg-white text-center rounded-10 rounded-bottom-0 p-3 mt-4 border-top shadow-sm">
+                <p class="fs-14 text-body mb-0">© <span>StatLabseu</span> - Gelişmiş İstatistiksel Analiz Platformu</p>
+            </footer>
+
+        </div>
+    </div>
+ 
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function setTxt(id, text) { let el = document.getElementById(id); if (el) el.innerText = text; }
+        function setHTML(id, html) { let el = document.getElementById(id); if (el) el.innerHTML = html; }
+        function setClass(id, cls) { let el = document.getElementById(id); if (el) el.className = cls; }
+        function setStyle(id, prop, val) { let el = document.getElementById(id); if (el) el.style[prop] = val; }
+
+        let charts = { scatter: null };
+        let parsedDataCache = {}; 
+        let rawVariableData = {}; 
+        let allVarNames = []; 
+        
+        let colCount = 2; 
+        let rowCount = 5;
+        let draggedColIndex = -1;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            if (localStorage.getItem('statlab_theme') === 'dark') { themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); }
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); themeIcon.classList.remove('text-secondary'); localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); themeIcon.classList.remove('text-warning'); themeIcon.classList.add('text-secondary'); localStorage.setItem('statlab_theme', 'light');
+                }
+                let aktifEl = document.getElementById('aktifSonuc'); if(aktifEl && aktifEl.style.display === 'block') baslatAnaliz();
+            });
+            
+            document.getElementById('dosyaGezgini').addEventListener('change', function(e) { handleFile(e.target.files[0]); });
+            setupDragAndDrop();
+            document.getElementById('excelGrid').addEventListener('paste', handleGridPaste);
+            buildInitialGrid();
+        });
+
+        // --- GRID YÖNETİMİ ---
+        function buildInitialGrid() {
+            let tbody = document.getElementById('gridBody');
+            tbody.innerHTML = '';
+            for(let i=1; i<=rowCount; i++) {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `<td>${i}</td>
+                                <td><input type="text" class="excel-input" oninput="validateCell(this)"></td>
+                                <td><input type="text" class="excel-input" oninput="validateCell(this)"></td>`;
+                tbody.appendChild(tr);
+            }
+            updateDataQuality();
+        }
+
+        function addRow() {
+            let tbody = document.getElementById('gridBody');
+            rowCount++;
+            let tr = document.createElement('tr');
+            let html = `<td>${rowCount}</td>`;
+            for(let j=0; j<colCount; j++) html += `<td><input type="text" class="excel-input" oninput="validateCell(this)"></td>`;
+            tr.innerHTML = html;
+            tbody.appendChild(tr);
+            updateDataQuality();
+        }
+
+        function addCol() {
+            colCount++;
+            let thead = document.getElementById('gridHeaderRow');
+            let th = document.createElement('th');
+            th.draggable = true; th.className = "draggable"; th.setAttribute('data-col', colCount);
+            th.innerHTML = `<input type="text" class="header-edit" value="Degisken_${colCount}" onblur="updateVarChips()">`;
+            thead.appendChild(th);
+            
+            let tbody = document.getElementById('gridBody');
+            for(let i=0; i<tbody.rows.length; i++) {
+                let td = document.createElement('td');
+                td.innerHTML = `<input type="text" class="excel-input" oninput="validateCell(this)">`;
+                tbody.rows[i].appendChild(td);
+            }
+            setupDragAndDrop(); updateVarChips(); updateDataQuality();
+        }
+
+        function validateCell(input) {
+            let val = input.value;
+            if(val.includes(',')) { val = val.replace(/,/g, '.'); input.value = val; }
+            if(val !== "" && val !== "-" && isNaN(Number(val))) input.classList.add('error');
+            else input.classList.remove('error');
+            updateDataQuality();
+        }
+
+        function setupDragAndDrop() {
+            let headers = document.querySelectorAll('.excel-table th.draggable');
+            headers.forEach(th => {
+                th.removeEventListener('dragstart', handleDragStart); th.removeEventListener('dragover', handleDragOver);
+                th.removeEventListener('drop', handleDrop); th.removeEventListener('dragend', handleDragEnd);
+
+                th.addEventListener('dragstart', handleDragStart); th.addEventListener('dragover', handleDragOver);
+                th.addEventListener('drop', handleDrop); th.addEventListener('dragend', handleDragEnd);
+            });
+        }
+        function handleDragStart(e) { draggedColIndex = e.target.closest('th').cellIndex; e.target.closest('th').classList.add('dragging'); }
+        function handleDragOver(e) { e.preventDefault(); }
+        function handleDragEnd(e) { e.target.closest('th').classList.remove('dragging'); }
+        function handleDrop(e) {
+            e.preventDefault();
+            let targetTh = e.target.closest('th'); if(!targetTh) return;
+            let targetIndex = targetTh.cellIndex;
+            if(draggedColIndex === targetIndex || targetIndex === 0 || draggedColIndex === 0) return;
+
+            let table = document.getElementById('excelGrid');
+            for(let i=0; i<table.rows.length; i++) {
+                let row = table.rows[i]; let cells = row.cells; let elem = cells[draggedColIndex];
+                if (targetIndex > draggedColIndex) row.insertBefore(elem, cells[targetIndex+1]);
+                else row.insertBefore(elem, cells[targetIndex]);
+            }
+            
+            let newHeaders = document.querySelectorAll('.excel-table th.draggable');
+            newHeaders.forEach((th, idx) => { th.setAttribute('data-col', idx+1); });
+            updateVarChips();
+        }
+
+        function handleGridPaste(e) {
+            e.preventDefault();
+            let clipboardData = e.clipboardData || window.clipboardData;
+            let pastedData = clipboardData.getData('Text');
+            if(!pastedData) return;
+
+            let rows = pastedData.trim().split('\n'); if(rows.length === 0) return;
+            let firstRowParts = rows[0].split(/[\t]+/).map(s=>s.trim());
+            let isHeader = isNaN(Number(firstRowParts[0].replace(',','.')));
+            let dataStartIndex = isHeader ? 1 : 0;
+            let reqCols = firstRowParts.length;
+
+            while(colCount < reqCols) addCol();
+            if (isHeader) {
+                let thead = document.getElementById('gridHeaderRow');
+                for(let j=0; j<reqCols; j++) { if(thead.cells[j+1]) thead.cells[j+1].querySelector('input').value = firstRowParts[j]; }
+            }
+
+            let reqRows = rows.length - dataStartIndex;
+            let tbody = document.getElementById('gridBody');
+            while(tbody.rows.length < reqRows) addRow();
+
+            for(let i=dataStartIndex; i<rows.length; i++) {
+                let parts = rows[i].split(/[\t]+/).map(s=>s.trim());
+                let tr = tbody.rows[i - dataStartIndex];
+                for(let j=0; j<parts.length; j++) {
+                    if(tr.cells[j+1]) { let inp = tr.cells[j+1].querySelector('input'); inp.value = parts[j]; validateCell(inp); }
+                }
+            }
+            updateVarChips(); updateDataQuality();
+        }
+
+        async function handleFile(file) {
+            if (!file) return;
+            const ext = file.name.split('.').pop().toLowerCase();
+            try {
+                let csvStr = "";
+                if(ext === 'csv' || ext === 'txt') { csvStr = await file.text(); } 
+                else if (ext === 'xlsx' || ext === 'xls') {
+                    const data = await file.arrayBuffer();
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    csvStr = XLSX.utils.sheet_to_csv(firstSheet, {FS: "\t"});
+                } else { alert("Sadece .csv, .txt, .xls ve .xlsx formatları desteklenir."); return; }
+                
+                const dataTransfer = new DataTransfer(); dataTransfer.setData('text', csvStr);
+                const pasteEvent = new ClipboardEvent('paste', { clipboardData: dataTransfer });
+                document.getElementById('excelGrid').dispatchEvent(pasteEvent);
+            } catch (err) { alert("Dosya okuma hatası: " + err); }
+            document.getElementById('dosyaGezgini').value = ""; 
+        }
+
+        function updateDataQuality() {
+            let table = document.getElementById('excelGrid'); let thead = document.getElementById('gridHeaderRow'); let tbody = document.getElementById('gridBody');
+            let btnAnaliz = document.getElementById('btnAnaliz'); let errBox = document.getElementById('gridErrorMsg');
+
+            let headers = [];
+            for(let j=1; j<=colCount; j++) headers.push(thead.cells[j].querySelector('input').value.trim() || `Var_${j}`);
+
+            let totalRows = tbody.rows.length; let validRowsCount = 0; let hasGlobalError = false;
+
+            for(let i=0; i<totalRows; i++) {
+                let row = tbody.rows[i]; let rowIsEmpty = true; let rowHasError = false;
+                for(let j=1; j<=colCount; j++) {
+                    let inp = row.cells[j].querySelector('input');
+                    if (inp.classList.contains('error')) { rowHasError = true; hasGlobalError = true; }
+                    if (inp.value.trim() !== "") rowIsEmpty = false;
+                }
+                if(!rowIsEmpty && !rowHasError) validRowsCount++;
+            }
+
+            if(hasGlobalError) { errBox.classList.remove('d-none'); errBox.classList.add('d-block'); btnAnaliz.disabled = true; } 
+            else { errBox.classList.add('d-none'); errBox.classList.remove('d-block'); btnAnaliz.disabled = false; }
+
+            setTxt('dqTotal', totalRows); setTxt('dqValid', validRowsCount); setTxt('dqMissing', totalRows - validRowsCount);
+            
+            if(validRowsCount >= 3 && !hasGlobalError) { updateVarChips(headers); setStyle('variableManagerBox', 'display', 'block'); } 
+            else { setStyle('variableManagerBox', 'display', 'none'); btnAnaliz.disabled = true; }
+        }
+
+        function updateVarChips(forcedHeaders = null) {
+            let thead = document.getElementById('gridHeaderRow');
+            let headers = forcedHeaders;
+            if(!headers) { headers = []; for(let j=1; j<=colCount; j++) headers.push(thead.cells[j].querySelector('input').value.trim() || `Var_${j}`); }
+
+            let box = document.getElementById('varCheckboxes');
+            let currentActive = Array.from(document.querySelectorAll('.var-chip.active')).map(el => el.id.replace('chip_', ''));
+            if(currentActive.length === 0) currentActive = headers; 
+
+            let chipsHtml = '';
+            headers.forEach(v => {
+                let isActive = currentActive.includes(v);
+                chipsHtml += `<div class="var-chip ${isActive ? 'active':''}" id="chip_${v}" onclick="toggleVar('${v}')"><i class="${isActive ? 'ri-check-line' : 'ri-close-line text-muted'}"></i> ${v}</div>`;
+            });
+            box.innerHTML = chipsHtml; updateDropdowns(headers);
+        }
+
+        function toggleVar(vName) {
+            let el = document.getElementById(`chip_${vName}`); let icon = el.querySelector('i');
+            if(el.classList.contains('active')) {
+                let activeCount = document.querySelectorAll('.var-chip.active').length;
+                if(activeCount <= 2) { alert("Analiz için en az 2 değişken seçili kalmalıdır."); return; }
+                el.classList.remove('active'); icon.className = "ri-close-line text-muted";
+            } else {
+                el.classList.add('active'); icon.className = "ri-check-line";
+            }
+            updateDropdowns();
+        }
+
+        function updateDropdowns(allHeaders = null) {
+            let activeVars = Array.from(document.querySelectorAll('.var-chip.active')).map(el => el.id.replace('chip_', ''));
+            let selX = document.getElementById('xVarSelect'); let selY = document.getElementById('yVarSelect');
+            let oldX = selX.value; let oldY = selY.value;
+            
+            selX.innerHTML = ''; selY.innerHTML = '';
+            activeVars.forEach(v => { selX.add(new Option(v, v)); selY.add(new Option(v, v)); });
+            
+            if(activeVars.includes(oldX)) selX.value = oldX; else selX.selectedIndex = 0;
+            if(activeVars.includes(oldY)) selY.value = oldY; else selY.selectedIndex = activeVars.length > 1 ? 1 : 0;
+        }
+
+        function getPreparedData() {
+            let table = document.getElementById('excelGrid'); let thead = document.getElementById('gridHeaderRow'); let tbody = document.getElementById('gridBody');
+            let activeVars = Array.from(document.querySelectorAll('.var-chip.active')).map(el => el.id.replace('chip_', ''));
+            
+            let colMap = {};
+            for(let j=1; j<=colCount; j++) {
+                let hName = thead.cells[j].querySelector('input').value.trim() || `Var_${j}`;
+                if(activeVars.includes(hName)) colMap[hName] = j;
+            }
+
+            let dataObj = {}; activeVars.forEach(v => dataObj[v] = []);
+            let validN = 0;
+
+            for(let i=0; i<tbody.rows.length; i++) {
+                let row = tbody.rows[i]; let isRowValid = true; let tempRow = {};
+                for(let v of activeVars) {
+                    let j = colMap[v];
+                    let valStr = row.cells[j].querySelector('input').value.trim();
+                    if(valStr === "") { isRowValid = false; break; }
+                    tempRow[v] = parseFloat(valStr);
+                }
+                if(isRowValid) { activeVars.forEach(v => dataObj[v].push(tempRow[v])); validN++; }
+            }
+
+            for(let v of activeVars) {
+                let arr = dataObj[v];
+                let mean = arr.reduce((a,b)=>a+b,0) / arr.length;
+                let vSum = arr.reduce((a,b)=>a+Math.pow(b-mean,2),0);
+                if(vSum === 0) return `Hata: '${v}' değişkeninin varyansı sıfır (Tüm veriler aynı). Spearman hesaplanamaz. Lütfen bu değişkeni kapatın.`;
+            }
+            return { names: activeVars, data: dataObj, n: validN };
+        }
+
+        function ornekVeriYukle() {
+            let sample = "Yas\tGelir_USD\tMutluluk_Skoru\tHarcama\n";
+            let n = 40 + Math.floor(Math.random() * 10);
+            
+            for(let i=0; i<n; i++) {
+                let yas = 20 + Math.floor(Math.random() * 40);
+                // Spearman'ın gücünü göstermek için eğrisel (non-linear ama monoton) ilişki ekleyelim: x^2 veya exp()
+                let gelir = Math.pow(yas, 1.5) * 10 + (Math.random() * 2000 - 1000); 
+                let mutluluk = 50 + (gelir / 200) + (Math.random() * 10 - 5);
+                if (mutluluk > 100) mutluluk = 100;
+                // Bir adet de negatif monoton ilişki
+                let harcama = 10000 - (yas * 100) + (Math.random() * 1000);
+                
+                sample += `${yas}\t${gelir.toFixed(0)}\t${mutluluk.toFixed(1)}\t${harcama.toFixed(0)}\n`;
+            }
+            
+            const dataTransfer = new DataTransfer(); dataTransfer.setData('text', sample);
+            const pasteEvent = new ClipboardEvent('paste', { clipboardData: dataTransfer });
+            document.getElementById('excelGrid').dispatchEvent(pasteEvent);
+            document.getElementById('alfaInput').value = "0.05";
+        }
+
+        function temizleVeri() {
+            colCount = 2; rowCount = 5; buildInitialGrid();
+            setStyle('aktifSonuc', 'display', 'none'); setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block'); setStyle('assumptionWarningBox', 'display', 'none'); setStyle('variableManagerBox', 'display', 'none');
+            Object.values(charts).forEach(c => { if(c) c.destroy(); });
+        }
+
+
+        // --- İSTATİSTİKSEL HESAPLAMALAR (JS YEREL YEDEK) ---
+        function calcDescStats(arr) {
+            let n = arr.length; if(n === 0) return { n:0, mean:0, sd:0, se:0, var:0, min:0, max:0, q1:0, q3:0, iqr:0, median:0, outliers:[], outCount:0, skew:0 };
+            let sum = arr.reduce((a,b)=>a+b, 0);
+            let mean = sum / n;
+            let ss = arr.reduce((a,b)=>a+Math.pow(b-mean, 2), 0);
+            let variance = ss / (n - 1);
+            let sd = Math.sqrt(variance); 
+
+            let sorted = [...arr].sort((a,b)=>a-b);
+            let min = sorted[0]; let max = sorted[n-1];
+            let q1 = sorted[Math.floor(n*0.25)]; let q3 = sorted[Math.floor(n*0.75)]; 
+            let median = n % 2 === 0 ? (sorted[n/2 - 1] + sorted[n/2]) / 2 : sorted[Math.floor(n/2)];
+            let iqr = q3 - q1;
+            
+            let lowerFence = q1 - 1.5 * iqr; let upperFence = q3 + 1.5 * iqr;
+            let outliers = sorted.filter(x => x < lowerFence || x > upperFence);
+            
+            let m3 = arr.reduce((a,b)=>a+Math.pow(b-mean, 3), 0);
+            let skew = (sd === 0 || n < 3) ? 0 : (m3 / n) / Math.pow(ss / n, 1.5);
+            
+            return { n, sum, mean, sd, min, max, q1, q3, iqr, median, outliers, outCount: outliers.length, skew };
+        }
+
+        function normalCDF(z) {
+            let absZ = Math.abs(z);
+            if (absZ > 8.0) return z > 0 ? 1.0 : 0.0;
+            let p = 0.2316419; let a1 = 0.31938153; let a2 = -0.356563782; let a3 = 1.781477937; let a4 = -1.821255978; let a5 = 1.330274429;
+            let t = 1.0 / (1.0 + p * absZ);
+            let d = (1.0 / Math.sqrt(2 * Math.PI)) * Math.exp(-0.5 * z * z);
+            let prob = d * t * (a1 + t * (a2 + t * (a3 + t * (a4 + t * a5))));
+            return z > 0 ? 1.0 - prob : prob;
+        }
+
+        function getStrength(r) {
+            let ar = Math.abs(r);
+            if (ar < 0.20) return "Çok Zayıf";
+            if (ar < 0.40) return "Zayıf";
+            if (ar < 0.60) return "Orta";
+            if (ar < 0.80) return "Güçlü";
+            return "Çok Güçlü";
+        }
+
+        function getRanks(arr) {
+            let sorted = arr.map((val, idx) => ({val, idx})).sort((a,b) => a.val - b.val);
+            let ranks = new Array(arr.length);
+            let i = 0; let tieSum = 0;
+            while(i < sorted.length) {
+                let j = i;
+                while(j < sorted.length && sorted[j].val === sorted[i].val) j++;
+                let count = j - i;
+                let sumRank = 0;
+                for(let x=i; x<j; x++) sumRank += (x + 1);
+                let avgRank = sumRank / count;
+                for(let x=i; x<j; x++) ranks[sorted[x].idx] = avgRank;
+                if(count > 1) tieSum += (Math.pow(count, 3) - count);
+                i = j;
+            }
+            return { ranks: ranks, tieTerm: tieSum };
+        }
+
+        function spearmanCorr(x, y, alpha) {
+            let n = x.length;
+            let rankX = getRanks(x).ranks;
+            let rankY = getRanks(y).ranks;
+            
+            // Pearson on Ranks
+            let sum_x = 0, sum_y = 0, sum_xy = 0, sum_x2 = 0, sum_y2 = 0;
+            for(let i=0; i<n; i++) {
+                sum_x += rankX[i]; sum_y += rankY[i];
+                sum_xy += rankX[i]*rankY[i];
+                sum_x2 += rankX[i]*rankX[i]; sum_y2 += rankY[i]*rankY[i];
+            }
+            
+            let num = (n * sum_xy) - (sum_x * sum_y);
+            let den = Math.sqrt((n * sum_x2 - sum_x*sum_x) * (n * sum_y2 - sum_y*sum_y));
+            let r = den === 0 ? 0 : num / den;
+            if (r > 1) r = 1; if (r < -1) r = -1;
+
+            let df = n - 2;
+            let t_stat = r * Math.sqrt(df / (1 - r*r + 1e-10));
+            
+            let z_fisher = 0.5 * Math.log((1+r)/(1-r + 1e-10));
+            let se_z = 1.06 / Math.sqrt(n - 3 + 1e-10); // Spearman için 1.06 katsayısı (FIeller et al.)
+            let test_z = z_fisher / se_z;
+            let p_val = 2 * (1 - normalCDF(test_z));
+
+            let z_crit = alpha === 0.01 ? 2.576 : (alpha === 0.10 ? 1.645 : 1.96);
+            let z_low = z_fisher - z_crit * se_z;
+            let z_up = z_fisher + z_crit * se_z;
+            let ci_low = (Math.exp(2*z_low) - 1) / (Math.exp(2*z_low) + 1);
+            let ci_up = (Math.exp(2*z_up) - 1) / (Math.exp(2*z_up) + 1);
+
+            // D^2 hesaplaması (Sadece görselleme/adım hesaplama için)
+            let sum_d2 = 0;
+            for(let i=0; i<n; i++) sum_d2 += Math.pow(rankX[i] - rankY[i], 2);
+
+            return { r, t_stat, p_val, df, ci_low, ci_up, r_sq: r*r, z_fisher, se_z, sum_d2, rx: rankX, ry: rankY };
+        }
+
+        // --- GRAFİKLER ---
+        function updateScatterPlot() {
+            if(!parsedDataCache.names || parsedDataCache.names.length < 2) return;
+            
+            let pairStr = document.getElementById('scatterPairSelect').value;
+            let parts = pairStr.split('_|vs|_');
+            if(parts.length !== 2) return;
+            let xName = parts[0]; let yName = parts[1];
+            
+            let xData = parsedDataCache.data[xName];
+            let yData = parsedDataCache.data[yName];
+            let res = spearmanCorr(xData, yData, 0.05);
+
+            let points = [];
+            for(let i=0; i<xData.length; i++) {
+                points.push({x: res.rx[i], y: res.ry[i]});
+            }
+
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; const gColor = isDark ? '#334155' : '#e2e8f0';
+
+            if(charts.scatter) charts.scatter.destroy();
+
+            charts.scatter = new Chart(document.getElementById('scatterChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Gözlem Sıraları (Ranks)',
+                            data: points,
+                            backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                            borderColor: '#10b981',
+                            borderWidth: 1,
+                            pointRadius: 5,
+                            pointHoverRadius: 7
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { color: fColor, font: {weight: 'bold'} } } },
+                    scales: { 
+                        y: { title: {display:true, text: `${yName} (Sıra)`, color: fColor, font:{weight:'bold'}}, grid: { color: gColor }, ticks: { color: fColor } }, 
+                        x: { title: {display:true, text: `${xName} (Sıra)`, color: fColor, font:{weight:'bold'}}, grid: { color: gColor }, ticks: { color: fColor } } 
+                    }
+                }
+            });
+        }
+
+        function baslatAnaliz() {
+            let parseRes = getPreparedData();
+            if (typeof parseRes === "string") { alert(parseRes); return; }
+            if (parseRes.n < 3) { alert("Analiz için en az 3 geçerli satır (gözlem) bulunmalıdır."); return; }
+            
+            parsedDataCache = parseRes; 
+            
+            let selX = document.getElementById('xVarSelect').value;
+            let selY = document.getElementById('yVarSelect').value;
+
+            if(selX === selY) { alert("X ve Y olarak aynı değişkeni seçemezsiniz. Lütfen ana odak için iki farklı değişken belirleyin."); return; }
+
+            setStyle('bosDurum', 'display', 'none'); setStyle('aktifSonuc', 'display', 'none'); setStyle('loadingOverlay', 'display', 'block'); setStyle('assumptionWarningBox', 'display', 'none');
+            setTimeout(() => hesaplaSpearman(parseRes, selX, selY), 800);
+        }
+
+        async function hesaplaSpearman(pData, mainX, mainY) {
+            try {
+                let alfa = parseFloat(document.getElementById('alfaInput').value);
+                let corrMethod = document.getElementById('methodInput').value; 
+                let names = pData.names;
+                let data = pData.data;
+                let N = pData.n;
+                let k = names.length;
+
+                // 1. TANIMLAYICI İSTATİSTİKLER
+                let statsObj = {};
+                let descTBody = `<thead><tr><th class="text-start">Metrik / İstatistik</th>`;
+                names.forEach(v => descTBody += `<th>${v}</th>`);
+                descTBody += `</tr></thead><tbody>`;
+
+                names.forEach(v => { statsObj[v] = calcDescStats(data[v]); });
+
+                descTBody += `<tr><td class="fw-bold text-start ps-3">Gözlem Sayısı ($n$)</td>`;
+                names.forEach(v => descTBody += `<td>${statsObj[v].n}</td>`); descTBody += `</tr>`;
+
+                descTBody += `<tr><td class="fw-bold text-start ps-3">Medyan (Ortanca)</td>`;
+                names.forEach(v => descTBody += `<td class="text-primary fw-bold">${statsObj[v].median.toFixed(3)}</td>`); descTBody += `</tr>`;
+
+                descTBody += `<tr><td class="fw-bold text-start ps-3">Çeyrekler (Q1 - Q3)</td>`;
+                names.forEach(v => descTBody += `<td>${statsObj[v].q1.toFixed(2)} - ${statsObj[v].q3.toFixed(2)}</td>`); descTBody += `</tr>`;
+
+                descTBody += `<tr><td class="fw-bold text-start ps-3">Min - Max</td>`;
+                names.forEach(v => descTBody += `<td class="text-muted">${statsObj[v].min} / ${statsObj[v].max}</td>`); descTBody += `</tr>`;
+
+                descTBody += `<tr class="bg-light"><td class="fw-bold text-start ps-3">Aykırı Değerler</td>`;
+                names.forEach(v => descTBody += `<td><span class="badge ${statsObj[v].outCount > 0 ? 'bg-danger' : 'bg-success'}">${statsObj[v].outCount} Tespit</span></td>`); descTBody += `</tr></tbody>`;
+                
+                setHTML('descTable', descTBody);
+
+                // 2. ÇOKLU KARŞILAŞTIRMALAR VE MATRİS OLUŞTURMA (JS FALLBACK)
+                let pairResults = [];
+                for(let i=0; i<k; i++) {
+                    for(let j=i+1; j<k; j++) {
+                        let res = spearmanCorr(data[names[i]], data[names[j]], alfa);
+                        pairResults.push({
+                            v1: names[i], v2: names[j], r: res.r, p_raw: res.p_val, p_adj: res.p_val, 
+                            t: res.t_stat, ci_l: res.ci_low, ci_u: res.ci_up, r2: res.r_sq,
+                            z_fisher: res.z_fisher, se_z: res.se_z, sum_d2: res.sum_d2
+                        });
+                    }
+                }
+
+                let m = pairResults.length;
+                if (corrMethod === 'bonferroni') {
+                    pairResults.forEach(pr => pr.p_adj = Math.min(1.0, pr.p_raw * m));
+                } else if (corrMethod === 'holm') {
+                    pairResults.sort((a,b) => a.p_raw - b.p_raw);
+                    for(let i=0; i<m; i++) {
+                        pairResults[i].p_adj = Math.min(1.0, pairResults[i].p_raw * (m - i));
+                        if (i > 0 && pairResults[i].p_adj < pairResults[i-1].p_adj) pairResults[i].p_adj = pairResults[i-1].p_adj;
+                    }
+                }
+                
+                let apiSuccess = false;
+
+                // 3. API İSTEĞİ (KESİN HESAPLAMALAR İÇİN)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3500); 
+
+                try {
+                    let reqBody = { data: data, alpha: alfa, correction: corrMethod };
+                    let istek = await fetch("https://api.statlabseu.com/test/spearman", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(reqBody), signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    
+                    if(istek.ok) { 
+                        let apiData = await istek.json(); 
+                        apiSuccess = true;
+                        pairResults = apiData.pairwise; 
+                    }
+                } catch (e) {
+                    clearTimeout(timeoutId);
+                }
+
+                // ANA KARTLAR (SEÇİLİ X-Y ÇİFTİ İÇİN)
+                let mainPair = pairResults.find(p => (p.v1===mainX && p.v2===mainY) || (p.v1===mainY && p.v2===mainX));
+                let isSig = mainPair.p_adj < alfa;
+
+                setTxt('resR', mainPair.r.toFixed(3));
+                setTxt('resP', mainPair.p_adj.toFixed(4));
+                setTxt('resR2', mainPair.r2.toFixed(3));
+                setTxt('resStrength', getStrength(mainPair.r));
+
+                setTxt('resN', N);
+                setHTML('resCI', `[${mainPair.ci_l.toFixed(3)} , ${mainPair.ci_u.toFixed(3)}]`);
+
+                // KORELASYON MATRİSİ (3+ DEĞİŞKEN)
+                if (k > 2) {
+                    let matHTML = `<thead><tr><th class="text-start">Değişkenler</th>`;
+                    names.forEach(v => matHTML += `<th>${v}</th>`);
+                    matHTML += `</tr></thead><tbody>`;
+
+                    for(let i=0; i<k; i++) {
+                        matHTML += `<tr><td class="text-start fw-bold text-dark">${names[i]}</td>`;
+                        for(let j=0; j<k; j++) {
+                            if (i === j) {
+                                matHTML += `<td class="hm-diag">1.000<br><small class="fw-normal">-</small></td>`;
+                            } else {
+                                let pair = pairResults.find(p => (p.v1===names[i] && p.v2===names[j]) || (p.v1===names[j] && p.v2===names[i]));
+                                let val = pair.r;
+                                let pVal = pair.p_adj;
+                                let stars = pVal < 0.001 ? "***" : (pVal < 0.01 ? "**" : (pVal < 0.05 ? "*" : ""));
+                                
+                                let intensity = Math.min(1, Math.abs(val) + 0.1); 
+                                let bg = val > 0 ? `rgba(16, 185, 129, ${intensity})` : `rgba(239, 68, 68, ${intensity})`; // Spearman Yesil/Kirmizi
+                                let textColor = intensity > 0.5 ? '#fff' : '#0f172a';
+                                
+                                matHTML += `<td style="background-color: ${bg}; color: ${textColor};" class="fw-bold">
+                                    ${val.toFixed(3)}${stars}<br>
+                                    <small style="font-size:10px; font-weight:normal; opacity:0.8;">p=${pVal.toFixed(3)}</small>
+                                </td>`;
+                            }
+                        }
+                        matHTML += `</tr>`;
+                    }
+                    matHTML += `</tbody>`;
+                    setHTML('corrMatrixTable', matHTML);
+                    setStyle('matrixSection', 'display', 'block');
+
+                    // Çoklu Tablo
+                    let multiHTML = '';
+                    pairResults.forEach(p => {
+                        let sig = p.p_adj < alfa;
+                        let isMain = (p.v1===mainX && p.v2===mainY) || (p.v1===mainY && p.v2===mainX);
+                        let trClass = isMain ? "bg-primary-subtle" : "";
+                        
+                        multiHTML += `<tr class="${trClass}">
+                            <td class="text-start fw-bold">${p.v1} <i class="ri-arrow-left-right-line px-1 text-muted"></i> ${p.v2} ${isMain?'<span class="badge bg-primary ms-1">Odak</span>':''}</td>
+                            <td class="fw-bold text-dark">${p.r.toFixed(3)}</td>
+                            <td class="text-muted">[${p.ci_l.toFixed(3)} , ${p.ci_u.toFixed(3)}]</td>
+                            <td>${p.r2.toFixed(3)}</td>
+                            <td class="text-muted">${p.p_raw.toFixed(4)}</td>
+                            <td class="fw-bold ${sig ? 'text-danger' : 'text-secondary'}">${p.p_adj.toFixed(4)}</td>
+                            <td><span class="badge ${sig ? 'bg-danger' : 'bg-secondary'}">${sig ? 'Anlamlı' : 'Yok'}</span></td>
+                        </tr>`;
+                    });
+                    setHTML('multiPairBody', multiHTML);
+                    setStyle('multiPairSection', 'display', 'block');
+                } else {
+                    setStyle('matrixSection', 'display', 'none');
+                    setStyle('multiPairSection', 'display', 'none');
+                }
+
+                // SCATTER DOLDUR
+                let sel = document.getElementById('scatterPairSelect');
+                sel.innerHTML = '';
+                pairResults.forEach(p => {
+                    let opt = document.createElement('option');
+                    opt.value = `${p.v1}_|vs|_${p.v2}`;
+                    opt.text = `${p.v1} vs ${p.v2}`;
+                    if((p.v1===mainX && p.v2===mainY) || (p.v1===mainY && p.v2===mainX)) opt.selected = true;
+                    sel.appendChild(opt);
+                });
+                if(k > 2) sel.style.display = 'inline-block'; else sel.style.display = 'none';
+                updateScatterPlot(); 
+
+                // KARAR METNİ
+                let yorum = "";
+                if (isSig) {
+                    setClass('kararKutusu', "alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start bg-danger-subtle text-danger shadow-sm mt-2");
+                    setClass('kararIkon', "ri-error-warning-fill text-danger fs-28"); setTxt('kararBaslik', "H₀ Reddedilir (İstatistiksel Olarak Anlamlı)");
+                    setHTML('kararAciklama', `p $\\lt \\alpha$ olduğu için, ${mainX} ile ${mainY} arasında popülasyonda sıfırdan farklı bir monotonik ilişki olduğuna dair yeterli kanıt bulunmuştur.`);
+                    
+                    let dirStr = mainPair.r > 0 ? "pozitif" : "negatif";
+                    yorum = `<span><strong>İstatistiksel Yorum:</strong> Spearman analizi sonucunda, <strong>${mainX}</strong> ile <strong>${mainY}</strong> arasında istatistiksel olarak anlamlı, ${dirStr} yönlü ve ${getStrength(mainPair.r).toLowerCase()} bir monotonik ilişki bulunmuştur ($\rho = ${mainPair.r.toFixed(3)}, p = ${mainPair.p_adj.toFixed(4)}$). Sıralı verilerin varyanslarının %${(mainPair.r2*100).toFixed(1)}'i ortaktır. Ancak bu ilişki bir değişkenin diğerine neden olduğunu göstermez.</span>`;
+                } else {
+                    setClass('kararKutusu', "alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start bg-success-subtle text-success shadow-sm mt-2");
+                    setClass('kararIkon', "ri-checkbox-circle-fill text-success fs-28"); setTxt('kararBaslik', "H₀ Reddedilemez (Anlamlı İlişki Yok)");
+                    setHTML('kararAciklama', `p $\\ge \\alpha$ olduğu için, ${mainX} ile ${mainY} arasındaki monotonik ilişkinin şans eseri olmadığına dair yeterli kanıt bulunamamıştır.`);
+                    
+                    yorum = `<span><strong>İstatistiksel Yorum:</strong> Spearman analizi sonucunda, <strong>${mainX}</strong> ile <strong>${mainY}</strong> arasındaki sıralı (monotonik) korelasyon istatistiksel olarak anlamlı bulunmamıştır ($\rho = ${mainPair.r.toFixed(3)}, p = ${mainPair.p_adj.toFixed(4)}$). Popülasyonda bu iki değişkenin birbirinden monotonik olarak bağımsız olduğu kabul edilir.</span>`;
+                }
+                setHTML('yorumText', yorum);
+
+                // ADIM ADIM TABLOLU HESAPLAMALAR
+                let d2Value = mainPair.sum_d2 ? mainPair.sum_d2.toFixed(1) : "API Data";
+                let calcDetHTML = `
+                    <h6 class="fw-bold mb-3 text-dark"><i class="ri-function-add-line align-middle me-1"></i> Adım 1: Klasik Formül ($\rho$) ve Fisher $Z$</h6>
+                    <p class="fs-13 text-muted">Eğer bağlı değerler (ties) yoksa klasik $\\rho$ formülü geçerlidir. Aksi halde Pearson korelasyonu (sıralar üzerinde) kullanılır.</p>
+                    <div class="table-responsive mb-4">
+                        <table class="table param-grid-table m-0">
+                            <thead>
+                                <tr><th class="text-start">Parametre</th><th>Formül / Bileşen</th><th>Değer</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="text-start fw-bold">Sıra Farkları Karesi ($\\sum d_i^2$)</td><td>$\\sum (R_X - R_Y)^2$</td><td class="fw-bold text-dark">${d2Value}</td></tr>
+                                <tr><td class="text-start fw-bold text-primary">Spearman $\\rho$</td><td>$1 - (6 \\sum d_i^2) / (n(n^2-1))$</td><td class="fw-bold text-primary">${mainPair.r.toFixed(4)}</td></tr>
+                                <tr class="bg-light"><td class="text-start fw-bold text-dark">Fisher $Z$ Dönüşümü</td><td>$0.5 \\times \\ln((1+\\rho)/(1-\\rho))$</td><td class="fw-bold text-dark">${mainPair.z_fisher ? mainPair.z_fisher.toFixed(4) : "API Data"}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6 class="fw-bold mb-3 text-dark"><i class="ri-percent-line align-middle me-1"></i> Adım 2: İstatistiksel Test ($t$) ve Güven Aralığı</h6>
+                    <div class="table-responsive">
+                        <table class="table param-grid-table m-0">
+                            <thead>
+                                <tr><th class="text-start">Test İstatistiği</th><th>Formül</th><th>Sonuç</th><th>$p$-değeri</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="text-start fw-bold">Student t Testi ($t$)</td><td>$\\rho \\sqrt{(n-2)/(1-\\rho^2)}$</td><td class="fw-bold text-dark">${mainPair.t ? mainPair.t.toFixed(4) : "API Data"}</td><td class="fw-bold ${isSig?'text-danger':'text-dark'}">${mainPair.p_raw.toFixed(5)}</td></tr>
+                                <tr class="bg-light"><td class="text-start fw-bold text-dark">Güven Aralığı Sınırları</td><td>Fisher $Z \\pm Z_{\\alpha/2} \\times SE_Z$</td><td colspan="2" class="fw-bold text-dark">[${mainPair.ci_l.toFixed(3)} , ${mainPair.ci_u.toFixed(3)}]</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                setHTML('hesaplamaDetayIcerik', calcDetHTML);
+
+                setStyle('loadingOverlay', 'display', 'none'); setStyle('aktifSonuc', 'display', 'block');
+                
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) {
+                        MathJax.typesetClear();
+                        MathJax.typesetPromise().catch(err => console.log(err));
+                    }
+                    document.getElementById('aktifSonuc').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+
+            } catch (error) { setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block'); alert("Analiz Hatası: " + error); }
+        }
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>
