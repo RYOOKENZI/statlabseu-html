@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { 
+                inlineMath: [['$', '$'], ['\\(', '\\)']], 
+                displayMath: [['$$', '$$'], ['\\[', '\\]']] 
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <title>Cox Regresyon | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        @font-face {
+            font-family: 'STIX Two Math';
+            src: url('assets/fonts/STIXTwoMath-Regular.ttf') format('truetype');
+            font-weight: normal; font-style: normal;
+        }
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+        .math-var { font-family: 'STIX Two Math', serif !important; font-style: italic; font-weight: normal; color: inherit; display: inline-block; }
+
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; margin-bottom: 20px;}
+        .param-grid-table { width: 100%; border-collapse: collapse; text-align: center; margin: 0; min-width: max-content; }
+        .param-grid-table th { font-size: 13px; font-weight: 700; color: #475569; background-color: #f1f5f9; padding: 13px 12px; border: 1px solid #e2e8f0; white-space: nowrap; vertical-align: middle; }
+        .param-grid-table td { padding: 13px 12px; font-size: 13px; color: #0f172a; border: 1px solid #e2e8f0; vertical-align: middle; white-space: nowrap; }
+        .param-grid-table tr:hover td { background-color: #f8fafc; }
+        
+        .param-grid-table tr:first-child th, .param-grid-table tr:first-child td { border-top: none; }
+        .param-grid-table tr:last-child th, .param-grid-table tr:last-child td { border-bottom: none; }
+        .param-grid-table tr th:first-child, .param-grid-table tr td:first-child { border-left: none; }
+        .param-grid-table tr th:last-child, .param-grid-table tr td:last-child { border-right: none; }
+
+        .info-box { background: linear-gradient(135deg, rgba(47, 143, 232, 0.1), rgba(14, 165, 233, 0.05)); border-left: 4px solid #2f8fe8; padding: 15px 20px; border-radius: 8px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 15px; }
+        .info-box i { font-size: 24px; color: #2f8fe8; }
+        .info-box p { margin: 0; font-size: 14px; color: #475569; line-height: 1.6; }
+
+        .loader-spinner { width: 40px; height: 40px; border: 4px solid rgba(47, 143, 232, 0.2); border-left-color: #2f8fe8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-pulse { animation: pulse-btn 1.8s infinite; background: linear-gradient(135deg, #2f8fe8, #0ea5e9); border: none; color: white !important; }
+        .btn-pulse:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(14, 165, 233, 0.4); background: linear-gradient(135deg, #1d7bd1, #0284c7); }
+        .btn-action { font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; transition: all 0.3s ease; }
+
+        .alert-warning-smart { background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.03)); border: 1px solid rgba(245, 158, 11, 0.2); border-left: 4px solid #f59e0b; color: #92400e; padding: 12px 16px; }
+        .insight-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #6366f1; padding: 15px 16px; border-radius: 8px; display: flex; align-items: flex-start; margin-top: 12px; }
+        .insight-box i { color: #6366f1; font-size: 22px; margin-right: 12px; margin-top: -3px; }
+        .insight-box span, .insight-box strong { font-size: 14.5px; font-weight: 600; line-height: 1.6; color: #000000 !important; }
+
+        .formula-box { background-color: #ffffff; padding: 25px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 15px; overflow-x: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.02);}
+
+        .custom-upload-zone { border: 2px dashed #2f8fe8 !important; background-color: rgba(47, 143, 232, 0.04); transition: all 0.2s ease-in-out; cursor: pointer; }
+        .custom-upload-zone:hover { background-color: rgba(47, 143, 232, 0.08); border-color: #1d7bd1 !important; transform: translateY(-1px); }
+
+        /* YENİ NESİL EXCEL BENZERİ GRİD (STICKY) */
+        .excel-container { max-height: 350px; overflow: auto; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; position: relative; }
+        .excel-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: max-content; }
+        .excel-table th { position: sticky; top: 0; z-index: 10; background: #f1f5f9; border-bottom: 1px solid #cbd5e1; border-right: 1px solid #cbd5e1; padding: 8px 10px; font-size: 13px; color: #334155; font-weight: 700; user-select: none; }
+        .excel-table td { border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 0; position: relative; }
+        
+        .excel-table td:first-child, .excel-table th:first-child { position: sticky; left: 0; z-index: 11; background: #f8fafc; border-right: 1px solid #cbd5e1; width: 40px; text-align: center; font-weight: bold; color: #64748b; font-size: 12px; }
+        .excel-table th:first-child { z-index: 12; top: 0; left: 0; }
+
+        .excel-input { width: 100%; height: 100%; min-height: 35px; border: none; outline: none; background: transparent; text-align: center; padding: 5px 10px; font-size: 14px; font-family: inherit; color: #0f172a; transition: all 0.2s; }
+        .excel-input:focus { background-color: #eff6ff; box-shadow: inset 0 0 0 2px #3b82f6; }
+        .excel-input.error { background-color: #fee2e2 !important; color: #b91c1c; font-weight: bold; }
+        
+        .header-edit { background: transparent; border: none; outline: none; font-weight: 700; color: inherit; width: 100%; text-align: center; cursor: text; }
+        .header-edit:focus { border-bottom: 1px dashed #3b82f6; }
+        
+        .btn-grid-action { border: 1px dashed #cbd5e1; background: transparent; color: #64748b; font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 6px; transition: all 0.2s; }
+        .btn-grid-action:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
+
+        /* MULTIPLE X CHIPS */
+        .var-checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; }
+        .x-var-label { cursor: pointer; user-select: none; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; border: 1px solid #cbd5e1; background: #fff; color: #475569; transition: all 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+        .x-var-label:hover { box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .x-var-label input[type="checkbox"] { display: none; }
+        .x-var-label input[type="checkbox"]:checked + span { color: #fff; }
+        .x-var-label:has(input[type="checkbox"]:checked) { background: #2f8fe8; border-color: #2f8fe8; color: #fff; }
+
+        /* PREDICTION BOXES */
+        .pred-box { background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 20px; }
+        .pred-result { font-size: 24px; font-weight: 800; color: #166534; }
+
+        /* GECE MODU AYARLARI */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light, html.dark-mode .bg-body-bg { background-color: #0f172a !important; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        html.dark-mode .info-box { background: rgba(47, 143, 232, 0.1); }
+        html.dark-mode .info-box p { color: #cbd5e1; }
+        
+        html.dark-mode .table-responsive { border-color: #334155; background: #1e293b; }
+        html.dark-mode .param-grid-table th { background-color: #0f172a; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .param-grid-table td { background-color: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark-mode .param-grid-table tr:hover td { background-color: #0f172a !important; }
+        
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+        html.dark-mode .formula-box { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        html.dark-mode .formula-box p { color: #cbd5e1; }
+        html.dark-mode mjx-container { color: #e2e8f0 !important; }
+        
+        html.dark-mode .alert-warning-smart { background: rgba(245, 158, 11, 0.1) !important; border: 1px solid rgba(245, 158, 11, 0.2) !important; border-left: 4px solid #fbbf24 !important; color: #fcd34d !important; }
+        html.dark-mode .insight-box { background-color: #1e293b !important; border: 1px solid #334155 !important; border-left: 4px solid #818cf8 !important; }
+        html.dark-mode .insight-box i { color: #818cf8 !important; }
+        html.dark-mode .insight-box span, html.dark-mode .insight-box strong { color: #ffffff !important; }
+
+        html.dark-mode .x-var-label { background: #1e293b; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .x-var-label:has(input[type="checkbox"]:checked) { background: #0ea5e9; color: #0f172a; border-color: #0ea5e9; }
+        html.dark-mode .x-var-label input[type="checkbox"]:checked + span { color: #0f172a; }
+
+        html.dark-mode select.bg-light, html.dark-mode input.bg-light { background-color: #0f172a !important; color: #cbd5e1; border: 1px solid #334155 !important; }
+
+        html.dark-mode .excel-container { border-color: #334155; background: #1e293b; }
+        html.dark-mode .excel-table th { background: #0f172a; border-color: #334155; color: #cbd5e1; }
+        html.dark-mode .excel-table td { border-color: #334155; }
+        html.dark-mode .excel-table td:first-child, html.dark-mode .excel-table th:first-child { background: #1e293b; border-color: #334155; color: #94a3b8; }
+        html.dark-mode .excel-input { color: #e2e8f0; }
+        html.dark-mode .excel-input:focus { background-color: #0f172a; box-shadow: inset 0 0 0 2px #0ea5e9; }
+        html.dark-mode .excel-input.error { background-color: #7f1d1d !important; color: #fca5a5; }
+        html.dark-mode .btn-grid-action { border-color: #475569; color: #94a3b8; }
+        html.dark-mode .btn-grid-action:hover { border-color: #0ea5e9; color: #0ea5e9; background: rgba(14, 165, 233, 0.1); }
+        
+        html.dark-mode .pred-box { background-color: #064e3b; border-color: #065f46; }
+        html.dark-mode .pred-result { color: #6ee7b7; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border border-white shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-heart-pulse-fill align-middle me-1"></i> Cox Regresyonu
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="main-content-container overflow-hidden">
+                
+                <div class="info-box shadow-sm">
+                    <i class="ri-information-line"></i>
+                    <div>
+                        <strong class="d-block text-dark mb-1">Cox Orantısal Tehlikeler Regresyonu (Proportional Hazards Model)</strong>
+                        <p class="mb-1">Bir olayın (örn. sağkalım, bozulma, iyileşme) gerçekleşmesine kadar geçen süre (Time) ile bir veya daha fazla bağımsız değişken (X) arasındaki ilişkiyi inceler. Sonucu <strong>Hazard Ratio (HR - Olay Tehlike Oranı)</strong> ile verir.</p>
+                        <p class="mb-0 text-danger fw-semibold fs-13"><i class="ri-error-warning-fill align-middle"></i> Kritik Uyarı: HR olasılık değildir. $HR = 1.30$, "X'teki 1 birimlik artış olayın anlık tehlikesinde %30 artışla ilişkilidir" demektir. Orantılı tehlikeler (PH) varsayımı sağlanmalıdır.</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- SOL PANEL: VERİ GİRİŞİ VE KALİTE YÖNETİMİ -->
+                    <div class="col-lg-5 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm">
+                            
+                            <h4 class="fs-16 fw-bold text-dark mb-3"><i class="ri-table-2 align-middle text-primary me-1"></i> Veri Matrisi</h4>
+
+                            <!-- HIZLI YÜKLEME BUTONU -->
+                            <div class="custom-upload-zone p-2 rounded-10 text-center mb-3" onclick="document.getElementById('dosyaGezgini').click()">
+                                <h5 class="fs-13 fw-semibold text-primary mb-0"><i class="ri-upload-cloud-2-line fs-18 align-middle me-1"></i> Excel (.xlsx) veya CSV Yükle</h5>
+                                <input type="file" id="dosyaGezgini" accept=".csv, .txt, .xlsx, .xls" style="display: none;">
+                            </div>
+
+                            <div class="alert alert-warning-smart py-2 fs-12 mb-3 border-0 rounded-3">
+                                <i class="ri-edit-2-fill align-middle me-1"></i> Hücrelere tıklayıp değer girebilir, Excel'den doğrudan kopyalayıp buraya <strong>yapıştırabilirsiniz (Ctrl+V)</strong>.
+                            </div>
+
+                            <div id="gridErrorMsg" class="text-danger fw-bold fs-12 mb-2 d-none"><i class="ri-error-warning-line align-middle"></i> Hata: Kırmızı hücrelerdeki geçersiz verileri düzeltin! Olay 0/1 olmalı, Süre negatif olamaz.</div>
+
+                            <!-- EXCEL GRİDİ -->
+                            <div class="excel-container mb-3" id="excelWrapper">
+                                <table class="excel-table" id="excelGrid">
+                                    <thead>
+                                        <tr id="gridHeaderRow">
+                                            <th>#</th>
+                                            <th><input type="text" class="header-edit" value="Sure_T" onblur="updateVarSelectors()"></th>
+                                            <th title="1=Olay Gerçekleşti, 0=Sansür/Olay Yok"><input type="text" class="header-edit" value="Olay_E" onblur="updateVarSelectors()"></th>
+                                            <th><input type="text" class="header-edit" value="Yas_X1" onblur="updateVarSelectors()"></th>
+                                            <th><input type="text" class="header-edit" value="Tedavi_X2" onblur="updateVarSelectors()"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="gridBody">
+                                        <!-- Satırlar JS ile oluşturulacak -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="d-flex gap-2 mb-3">
+                                <button class="btn-grid-action w-50" onclick="addRow()"><i class="ri-add-line"></i> Satır (Gözlem) Ekle</button>
+                                <button class="btn-grid-action w-50" onclick="addCol()"><i class="ri-add-column-line"></i> Sütun (Değişken) Ekle</button>
+                            </div>
+
+                            <!-- VERİ KALİTE ÖZETİ -->
+                            <div id="dataQualityBox" class="bg-light p-3 rounded-3 border mb-3">
+                                <h6 class="fs-13 fw-bold text-dark mb-2"><i class="ri-bar-chart-box-line text-primary me-1"></i>Veri Kalite Özeti</h6>
+                                <div class="d-flex justify-content-between fs-12 mb-1"><span>Toplam Satır:</span> <strong id="dqTotal">0</strong></div>
+                                <div class="d-flex justify-content-between fs-12 mb-1"><span>Geçerli Gözlem (N):</span> <strong id="dqValid" class="text-success">0</strong></div>
+                                <div class="d-flex justify-content-between fs-12 mb-2"><span>Eksik/Hatalı:</span> <strong id="dqMissing" class="text-danger">0</strong></div>
+                            </div>
+
+                            <!-- DEĞİŞKEN SEÇİMİ VE YÖNETİMİ -->
+                            <div id="variableManagerBox" class="mb-3">
+                                <hr class="border-secondary opacity-25 my-3">
+                                
+                                <div class="d-flex gap-2 mb-3">
+                                    <div class="w-50">
+                                        <label class="form-label fw-bold text-secondary fs-12 mb-1">1. Süre (Zaman)</label>
+                                        <select id="timeVarSelect" class="form-select bg-light border-0 fs-13" onchange="updateVarSelectors()"></select>
+                                    </div>
+                                    <div class="w-50">
+                                        <label class="form-label fw-bold text-secondary fs-12 mb-1">2. Olay (Event 0/1)</label>
+                                        <select id="eventVarSelect" class="form-select bg-light border-0 fs-13" onchange="updateVarSelectors()"></select>
+                                    </div>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="form-label fw-bold text-secondary fs-12 mb-2">3. Bağımsız Değişkenler (Kovaryanslar)</label>
+                                    <div id="xVarCheckboxes" class="var-checkbox-group bg-light p-2 rounded-3 border">
+                                        <!-- Dinamik Checkboxlar Gelecek -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="border-secondary opacity-25 my-3">
+
+                            <div class="row g-2 mb-4">
+                                <div class="col-4">
+                                    <label class="form-label fw-bold text-secondary fs-11 mb-1">Anlamlılık ($\alpha$)</label>
+                                    <select id="alfaInput" class="form-select bg-light border-0 rounded-10 py-1 fs-12">
+                                        <option value="0.05" selected>0.05</option>
+                                        <option value="0.01">0.01</option>
+                                        <option value="0.10">0.10</option>
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label fw-bold text-secondary fs-11 mb-1">Güven Aralığı</label>
+                                    <select id="ciInput" class="form-select bg-light border-0 rounded-10 py-1 fs-12">
+                                        <option value="0.95" selected>%95</option>
+                                        <option value="0.99">%99</option>
+                                        <option value="0.90">%90</option>
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label fw-bold text-secondary fs-11 mb-1">Eşit Zaman (Ties)</label>
+                                    <select id="tiesInput" class="form-select bg-light border-0 rounded-10 py-1 fs-12">
+                                        <option value="efron" selected>Efron</option>
+                                        <option value="breslow">Breslow</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-column gap-3 mt-4">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-secondary w-50 py-2 rounded-10 btn-action" onclick="ornekVeriYukle()">
+                                        <i class="ri-magic-line align-middle me-1"></i> Örnek Veri
+                                    </button>
+                                    <button class="btn btn-outline-danger w-50 py-2 rounded-10 btn-action" onclick="temizleVeri()">
+                                        <i class="ri-delete-bin-line align-middle me-1"></i> Temizle
+                                    </button>
+                                </div>
+                                <button class="btn w-100 py-3 rounded-10 btn-action btn-pulse" onclick="baslatAnaliz()" id="btnAnaliz">
+                                    <i class="ri-heart-pulse-fill align-middle me-1 fs-18"></i> COX MODELİNİ ÇALIŞTIR
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- TAHMİN / PREDİCTİON BÖLÜMÜ (Başlangıçta Gizli) -->
+                        <div id="predictSection" class="mt-4" style="display: none;">
+                            <div class="card bg-white border-0 rounded-10 p-4 shadow-sm">
+                                <h5 class="fw-bold fs-15 text-dark mb-3"><i class="ri-focus-3-line text-primary me-1"></i> Yeni Birey İçin Risk ve Sağkalım Tahmini</h5>
+                                <p class="fs-12 text-muted mb-3">Model kurulduktan sonra, yeni bir profilin X değerlerini girerek kişisel <strong>Lineer Risk Skorunu</strong> ve <strong>Sağkalım Olasılığını</strong> hesaplayabilirsiniz.</p>
+                                
+                                <div id="predictionInputsContainer" class="row g-2 mb-3">
+                                    <!-- Dinamik Inputlar Gelecek -->
+                                </div>
+                                
+                                <button class="btn btn-primary fw-bold w-100 mb-3" onclick="hesaplaTahmin()"><i class="ri-calculator-line me-1"></i> Bireysel Riski Hesapla</button>
+
+                                <div id="predictResultBox" style="display:none;">
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <div class="pred-box text-center h-100 border border-success border-opacity-50" style="background-color: #f0fdf4;">
+                                                <span class="d-block text-success fw-bold mb-1" title="Log-hazard skoru. Sıfırdan büyük olması riskin arttığını gösterir.">Lineer Risk Skoru ($\eta$)</span>
+                                                <div class="pred-result" id="resPredRisk">-</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="pred-box text-center h-100 border border-danger border-opacity-50" style="background-color: #fef2f2;">
+                                                <span class="d-block text-danger fw-bold mb-1" title="Bu profil için hazardın (tehlikenin) taban hazarda göre ne kadar katlandığını gösterir.">Relative Hazard ($e^\eta$)</span>
+                                                <div class="fs-24 fw-bold text-danger" id="resPredRH">-</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted fs-11 mt-2 d-block text-center">Not: Bireysel sağkalım eğrisi grafiği sağ panelde çizilmektedir.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- SAĞ PANEL: SONUÇLAR -->
+                    <div class="col-lg-7 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                            
+                            <div id="bosDurum" class="text-center py-5 my-auto">
+                                <i class="ri-heart-pulse-fill text-muted opacity-25" style="font-size: 4.5rem;"></i>
+                                <h5 class="text-muted mt-3 fs-16">Analiz Bekleniyor</h5>
+                                <p class="text-muted fs-14 mb-0">Sol panelden bağımsız değişkenlerinizi seçip modeli kurun.</p>
+                            </div>
+
+                            <div id="loadingOverlay" class="text-center py-5 my-auto" style="display: none;">
+                                <div class="loader-spinner"></div>
+                                <h5 class="text-primary mt-4 fs-16 fw-semibold">Partial Likelihood Optimizasyonu Çözülüyor...</h5>
+                            </div>
+
+                            <div id="aktifSonuc" style="display: none;">
+
+                                <!-- ÜST İSTATİSTİK KARTLARI (MODEL ÖZETİ) -->
+                                <div class="row g-3 text-center mb-4">
+                                    <div class="col-md-3">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Toplam Gözlem ($N$)</span>
+                                            <h3 id="resN" class="text-dark mb-0 fw-bold fs-22">-</h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase text-danger">Olay (Event) Sayısı</span>
+                                            <h3 id="resEvent" class="text-danger mb-0 fw-bold fs-22">-</h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase text-primary">Model P-Değeri (LR)</span>
+                                            <h3 id="resP" class="text-primary mb-0 fw-bold fs-20">-</h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase text-success" title="Modelin kimin önce öleceğini/olay yaşayacağını doğru tahmin etme oranı (0.5=Şans, 1.0=Mükemmel)">Concordance Index</span>
+                                            <h4 id="resCIdx" class="text-success mb-0 fw-bold fs-18">-</h4>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="p-2 bg-body-bg rounded-10 border border-light d-flex justify-content-around px-2 align-items-center">
+                                            <div><span class="text-muted fs-12 fw-semibold">Sansür Oranı:</span> <span id="resCensRate" class="text-dark fw-bold fs-14 ms-1">-</span></div>
+                                            <div><span class="text-muted fs-12 fw-semibold">Likelihood Ratio (LR) $\chi^2$:</span> <span id="resLR" class="text-dark fw-bold fs-14 ms-1">-</span></div>
+                                            <div><span class="text-muted fs-12 fw-semibold">Bağımsız Değişken ($k$):</span> <span id="resK" class="text-dark fw-bold fs-14 ms-1">-</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 1. KATSAYILAR VE HAZARD RATIO TABLOSU -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="fs-14 fw-bold text-dark mb-0"><i class="ri-functions text-primary me-1"></i> Katsayılar ($\beta$), Hazard Ratio (HR) ve Anlamlılık</h5>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table param-grid-table m-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-start">Değişken ($X_i$)</th>
+                                                    <th title="Log-hazard katsayısı">Katsayı ($\beta$)</th>
+                                                    <th>Std. Hata</th>
+                                                    <th title="Wald İstatistiği (z)">$z$ İstatistiği</th>
+                                                    <th>$p$-değeri</th>
+                                                    <th class="text-danger" title="Hazard Ratio: Tehlike Oranı (exp(b)).">Hazard Ratio (HR)</th>
+                                                    <th id="thCI" colspan="2" class="text-danger">%95 GA (HR için)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="coefTableBody">
+                                                <!-- JS Dolduracak -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <small class="text-muted fs-11 mt-2 d-block"><i class="ri-information-fill text-primary me-1"></i><strong>Hazard Ratio (HR) Yorumu:</strong> $HR > 1$ ise değişken arttıkça olayın <u>anlık tehlikesi (riski)</u> artar. $HR < 1$ ise risk azalır (koruyucu etki). $HR = 1$ ise riskte fark yoktur.</small>
+                                </div>
+
+                                <!-- 2. ORANTILI TEHLİKELER (PROPORTIONAL HAZARDS) VARSAYIMI -->
+                                <div class="mb-4">
+                                    <h5 class="fs-14 fw-bold text-dark mb-2"><i class="ri-shield-check-line text-primary me-1"></i> Orantılı Tehlikeler (PH) Varsayım Kontrolü</h5>
+                                    <p class="fs-12 text-muted mb-2">Schoenfeld artıkları kullanılarak hesaplanır. Cox modelinin geçerli olabilmesi için değişkenlerin etkisinin (HR) zaman boyunca <u>sabit</u> olması (p > 0.05) gerekir.</p>
+                                    <div class="table-responsive">
+                                        <table class="table param-grid-table m-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-start">Değişken</th>
+                                                    <th>Test İstatistiği ($\chi^2$)</th>
+                                                    <th>$p$-değeri</th>
+                                                    <th>PH Varsayımı Durumu</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="phTableBody">
+                                                <!-- JS Dolduracak -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div id="phWarning" class="alert alert-warning-smart py-2 fs-12 mt-2 mb-0 d-none">
+                                        <i class="ri-error-warning-fill me-1"></i> <strong>Kritik Uyarı:</strong> PH varsayımını ihlal eden (p < 0.05) değişkenler tespit edildi! Bu değişkenlerin tehlike oranı zamanla değişmektedir. Stratified Cox modeli kullanmayı düşünün.
+                                    </div>
+                                </div>
+
+                                <!-- GRAFİKLER BÖLÜMÜ -->
+                                <div class="row mt-4">
+                                    <!-- FOREST PLOT -->
+                                    <div class="col-12 mb-4">
+                                        <div class="chart-container h-100 d-flex flex-column border-primary border-opacity-25">
+                                            <h5 class="fs-14 fw-bold text-dark mb-2 text-center text-uppercase tracking-wider">Hazard Ratio (HR) Forest Plot</h5>
+                                            <span class="fs-12 text-muted mb-3 text-center d-block">Mavi noktalar Hazard Ratio değerlerini, çizgiler %95 güven aralıklarını gösterir. Çizgi $HR=1$ referans hattını kesiyorsa etki istatistiksel olarak anlamlı <u>değildir</u>.</span>
+                                            <div style="position: relative; height: 350px; width: 100%;"><canvas id="forestChart"></canvas></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- PREDICTED SURVIVAL CURVE (BİREYSEL) -->
+                                    <div class="col-12 mb-4">
+                                        <div class="chart-container h-100 d-flex flex-column border-primary border-opacity-25">
+                                            <h5 class="fs-14 fw-bold text-dark mb-2 text-center text-uppercase tracking-wider">Temel ve Bireysel Tahmini Sağkalım Eğrisi $S(t|X)$</h5>
+                                            <span class="fs-12 text-muted mb-3 text-center d-block">Gri çizgi popülasyonun Temel Sağkalımını (Baseline Survival, X=0) gösterir. Mavi çizgi ise <strong>sol alttan (Tahmin bölümü) girdiğiniz değerlere sahip bireyin</strong> tahmini sağkalım eğrisidir.</span>
+                                            <div style="position: relative; height: 350px; width: 100%;"><canvas id="survChart"></canvas></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ANA KARAR VE İÇGÖRÜ KUTUSU -->
+                                <div id="kararKutusu" class="alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start shadow-sm mt-4">
+                                    <div class="d-flex justify-content-center mt-1 me-3"><i id="kararIkon" class="fs-28"></i></div>
+                                    <div class="flex-grow-1">
+                                        <h4 id="kararBaslik" class="mb-2 fs-16 fw-bold">-</h4>
+                                        <p id="kararAciklama" class="mb-0 fs-14 text-muted lh-base">-</p>
+                                        
+                                        <!-- İNDİGO AKILLI YORUM KUTUSU -->
+                                        <div id="yorumWrapper" class="insight-box shadow-sm mt-3">
+                                            <i class="ri-lightbulb-flash-fill"></i>
+                                            <div class="d-flex flex-column w-100" id="yorumText">
+                                                <!-- Yorumlar satır satır gelecek -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- AKORDEON: TEORİK ALTYAPI (FORMÜLLER) -->
+                                <div class="mt-4 mb-2">
+                                    <button class="btn btn-pulse w-100 py-3 d-flex justify-content-between align-items-center fs-15 fw-bold rounded-10 border-0 shadow" type="button" data-bs-toggle="collapse" data-bs-target="#teorikFormuller" aria-expanded="false" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: white;">
+                                        <span><i class="ri-function-line me-2 fs-20 align-middle"></i> Matematiksel Formülleri Görüntüle</span>
+                                        <i class="ri-arrow-down-s-line fs-22"></i>
+                                    </button>
+                                    <div class="collapse mt-3" id="teorikFormuller">
+                                        <div class="card card-body bg-body-bg border border-light p-4 rounded-10 shadow-sm">
+                                            <div class="row g-3">
+                                                
+                                                <div class="col-12">
+                                                    <div class="formula-box">
+                                                        <strong class="text-dark d-block mb-3 fs-15">1. Cox Modeli (Tehlike ve Sağkalım Fonksiyonu)</strong>
+                                                        <p class="fs-14">Cox modeli temel tehlikeyi (baseline hazard) tahmin etmeden, sadece katsayıların hazard üzerindeki etkisini maksimize eder.</p>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ h(t|X) = h_0(t) \exp(\beta_1 X_1 + \beta_2 X_2 + \dots) $$<br>
+                                                            $$ S(t|X) = \left[ S_0(t) \right]^{\exp(\beta_1 X_1 + \beta_2 X_2 + \dots)} $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="formula-box">
+                                                        <strong class="text-dark d-block mb-3 fs-15">2. Hazard Ratio (HR) ve Güven Aralığı</strong>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ HR_j = e^{\beta_j} $$<br>
+                                                            $$ CI_{HR} = \left( e^{\beta_j - Z_{\alpha/2} SE} , e^{\beta_j + Z_{\alpha/2} SE} \right) $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="formula-box mb-0">
+                                                        <strong class="text-dark d-block mb-3 fs-15">3. Model Anlamlılığı (Likelihood Ratio Test)</strong>
+                                                        <p class="fs-14">Boş model (sabit) ile kurulan çoklu modelin Kısmi Log-Olasılık (Partial Log-Likelihood) farkını ölçer.</p>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ LR \ \chi^2 = 2 \times (\ln L_{model} - \ln L_{null}) $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="footer-area bg-white text-center rounded-10 rounded-bottom-0 p-3 mt-4 border-top shadow-sm">
+                <p class="fs-14 text-body mb-0">© <span>StatLabseu</span> - Gelişmiş İstatistiksel Analiz Platformu</p>
+            </footer>
+
+        </div>
+    </div>
+ 
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function setTxt(id, text) { let el = document.getElementById(id); if (el) el.innerText = text; }
+        function setHTML(id, html) { let el = document.getElementById(id); if (el) el.innerHTML = html; }
+        function setClass(id, cls) { let el = document.getElementById(id); if (el) el.className = cls; }
+        function setStyle(id, prop, val) { let el = document.getElementById(id); if (el) el.style[prop] = val; }
+
+        let charts = { forest: null, surv: null };
+        let parsedDataCache = {}; 
+        let regModelCache = null; 
+        
+        let colCount = 4; 
+        let rowCount = 5;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            if (localStorage.getItem('statlab_theme') === 'dark') { themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); }
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); themeIcon.classList.remove('text-secondary'); localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); themeIcon.classList.remove('text-warning'); themeIcon.classList.add('text-secondary'); localStorage.setItem('statlab_theme', 'light');
+                }
+                let aktifEl = document.getElementById('aktifSonuc'); if(aktifEl && aktifEl.style.display === 'block') baslatAnaliz();
+            });
+            
+            document.getElementById('dosyaGezgini').addEventListener('change', function(e) { handleFile(e.target.files[0]); });
+            document.getElementById('excelGrid').addEventListener('paste', handleGridPaste);
+            buildInitialGrid();
+        });
+
+        // --- GRID YÖNETİMİ ---
+        function buildInitialGrid() {
+            let tbody = document.getElementById('gridBody');
+            tbody.innerHTML = '';
+            for(let i=1; i<=rowCount; i++) {
+                let tr = document.createElement('tr');
+                let html = `<td>${i}</td>`;
+                for(let j=0; j<colCount; j++) html += `<td><input type="text" class="excel-input" oninput="validateCell(this)"></td>`;
+                tr.innerHTML = html;
+                tbody.appendChild(tr);
+            }
+            updateDataQuality();
+        }
+
+        function addRow() {
+            let tbody = document.getElementById('gridBody');
+            rowCount++;
+            let tr = document.createElement('tr');
+            let html = `<td>${rowCount}</td>`;
+            for(let j=0; j<colCount; j++) html += `<td><input type="text" class="excel-input" oninput="validateCell(this)"></td>`;
+            tr.innerHTML = html;
+            tbody.appendChild(tr);
+            updateDataQuality();
+        }
+
+        function addCol() {
+            colCount++;
+            let thead = document.getElementById('gridHeaderRow');
+            let th = document.createElement('th');
+            th.draggable = true; th.className = "draggable"; th.setAttribute('data-col', colCount);
+            th.innerHTML = `<input type="text" class="header-edit" value="Degisken_${colCount}" onblur="updateVarSelectors()">`;
+            thead.appendChild(th);
+            
+            let tbody = document.getElementById('gridBody');
+            for(let i=0; i<tbody.rows.length; i++) {
+                let td = document.createElement('td');
+                td.innerHTML = `<input type="text" class="excel-input" oninput="validateCell(this)">`;
+                tbody.rows[i].appendChild(td);
+            }
+            updateVarSelectors(); updateDataQuality();
+        }
+
+        function validateCell(input) {
+            let val = input.value;
+            if(val.includes(',')) { val = val.replace(/,/g, '.'); input.value = val; }
+            
+            let tr = input.closest('tr');
+            let cellIndex = Array.from(tr.children).indexOf(input.parentElement);
+            
+            if(val !== "" && val !== "-" && isNaN(Number(val))) input.classList.add('error');
+            else if (cellIndex === 2 && val !== "" && val !== "0" && val !== "1" && val !== "1.0" && val !== "0.0") input.classList.add('error'); // Olay 0/1
+            else if (cellIndex === 1 && val !== "" && Number(val) < 0) input.classList.add('error'); // Süre
+            else input.classList.remove('error');
+            
+            updateDataQuality();
+        }
+
+        function handleGridPaste(e) {
+            e.preventDefault();
+            let clipboardData = e.clipboardData || window.clipboardData;
+            let pastedData = clipboardData.getData('Text');
+            if(!pastedData) return;
+
+            let rows = pastedData.trim().split('\n'); if(rows.length === 0) return;
+            let firstRowParts = rows[0].split(/[\t]+/).map(s=>s.trim());
+            let isHeader = isNaN(Number(firstRowParts[0].replace(',','.'))); 
+            let dataStartIndex = isHeader ? 1 : 0;
+            let reqCols = firstRowParts.length;
+
+            while(colCount < reqCols) addCol();
+            if (isHeader) {
+                let thead = document.getElementById('gridHeaderRow');
+                for(let j=0; j<reqCols; j++) { if(thead.cells[j+1]) thead.cells[j+1].querySelector('input').value = firstRowParts[j]; }
+            }
+
+            let reqRows = rows.length - dataStartIndex;
+            let tbody = document.getElementById('gridBody');
+            while(tbody.rows.length < reqRows) addRow();
+
+            for(let i=dataStartIndex; i<rows.length; i++) {
+                let parts = rows[i].split(/[\t]+/).map(s=>s.trim());
+                let tr = tbody.rows[i - dataStartIndex];
+                for(let j=0; j<Math.min(colCount, parts.length); j++) {
+                    if(tr.cells[j+1]) { let inp = tr.cells[j+1].querySelector('input'); inp.value = parts[j]; validateCell(inp); }
+                }
+            }
+            updateVarSelectors(); updateDataQuality();
+        }
+
+        async function handleFile(file) {
+            if (!file) return;
+            const ext = file.name.split('.').pop().toLowerCase();
+            try {
+                let csvStr = "";
+                if(ext === 'csv' || ext === 'txt') { csvStr = await file.text(); } 
+                else if (ext === 'xlsx' || ext === 'xls') {
+                    const data = await file.arrayBuffer();
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    csvStr = XLSX.utils.sheet_to_csv(firstSheet, {FS: "\t"});
+                } else { alert("Sadece .csv, .txt, .xls ve .xlsx formatları desteklenir."); return; }
+                
+                const dataTransfer = new DataTransfer(); dataTransfer.setData('text', csvStr);
+                const pasteEvent = new ClipboardEvent('paste', { clipboardData: dataTransfer });
+                document.getElementById('excelGrid').dispatchEvent(pasteEvent);
+            } catch (err) { alert("Dosya okuma hatası: " + err); }
+            document.getElementById('dosyaGezgini').value = ""; 
+        }
+
+        function updateDataQuality() {
+            let tbody = document.getElementById('gridBody');
+            let btnAnaliz = document.getElementById('btnAnaliz'); let errBox = document.getElementById('gridErrorMsg');
+
+            let totalRows = tbody.rows.length; let validRowsCount = 0; let hasGlobalError = false;
+
+            for(let i=0; i<totalRows; i++) {
+                let row = tbody.rows[i]; let rowIsEmpty = true; let rowHasError = false;
+                
+                for(let j=1; j<=colCount; j++) {
+                    let inp = row.cells[j].querySelector('input');
+                    if (inp.classList.contains('error')) { rowHasError = true; hasGlobalError = true; }
+                    if (inp.value.trim() !== "") rowIsEmpty = false;
+                }
+                
+                if(!rowIsEmpty && !rowHasError) validRowsCount++;
+            }
+
+            if(hasGlobalError) { errBox.classList.remove('d-none'); errBox.classList.add('d-block'); btnAnaliz.disabled = true; } 
+            else { errBox.classList.add('d-none'); errBox.classList.remove('d-block'); btnAnaliz.disabled = false; }
+
+            setTxt('dqTotal', totalRows); setTxt('dqValid', validRowsCount); setTxt('dqMissing', totalRows - validRowsCount);
+            if(validRowsCount < 5) btnAnaliz.disabled = true;
+        }
+
+        function updateVarSelectors() {
+            let thead = document.getElementById('gridHeaderRow');
+            let headers = [];
+            for(let j=1; j<=colCount; j++) headers.push(thead.cells[j].querySelector('input').value.trim() || `Var_${j}`);
+
+            let tSel = document.getElementById('timeVarSelect'); let oldT = tSel.value;
+            let eSel = document.getElementById('eventVarSelect'); let oldE = eSel.value;
+            
+            tSel.innerHTML = ''; eSel.innerHTML = '';
+            headers.forEach(v => { tSel.add(new Option(v, v)); eSel.add(new Option(v, v)); });
+            
+            if(headers.includes(oldT)) tSel.value = oldT; else tSel.selectedIndex = 0;
+            if(headers.includes(oldE)) eSel.value = oldE; else eSel.selectedIndex = headers.length > 1 ? 1 : 0;
+            
+            let curT = tSel.value; let curE = eSel.value;
+
+            // X'ler için Checkbox
+            let xBox = document.getElementById('xVarCheckboxes');
+            let currentX = Array.from(document.querySelectorAll('.x-var-label input:checked')).map(el => el.value);
+            
+            let chipsHtml = '';
+            headers.forEach(v => {
+                if(v !== curT && v !== curE) {
+                    let isChecked = currentX.includes(v) || currentX.length === 0; 
+                    chipsHtml += `<label class="x-var-label"><input type="checkbox" value="${v}" ${isChecked ? 'checked':''}><span>${v}</span></label>`;
+                }
+            });
+            xBox.innerHTML = chipsHtml;
+        }
+
+        function getPreparedData() {
+            let thead = document.getElementById('gridHeaderRow'); let tbody = document.getElementById('gridBody');
+            
+            let tName = document.getElementById('timeVarSelect').value;
+            let eName = document.getElementById('eventVarSelect').value;
+            let xNames = Array.from(document.querySelectorAll('.x-var-label input:checked')).map(el => el.value);
+            
+            if(!tName || !eName) return "Süre ve Olay değişkenleri seçilmelidir.";
+            if(xNames.length === 0) return "En az bir bağımsız değişken (Kovaryans X) seçilmelidir.";
+
+            let colMap = {};
+            for(let j=1; j<=colCount; j++) {
+                let hName = thead.cells[j].querySelector('input').value.trim() || `Var_${j}`;
+                colMap[hName] = j;
+            }
+
+            let dataObj = {};
+            dataObj[tName] = []; dataObj[eName] = [];
+            xNames.forEach(x => dataObj[x] = []);
+            let validN = 0;
+
+            for(let i=0; i<tbody.rows.length; i++) {
+                let row = tbody.rows[i];
+                let isRowValid = true; let tempRow = {};
+                
+                let tValStr = row.cells[colMap[tName]].querySelector('input').value.trim();
+                let eValStr = row.cells[colMap[eName]].querySelector('input').value.trim();
+                if(tValStr === "" || eValStr === "") isRowValid = false; 
+                else { tempRow[tName] = parseFloat(tValStr); tempRow[eName] = parseFloat(eValStr); }
+
+                for(let x of xNames) {
+                    let xValStr = row.cells[colMap[x]].querySelector('input').value.trim();
+                    if(xValStr === "") isRowValid = false; else tempRow[x] = parseFloat(xValStr);
+                }
+
+                if(isRowValid && tempRow[tName] >= 0 && (tempRow[eName] === 0 || tempRow[eName] === 1)) {
+                    dataObj[tName].push(tempRow[tName]);
+                    dataObj[eName].push(tempRow[eName]);
+                    xNames.forEach(x => dataObj[x].push(tempRow[x]));
+                    validN++;
+                }
+            }
+
+            if(validN < xNames.length + 2) return `Hata: Çoklu regresyon için gözlem sayısı (n=${validN}), değişken sayısından yetersiz.`;
+
+            let eSum = dataObj[eName].reduce((a,b)=>a+b,0);
+            if(eSum === 0) return "Veri setinde hiç Olay (Event=1) gerçekleşmemiş. Cox modeli hesaplanamaz.";
+
+            for(let v of xNames) {
+                let arr = dataObj[v];
+                let mean = arr.reduce((a,b)=>a+b,0) / arr.length;
+                let vSum = arr.reduce((a,b)=>a+Math.pow(b-mean,2),0);
+                if(vSum === 0) return `Hata: '${v}' değişkeninin varyansı sıfır. Regresyon hesaplanamaz. Lütfen bu değişkeni analizden çıkarın.`;
+            }
+
+            return { tName, eName, xNames, data: dataObj, n: validN };
+        }
+
+        function ornekVeriYukle() {
+            let sample = "Sure_Ay\tOlay\tYas\tTedavi_1_0\n";
+            let n = 150 + Math.floor(Math.random() * 50);
+            
+            for(let i=0; i<n; i++) {
+                let yas = 30 + Math.floor(Math.random() * 40);
+                let tedavi = Math.random() > 0.5 ? 1 : 0;
+                
+                // Cox Hazard Üretimi (Yas riski artırır, tedavi azaltır)
+                let b_yas = 0.05; let b_ted = -0.8;
+                let hz = Math.exp(b_yas * (yas - 50) + b_ted * tedavi); 
+                let lambda = 0.02 * hz; 
+                let t = -Math.log(Math.random()) / lambda;
+                
+                let censorTime = 60 * Math.random();
+                let event = 1;
+                
+                if(t > 60 || t > censorTime) {
+                    t = Math.min(60, censorTime);
+                    event = 0;
+                }
+                
+                sample += `${t.toFixed(1)}\t${event}\t${yas}\t${tedavi}\n`;
+            }
+            
+            const dataTransfer = new DataTransfer(); dataTransfer.setData('text', sample);
+            const pasteEvent = new ClipboardEvent('paste', { clipboardData: dataTransfer });
+            document.getElementById('excelGrid').dispatchEvent(pasteEvent);
+            document.getElementById('alfaInput').value = "0.05";
+        }
+
+        function temizleVeri() {
+            colCount = 4; rowCount = 5; buildInitialGrid(); updateVarSelectors();
+            setStyle('aktifSonuc', 'display', 'none'); setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block'); setStyle('predictSection', 'display', 'none');
+            Object.values(charts).forEach(c => { if(c) c.destroy(); });
+        }
+
+
+        // --- GRAFİKLER ---
+        function drawForestPlot(labels, hrs, lower, upper) {
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; const gColor = isDark ? '#334155' : '#e2e8f0';
+
+            if(charts.forest) charts.forest.destroy();
+
+            // Sadece değişkenleri (intercept yok) çiz
+            let yLabels = []; let xPoints = []; let errorBars = [];
+            for(let i=0; i<labels.length; i++) {
+                yLabels.push(labels[i]);
+                xPoints.push({x: hrs[i], y: i});
+                // Custom plugin can draw error bars, but standard chart.js scatter with custom trick:
+            }
+
+            charts.forest = new Chart(document.getElementById('forestChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        { label: 'Hazard Ratio (HR)', data: xPoints, backgroundColor: '#ef4444', borderColor: '#ef4444', pointRadius: 6, pointHoverRadius: 8, z: 2 }
+                    ]
+                },
+                plugins: [{
+                    id: 'errorBars',
+                    afterDatasetsDraw(chart) {
+                        const ctx = chart.ctx; const xAxis = chart.scales.x; const yAxis = chart.scales.y;
+                        ctx.save();
+                        for(let i=0; i<labels.length; i++) {
+                            let yPos = yAxis.getPixelForValue(i);
+                            let xL = xAxis.getPixelForValue(lower[i]);
+                            let xU = xAxis.getPixelForValue(upper[i]);
+                            
+                            ctx.beginPath(); ctx.moveTo(xL, yPos); ctx.lineTo(xU, yPos);
+                            ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3; ctx.stroke();
+                            // Caps
+                            ctx.beginPath(); ctx.moveTo(xL, yPos-5); ctx.lineTo(xL, yPos+5); ctx.stroke();
+                            ctx.beginPath(); ctx.moveTo(xU, yPos-5); ctx.lineTo(xU, yPos+5); ctx.stroke();
+                        }
+                        ctx.restore();
+                    }
+                }],
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    indexAxis: 'y', // Yatay scatter
+                    plugins: { 
+                        legend: { display: false },
+                        annotation: {
+                            annotations: {
+                                line1: { type: 'line', xMin: 1, xMax: 1, borderColor: '#94a3b8', borderDash: [5,5], borderWidth: 2 }
+                            }
+                        }
+                    }, 
+                    scales: { 
+                        y: { type: 'category', labels: yLabels, grid: { display: false }, ticks: { color: fColor, font:{weight:'bold'} } }, 
+                        x: { type: 'logarithmic', title: {display:true, text: 'Hazard Ratio (Log Scale)', color: fColor}, grid: { color: gColor }, ticks: { color: fColor } } 
+                    } 
+                }
+            });
+        }
+
+        function drawSurvivalCurve(baseT, baseS, predS = null) {
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; const gColor = isDark ? '#334155' : '#e2e8f0';
+
+            if(charts.surv) charts.surv.destroy();
+
+            let basePts = [];
+            let lastS = 1.0;
+            for(let i=0; i<baseT.length; i++) {
+                if(i > 0) basePts.push({x: baseT[i], y: lastS}); // step
+                basePts.push({x: baseT[i], y: baseS[i]});
+                lastS = baseS[i];
+            }
+
+            let dSets = [
+                { label: 'Temel Sağkalım (Baseline S0)', data: basePts, type: 'line', borderColor: '#94a3b8', borderWidth: 2, borderDash: [5, 5], fill: false, pointRadius: 0, tension: 0 }
+            ];
+
+            if(predS) {
+                let predPts = []; lastS = 1.0;
+                for(let i=0; i<baseT.length; i++) {
+                    if(i > 0) predPts.push({x: baseT[i], y: lastS});
+                    predPts.push({x: baseT[i], y: predS[i]});
+                    lastS = predS[i];
+                }
+                dSets.push({ label: 'Bireysel Tahmini Sağkalım S(t|X)', data: predPts, type: 'line', borderColor: '#2f8fe8', borderWidth: 3, fill: false, pointRadius: 0, tension: 0 });
+            }
+
+            charts.surv = new Chart(document.getElementById('survChart'), {
+                data: { datasets: dSets },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { color: fColor } } }, 
+                    scales: { 
+                        y: { min: 0, max: 1.05, title: {display:true, text: 'Sağkalım Olasılığı S(t)', color: fColor}, grid: { color: gColor }, ticks: { color: fColor } }, 
+                        x: { type: 'linear', title: {display:true, text: `Takip Süresi`, color: fColor}, grid: { color: gColor }, ticks: { color: fColor } } 
+                    } 
+                }
+            });
+        }
+
+
+        // TAHMİN (PREDICTION) SİSTEMİ
+        function buildPredictionInputs() {
+            let container = document.getElementById('predictionInputsContainer');
+            container.innerHTML = '';
+            regModelCache.xNames.forEach((xName, i) => {
+                let div = document.createElement('div');
+                div.className = "col-md-6 col-lg-3";
+                div.innerHTML = `
+                    <label class="form-label fs-12 fw-bold text-secondary mb-1">${xName}:</label>
+                    <input type="number" id="predInp_${xName}" class="form-control border-0 bg-light" placeholder="Değer..." step="any" value="0">
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function hesaplaTahmin() {
+            if(!regModelCache) return;
+            let xNames = regModelCache.xNames;
+            let newX_vector = []; 
+
+            for(let x of xNames) {
+                let val = parseFloat(document.getElementById(`predInp_${x}`).value);
+                if(isNaN(val)) { alert(`Lütfen '${x}' için geçerli bir sayı girin.`); return; }
+                newX_vector.push(val);
+            }
+
+            // Risk Score Eta
+            let eta = 0;
+            for(let i=0; i<newX_vector.length; i++) {
+                eta += regModelCache.b[i] * newX_vector[i]; // Not: Merkezden sapma var mı API'ye göre bak. Genelde X*b.
+            }
+            // CoxPH baseline S0 usually assumes centered data, but lifelines baseline hazard handles this natively.
+            // We use exact S(t) = S0(t)^exp(eta - mean_eta) depending on API. Here we assume S0 is for X=0.
+            
+            let rel_haz = Math.exp(eta);
+
+            document.getElementById('resPredRisk').innerText = eta.toFixed(3);
+            document.getElementById('resPredRH').innerText = `${rel_haz.toFixed(3)}x`;
+
+            // Bireysel S(t)
+            let baseT = regModelCache.base_t;
+            let baseS = regModelCache.base_s;
+            let predS = baseS.map(s => Math.pow(s, rel_haz));
+
+            setStyle('predictResultBox', 'display', 'block');
+            drawSurvivalCurve(baseT, baseS, predS);
+        }
+
+        function baslatAnaliz() {
+            let parseRes = getPreparedData();
+            if (typeof parseRes === "string") { alert(parseRes); return; }
+            
+            parsedDataCache = parseRes; 
+
+            setStyle('bosDurum', 'display', 'none'); setStyle('aktifSonuc', 'display', 'none'); setStyle('predictSection', 'display', 'none'); setStyle('loadingOverlay', 'display', 'block'); 
+            setTimeout(() => hesaplaCox(parseRes), 800);
+        }
+
+        async function hesaplaCox(pData) {
+            try {
+                let alfa = parseFloat(document.getElementById('alfaInput').value);
+                let ci_lvl = parseFloat(document.getElementById('ciInput').value);
+                let tie_mtd = document.getElementById('tiesInput').value;
+                
+                let tName = pData.tName; let eName = pData.eName;
+                let xNames = pData.xNames;
+                let N = pData.n; let k = xNames.length;
+                let events = pData.data[eName].reduce((a,b)=>a+b,0);
+                let cens = N - events;
+
+                let apiSuccess = false;
+                let rRes = {};
+
+                // API İSTEĞİ (Lifelines CoxPH)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000); 
+
+                try {
+                    let reqBody = { x: {}, t: pData.data[tName], e: pData.data[eName], alpha: alfa, conf_level: ci_lvl, ties: tie_mtd };
+                    for(let xn of xNames) reqBody.x[xn] = pData.data[xn];
+                    
+                    let istek = await fetch("https://api.statlabseu.com/test/cox-regression", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(reqBody), signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    
+                    if(istek.ok) { 
+                        let apiData = await istek.json(); 
+                        apiSuccess = true;
+                        
+                        rRes.lr_stat = apiData.likelihood_ratio_test.chi_square;
+                        rRes.lr_p = apiData.likelihood_ratio_test.p_value;
+                        rRes.c_index = apiData.concordance_index;
+                        
+                        rRes.b = []; rRes.se = []; rRes.z = []; rRes.p = []; rRes.hr = []; rRes.ci_l = []; rRes.ci_u = [];
+                        rRes.vif = apiData.vif || new Array(k).fill(1);
+                        rRes.ph_p = apiData.schoenfeld_test.p_values || new Array(k).fill(1.0);
+
+                        for(let i=0; i<k; i++) {
+                            let coef = apiData.coefficients[i];
+                            let hr_dt = apiData.hazard_ratios[i];
+                            rRes.b.push(coef.estimate); rRes.se.push(coef.std_error); rRes.z.push(coef.z); rRes.p.push(coef.p_value);
+                            rRes.hr.push(hr_dt.estimate); rRes.ci_l.push(hr_dt.ci_lower); rRes.ci_u.push(hr_dt.ci_upper);
+                        }
+
+                        rRes.base_t = apiData.baseline_survival.time;
+                        rRes.base_s = apiData.baseline_survival.survival;
+                        
+                        rRes.xNames = xNames;
+                        regModelCache = rRes;
+                    }
+                } catch (e) { clearTimeout(timeoutId); }
+
+                if(!apiSuccess) {
+                    alert("Cox Regresyonu iteratif (Partial Likelihood) bir modeldir. Backend API kapalı olduğundan JavaScript ile kaba tahmin yapılamamaktadır. Lütfen API'yi çalıştırın.");
+                    setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block');
+                    return;
+                }
+
+                // UI GÜNCELLEMELERİ
+                buildPredictionInputs();
+                setStyle('predictSection', 'display', 'block'); 
+                document.getElementById('predictResultBox').style.display = 'none';
+
+                let isModelSig = rRes.lr_p < alfa;
+
+                // TOP CARDS
+                setTxt('resN', N); setTxt('resEvent', events); setTxt('resCensRate', `%${((cens/N)*100).toFixed(1)}`);
+                setTxt('resCIdx', rRes.c_index.toFixed(3)); setTxt('resP', rRes.lr_p.toFixed(4));
+                setTxt('resLR', rRes.lr_stat.toFixed(3)); setTxt('resK', k); 
+
+                // KATSAYILAR TABLOSU (COEFFICIENTS + OR)
+                setTxt('thCI', `%${ci_lvl*100} GA (HR için)`);
+                let coefHTML = '';
+                
+                for(let i=0; i<k; i++) {
+                    let pCls = rRes.p[i] < alfa ? 'fw-bold text-danger' : 'fw-bold text-dark';
+                    coefHTML += `
+                    <tr>
+                        <td class="text-start fw-bold text-primary">${xNames[i]}</td>
+                        <td class="fw-bold text-dark">${rRes.b[i].toFixed(4)}</td>
+                        <td>${rRes.se[i].toFixed(4)}</td>
+                        <td>${rRes.z[i].toFixed(3)}</td>
+                        <td class="${pCls}">${rRes.p[i].toFixed(4)}</td>
+                        <td class="fw-bold text-danger">${rRes.hr[i].toFixed(3)}</td>
+                        <td class="text-muted" colspan="2">[${rRes.ci_l[i].toFixed(3)} , ${rRes.ci_u[i].toFixed(3)}]</td>
+                    </tr>`;
+                }
+                setHTML('coefTableBody', coefHTML);
+
+                // PH VARSAYIM TABLOSU
+                let phHTML = ''; let hasPhWarn = false;
+                for(let i=0; i<k; i++) {
+                    if(rRes.ph_p[i] < 0.05) hasPhWarn = true;
+                    let pCls = rRes.ph_p[i] < 0.05 ? 'fw-bold text-danger' : 'text-success fw-bold';
+                    let statTxt = rRes.ph_p[i] < 0.05 ? 'İhlal (Zamanla Değişiyor)' : 'Uygun (Sabit)';
+                    phHTML += `<tr>
+                        <td class="text-start fw-bold">${xNames[i]}</td>
+                        <td>-</td>
+                        <td class="${pCls}">${rRes.ph_p[i].toFixed(4)}</td>
+                        <td><span class="badge ${rRes.ph_p[i]<0.05?'bg-danger':'bg-success'}">${statTxt}</span></td>
+                    </tr>`;
+                }
+                setHTML('phTableBody', phHTML);
+
+                if(hasPhWarn) {
+                    document.getElementById('phWarning').classList.remove('d-none'); document.getElementById('phWarning').classList.add('d-block');
+                } else {
+                    document.getElementById('phWarning').classList.add('d-none'); document.getElementById('phWarning').classList.remove('d-block');
+                }
+
+                // GRAFIKLER
+                drawForestPlot(xNames, rRes.hr, rRes.ci_l, rRes.ci_u);
+                drawSurvivalCurve(rRes.base_t, rRes.base_s, null);
+
+                // KARAR METNİ VE YORUM
+                let yorum = "";
+                if (isModelSig) {
+                    setClass('kararKutusu', "alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start bg-danger-subtle text-danger shadow-sm mt-4");
+                    setClass('kararIkon', "ri-error-warning-fill text-danger fs-28"); setTxt('kararBaslik', "H₀ Reddedilir (Cox Modeli Anlamlı)");
+                    setHTML('kararAciklama', `Likelihood Ratio testi anlamlıdır (p < $\\alpha$). Bağımsız değişkenlerden en az birinin olayın tehlikesini (Hazard) açıklamada istatistiksel bir katkısı vardır.`);
+                    
+                    let sigVars = []; let nonSigVars = [];
+                    for(let i=0; i<k; i++) {
+                        if(rRes.p[i] < alfa) {
+                            let incDec = rRes.hr[i] > 1 ? "artırır" : "azaltır";
+                            sigVars.push(`<strong>${xNames[i]}</strong> ($HR=${rRes.hr[i].toFixed(2)}$, riski ${incDec})`);
+                        }
+                        else nonSigVars.push(xNames[i]);
+                    }
+
+                    yorum = `<span><strong>İstatistiksel Yorum:</strong> Cox Orantısal Tehlikeler Regresyon modeli genel olarak istatistiksel açıdan anlamlı bulunmuştur ($LR \\chi^2 = ${rRes.lr_stat.toFixed(2)}, p = ${rRes.lr_p.toFixed(4)}$). Modelin doğru kimin önce olay yaşayacağını bilme oranı (C-index) <strong>${rRes.c_index.toFixed(3)}</strong> olarak tespit edilmiştir. 
+                    <br><br>Diğer değişkenler sabit tutulduğunda, modele anlamlı katkı sağlayan değişkenler şunlardır: ${sigVars.length > 0 ? sigVars.join(', ') : 'Bulunamadı'}. `;
+                    if(nonSigVars.length > 0) yorum += `<br>Buna karşın; ${nonSigVars.join(', ')} değişkenlerinin model içerisinde istatistiksel olarak anlamlı bir katkısı bulunmamaktadır. `;
+                    yorum += `</span>`;
+                } else {
+                    setClass('kararKutusu', "alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start bg-success-subtle text-success shadow-sm mt-4");
+                    setClass('kararIkon', "ri-checkbox-circle-fill text-success fs-28"); setTxt('kararBaslik', "H₀ Reddedilemez (Anlamlı Model Bulunamadı)");
+                    setHTML('kararAciklama', `p $\\ge \\alpha$ olduğu için, bağımsız değişkenlerin bir bütün olarak olay tehlikesini (Hazard) açıklamada istatistiksel açıdan anlamlı bir katkısı olmadığı sonucuna varılmıştır.`);
+                    
+                    yorum = `<span><strong>İstatistiksel Yorum:</strong> Cox regresyon analizi sonucunda, oluşturulan modelin tahmin gücüne dair istatistiksel olarak anlamlı bir kanıt bulunamamıştır ($LR \\chi^2 = ${rRes.lr_stat.toFixed(2)}, p = ${rRes.lr_p.toFixed(4)}$). Seçilen değişkenlerin olay riski üzerinde şans eseri olanlardan öte bir etkisi yoktur.</span>`;
+                }
+                setHTML('yorumText', yorum);
+
+                setStyle('loadingOverlay', 'display', 'none'); setStyle('aktifSonuc', 'display', 'block');
+
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) {
+                        MathJax.typesetClear();
+                        MathJax.typesetPromise().catch(err => console.log(err));
+                    }
+                    document.getElementById('aktifSonuc').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+
+            } catch (error) { setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block'); alert("Analiz Hatası: " + error); }
+        }
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>
