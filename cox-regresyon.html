@@ -617,7 +617,7 @@
                 td.innerHTML = `<input type="text" class="excel-input" oninput="validateCell(this)">`;
                 tbody.rows[i].appendChild(td);
             }
-            updateVarSelectors(); updateDataQuality();
+            setupDragAndDrop(); updateVarSelectors(); updateDataQuality();
         }
 
         function validateCell(input) {
@@ -633,6 +633,37 @@
             else input.classList.remove('error');
             
             updateDataQuality();
+        }
+
+        function setupDragAndDrop() {
+            let headers = document.querySelectorAll('.excel-table th.draggable');
+            headers.forEach(th => {
+                th.removeEventListener('dragstart', handleDragStart); th.removeEventListener('dragover', handleDragOver);
+                th.removeEventListener('drop', handleDrop); th.removeEventListener('dragend', handleDragEnd);
+
+                th.addEventListener('dragstart', handleDragStart); th.addEventListener('dragover', handleDragOver);
+                th.addEventListener('drop', handleDrop); th.addEventListener('dragend', handleDragEnd);
+            });
+        }
+        function handleDragStart(e) { draggedColIndex = e.target.closest('th').cellIndex; e.target.closest('th').classList.add('dragging'); }
+        function handleDragOver(e) { e.preventDefault(); }
+        function handleDragEnd(e) { e.target.closest('th').classList.remove('dragging'); }
+        function handleDrop(e) {
+            e.preventDefault();
+            let targetTh = e.target.closest('th'); if(!targetTh) return;
+            let targetIndex = targetTh.cellIndex;
+            if(draggedColIndex === targetIndex || targetIndex === 0 || draggedColIndex === 0) return;
+
+            let table = document.getElementById('excelGrid');
+            for(let i=0; i<table.rows.length; i++) {
+                let row = table.rows[i]; let cells = row.cells; let elem = cells[draggedColIndex];
+                if (targetIndex > draggedColIndex) row.insertBefore(elem, cells[targetIndex+1]);
+                else row.insertBefore(elem, cells[targetIndex]);
+            }
+            
+            let newHeaders = document.querySelectorAll('.excel-table th.draggable');
+            newHeaders.forEach((th, idx) => { th.setAttribute('data-col', idx+1); });
+            updateVarSelectors();
         }
 
         function handleGridPaste(e) {
@@ -968,10 +999,8 @@
             // Risk Score Eta
             let eta = 0;
             for(let i=0; i<newX_vector.length; i++) {
-                eta += regModelCache.b[i] * newX_vector[i]; // Not: Merkezden sapma var mı API'ye göre bak. Genelde X*b.
+                eta += regModelCache.b[i] * newX_vector[i]; 
             }
-            // CoxPH baseline S0 usually assumes centered data, but lifelines baseline hazard handles this natively.
-            // We use exact S(t) = S0(t)^exp(eta - mean_eta) depending on API. Here we assume S0 is for X=0.
             
             let rel_haz = Math.exp(eta);
 
@@ -1050,6 +1079,13 @@
                         
                         rRes.xNames = xNames;
                         regModelCache = rRes;
+                    } else {
+                        let errData = await istek.json();
+                        console.error("API Error Detail:", errData);
+                        alert("Sunucu Hatası: " + (errData.detail || "Bilinmeyen hata oluştu."));
+                        setStyle('loadingOverlay', 'display', 'none'); 
+                        setStyle('bosDurum', 'display', 'block');
+                        return;
                     }
                 } catch (e) { clearTimeout(timeoutId); }
 
