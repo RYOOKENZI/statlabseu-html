@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    
+    <!-- Matematik Formülleri İçin -->
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <title>İleri Zaman Serisi Analizi (VAR/VECM) | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; margin-bottom: 20px; max-height: 400px;}
+        .param-grid-table { width: 100%; border-collapse: collapse; text-align: center; margin: 0; min-width: max-content; }
+        .param-grid-table th { position: sticky; top: 0; font-size: 13px; font-weight: 700; color: #475569; background-color: #f1f5f9; padding: 13px 12px; border: 1px solid #e2e8f0; white-space: nowrap; vertical-align: middle; z-index: 2; }
+        .param-grid-table td { padding: 11px 12px; font-size: 13px; color: #0f172a; border: 1px solid #e2e8f0; vertical-align: middle; white-space: nowrap; }
+        .param-grid-table tr:hover td { background-color: #f8fafc; }
+        
+        .info-box { background: linear-gradient(135deg, rgba(47, 143, 232, 0.1), rgba(14, 165, 233, 0.05)); border-left: 4px solid #2f8fe8; padding: 15px 20px; border-radius: 8px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 15px; }
+        .info-box i { font-size: 24px; color: #2f8fe8; }
+        .info-box p { margin: 0; font-size: 14px; color: #475569; line-height: 1.6; }
+
+        .loader-spinner { width: 40px; height: 40px; border: 4px solid rgba(47, 143, 232, 0.2); border-left-color: #2f8fe8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-pulse { animation: pulse-btn 1.8s infinite; background: linear-gradient(135deg, #2f8fe8, #0ea5e9); border: none; color: white !important; }
+        .btn-pulse:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(14, 165, 233, 0.4); background: linear-gradient(135deg, #1d7bd1, #0284c7); }
+        .btn-action { font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; transition: all 0.3s ease; }
+
+        .alert-warning-smart { background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.03)); border: 1px solid rgba(245, 158, 11, 0.2); border-left: 4px solid #f59e0b; color: #92400e; padding: 12px 16px; }
+        .insight-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #6366f1; padding: 15px 16px; border-radius: 8px; display: flex; align-items: flex-start; margin-top: 12px; }
+        .insight-box i { color: #6366f1; font-size: 22px; margin-right: 12px; margin-top: -3px; }
+        .insight-box span, .insight-box strong { font-size: 14.5px; font-weight: 600; line-height: 1.6; color: #000000 !important; }
+        .formula-box { background-color: #ffffff; padding: 25px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 15px; overflow-x: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.02);}
+
+        .ts-session-badge { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); display: inline-flex; align-items: center; gap: 5px; }
+        .no-data-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); border-radius: 10px; }
+        
+        .ts-info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .ts-info-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+        .ts-info-item span { display: block; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+        .ts-info-item strong { display: block; font-size: 15px; color: #0f172a; }
+
+        .param-group { border-left: 3px solid #cbd5e1; padding-left: 15px; margin-bottom: 15px; }
+
+        .multi-select-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; max-height: 120px; overflow-y: auto; }
+        .series-checkbox { margin-right: 8px; }
+
+        /* GECE MODU AYARLARI */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light, html.dark-mode .bg-body-bg { background-color: #0f172a !important; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        html.dark-mode .info-box { background: rgba(47, 143, 232, 0.1); }
+        html.dark-mode .info-box p { color: #cbd5e1; }
+        html.dark-mode .table-responsive { border-color: #334155; background: #1e293b; }
+        html.dark-mode .param-grid-table th { background-color: #0f172a; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .param-grid-table td { background-color: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark-mode .param-grid-table tr:hover td { background-color: #0f172a !important; }
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+        html.dark-mode .alert-warning-smart { background: rgba(245, 158, 11, 0.1) !important; border: 1px solid rgba(245, 158, 11, 0.2) !important; border-left: 4px solid #fbbf24 !important; color: #fcd34d !important; }
+        html.dark-mode .insight-box { background-color: #1e293b !important; border: 1px solid #334155 !important; border-left: 4px solid #818cf8 !important; }
+        html.dark-mode .insight-box i { color: #818cf8 !important; }
+        html.dark-mode .insight-box span, html.dark-mode .insight-box strong { color: #ffffff !important; }
+        html.dark-mode select.bg-light, html.dark-mode input.bg-light { background-color: #0f172a !important; color: #cbd5e1; border: 1px solid #334155 !important; }
+        html.dark-mode .formula-box { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        html.dark-mode .formula-box p { color: #cbd5e1; }
+        html.dark-mode .no-data-overlay { background: rgba(15, 23, 42, 0.95); border: 1px solid #334155; }
+        html.dark-mode .ts-info-item { background: #1e293b; border-color: #334155; }
+        html.dark-mode .ts-info-item span { color: #94a3b8; }
+        html.dark-mode .ts-info-item strong { color: #f8fafc; }
+        html.dark-mode .param-group { border-color: #475569; }
+        html.dark-mode .multi-select-box { background: #1e293b; border-color: #334155; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border border-white shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-node-tree align-middle me-1"></i> TS: İleri Analiz (Çok Değişkenli)
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="main-content-container overflow-hidden position-relative">
+                
+                <!-- VERİ YOKSA EKRANI KAPATAN OVERLAY -->
+                <div id="noDataOverlay" class="no-data-overlay" style="display: none;">
+                    <i class="ri-database-2-line text-primary mb-3" style="font-size: 64px;"></i>
+                    <h3 class="fw-bold text-dark mb-2">Zaman Serisi Oturumu Bulunamadı</h3>
+                    <p class="text-muted mb-4 text-center" style="max-width: 450px;">İleri analizler (VAR, VECM, Granger vb.) yapabilmek için öncelikle "Genel Analiz" sayfasından ortak veri setinizi yüklemeniz gerekmektedir.</p>
+                    <a href="zaman-serisi-genel-analiz.html" class="btn btn-primary px-4 py-2 fw-bold rounded-pill shadow"><i class="ri-arrow-left-line me-1"></i> Veri Girişi Sayfasına Git</a>
+                </div>
+
+                <div class="info-box shadow-sm mb-3">
+                    <i class="ri-information-line"></i>
+                    <div>
+                        <strong class="d-block text-dark mb-1">Çok Değişkenli (Multivariate) Zaman Serisi ve Ekonometri Asistanı</strong>
+                        <p class="mb-0">Bu modül; birden fazla zaman serisinin birbirini nasıl etkilediğini, <strong>Granger Nedenselliğini</strong>, uzun dönemli denge ilişkisini <strong>(Eşbütünleşme - Johansen/VECM)</strong> ve şoklara verilen tepkileri <strong>(IRF/FEVD)</strong> inceler. Ayrıca tek seriler için yapısal kırılma (CUSUM) testlerini içerir. Analiz için ortak oturumdaki veriler kullanılır.</p>
+                    </div>
+                </div>
+
+                <!-- ÜST BİLGİ VE OTURUM KONTROLÜ -->
+                <div class="d-flex justify-content-between align-items-center bg-white p-3 rounded-10 border border-light shadow-sm mb-4 flex-wrap gap-3">
+                    <div id="sessionStatus" class="d-flex align-items-center">
+                        <span class="ts-session-badge" id="sessionBadge"><i class="ri-check-double-line"></i> Ortak Oturum Aktif</span>
+                        <span class="fs-13 text-muted ms-2" id="sessionSubText">Yükleniyor...</span>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fs-12 text-muted fw-bold">Analize Dahil Edilecek Seriler:</span>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="btnSeriesDropdown">
+                                Serileri Seç (0)
+                            </button>
+                            <ul class="dropdown-menu p-2 shadow-sm" id="multiSeriesCheckboxes" style="width: 250px;">
+                                <!-- JS Dolduracak (Y1, Y2 vb.) -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- SOL PANEL: ANALİZ MENÜSÜ VE AYARLAR -->
+                    <div class="col-lg-3 mb-4">
+                        <div class="position-sticky" style="top: 25px;">
+                            <div class="card bg-white border-0 rounded-10 p-4 shadow-sm">
+                                
+                                <h4 class="fs-16 fw-bold text-dark mb-3"><i class="ri-apps-2-line align-middle text-primary me-1"></i> İleri Analiz Menüsü</h4>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-secondary fs-12 mb-1">Uygulanacak Test / Model</label>
+                                    <select id="analysisTypeInput" class="form-select bg-light border-0 fs-13 text-primary fw-bold" onchange="toggleAnalysisParams()">
+                                        <optgroup label="Çok Değişkenli (En az 2 Seri)">
+                                            <option value="var" selected>VAR Modeli & Lag Seçimi</option>
+                                            <option value="granger">Granger Nedensellik Testi</option>
+                                            <option value="cointegration">Johansen Eşbütünleşme & VECM</option>
+                                            <option value="irf">Impulse Response (IRF) / FEVD</option>
+                                        </optgroup>
+                                        <optgroup label="Tek Değişkenli (1 Seri Yeterli)">
+                                            <option value="cusum">Yapısal Kırılma (CUSUM)</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+
+                                <!-- VAR/VECM PARAMS -->
+                                <div id="param_var" class="param-group">
+                                    <label class="form-label fw-bold text-dark fs-12 mb-2 border-bottom pb-1 d-block">VAR Parametreleri</label>
+                                    <div class="mb-2">
+                                        <label class="fs-11 text-muted">Maksimum Gecikme (Max Lag $p$)</label>
+                                        <input type="number" class="form-control form-control-sm bg-light border-0" id="var_p" value="4" min="1" max="12">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="fs-11 text-muted">Bilgi Kriteri (Lag Seçimi)</label>
+                                        <select id="var_crit" class="form-select form-select-sm bg-light border-0"><option value="aic" selected>AIC</option><option value="bic">BIC (Daha sıkı)</option><option value="hqic">HQIC</option></select>
+                                    </div>
+                                </div>
+
+                                <!-- GRANGER PARAMS -->
+                                <div id="param_granger" class="param-group" style="display:none;">
+                                    <label class="form-label fw-bold text-dark fs-12 mb-2 border-bottom pb-1 d-block">Granger Test Parametreleri</label>
+                                    <div class="mb-2">
+                                        <label class="fs-11 text-muted">Test Edilecek Gecikme (Lag)</label>
+                                        <input type="number" class="form-control form-control-sm bg-light border-0" id="granger_p" value="2" min="1">
+                                    </div>
+                                    <div class="alert alert-warning-smart p-2 fs-11 mt-2">
+                                        Granger nedenselliği gerçek bir nedensellik değil, <strong>öngörülebilirlik (predictability)</strong> ifade eder.
+                                    </div>
+                                </div>
+                                
+                                <!-- COINTEGRATION PARAMS -->
+                                <div id="param_coint" class="param-group" style="display:none;">
+                                    <label class="form-label fw-bold text-dark fs-12 mb-2 border-bottom pb-1 d-block">Johansen Test Parametreleri</label>
+                                    <div class="mb-2">
+                                        <label class="fs-11 text-muted">Trend Varsayımı</label>
+                                        <select id="coint_trend" class="form-select form-select-sm bg-light border-0"><option value="c" selected>Sabit (Constant)</option><option value="ct">Sabit ve Trend</option></select>
+                                    </div>
+                                    <div class="alert alert-warning-smart p-2 fs-11 mt-2">
+                                        Eşbütünleşme testleri için serilerinizin <strong>$I(1)$ (Farkı alınınca durağan)</strong> olması gerekir.
+                                    </div>
+                                </div>
+
+                                <!-- CUSUM PARAMS -->
+                                <div id="param_cusum" class="param-group" style="display:none;">
+                                    <label class="form-label fw-bold text-dark fs-12 mb-2 border-bottom pb-1 d-block">CUSUM (Yapısal Kırılma)</label>
+                                    <div class="mb-2">
+                                        <label class="fs-11 text-muted">Test Yöntemi</label>
+                                        <select id="cusum_type" class="form-select form-select-sm bg-light border-0"><option value="cusum" selected>CUSUM (Artıklar)</option><option value="cusumsq">CUSUM-SQ (Kareli Artıklar)</option></select>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <button class="btn w-100 py-3 rounded-10 btn-action btn-pulse" onclick="baslatAnaliz()" id="btnAnaliz">
+                                        <i class="ri-play-circle-fill align-middle me-1 fs-18"></i> ANALİZİ ÇALIŞTIR
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SAĞ PANEL: SONUÇLAR VE GRAFİKLER -->
+                    <div class="col-lg-9 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100 min-vh-50">
+
+                            <!-- BEKLEME EKRANLARI -->
+                            <div id="bosDurum" class="text-center py-5 my-auto">
+                                <i class="ri-mind-map text-muted opacity-25" style="font-size: 4.5rem;"></i>
+                                <h5 class="text-muted mt-3 fs-16">İleri Analiz Bekleniyor</h5>
+                                <p class="text-muted fs-14 mb-0">Sol panelden en az 2 seri seçip, uygulanacak testi belirleyin.</p>
+                            </div>
+
+                            <div id="loadingOverlay" class="text-center py-5 my-auto" style="display: none;">
+                                <div class="loader-spinner"></div>
+                                <h5 class="text-primary mt-4 fs-16 fw-semibold">Ekonometrik Modeller Hesaplanıyor...</h5>
+                            </div>
+
+                            <!-- 1. VAR SONUÇ BÖLÜMÜ -->
+                            <div id="res_var" style="display: none;">
+                                <div class="alert bg-body-bg border border-secondary border-opacity-25 rounded-10 p-3 mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                                        <h5 class="fw-bold fs-14 text-dark mb-0 text-uppercase tracking-wider"><i class="ri-award-fill text-warning me-1"></i> VAR Modeli (Vector Autoregression) Özeti</h5>
+                                        <span class="badge bg-success fs-12 px-3 py-2" id="var_best_lag">Önerilen Lag: -</span>
+                                    </div>
+                                    <div class="ts-info-grid" style="grid-template-columns: repeat(3, 1fr);">
+                                        <div class="ts-info-item"><span>Seçilen Bilgi Kriteri</span><strong class="text-primary" id="var_crit_res">-</strong></div>
+                                        <div class="ts-info-item"><span>Gözlem Sayısı</span><strong class="text-dark" id="var_n">-</strong></div>
+                                        <div class="ts-info-item"><span>Model Stabilitesi (Kökler)</span><strong id="var_stab">-</strong></div>
+                                    </div>
+                                    <small class="text-muted fs-11 mt-2 d-block text-center border-top pt-2" id="varStabDesc"></small>
+                                </div>
+
+                                <h5 class="fs-14 fw-bold text-dark mb-2"><i class="ri-table-2 text-primary me-1"></i> Gecikme (Lag) Uzunluğu Seçim Kriterleri</h5>
+                                <p class="fs-12 text-muted mb-2">Aşağıdaki tablo her bir gecikme için bilgi kriterlerini gösterir. İlgili sütundaki <strong>en düşük (*)</strong> değere sahip lag uzunluğu en ideal olanıdır.</p>
+                                <div class="table-responsive mb-4">
+                                    <table class="table param-grid-table m-0">
+                                        <thead><tr><th>Lag ($p$)</th><th>AIC</th><th>BIC</th><th>HQIC</th><th>FPE</th></tr></thead>
+                                        <tbody id="varLagTableBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- 2. GRANGER SONUÇ BÖLÜMÜ -->
+                            <div id="res_granger" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                                    <h5 class="fw-bold fs-15 text-dark mb-0 text-uppercase tracking-wider"><i class="ri-arrow-left-right-line text-primary me-1"></i> Granger Nedensellik Matrisi</h5>
+                                </div>
+                                <div class="alert alert-warning-smart py-2 fs-12 mb-3 border-0 rounded-3">
+                                    <i class="ri-information-fill align-middle me-1"></i> Tablodaki hücreler <strong>Satır (X) $\rightarrow$ Sütun (Y)</strong> yönündeki Granger nedenselliğinin $p$-değerini gösterir. <span class="text-success fw-bold">Yeşil (p < 0.05)</span> olan hücreler, Satırın Sütunu tahmin etmede faydalı (neden) olduğunu kanıtlar.
+                                </div>
+                                <div class="table-responsive mb-4">
+                                    <table class="table param-grid-table m-0">
+                                        <thead id="grangerHeader"></thead>
+                                        <tbody id="grangerBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- 3. COINTEGRATION (JOHANSEN) SONUÇ BÖLÜMÜ -->
+                            <div id="res_coint" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                                    <h5 class="fw-bold fs-15 text-dark mb-0 text-uppercase tracking-wider"><i class="ri-link text-primary me-1"></i> Johansen Eşbütünleşme (Cointegration) Testi</h5>
+                                    <span class="badge bg-primary fs-12 px-3 py-2" id="coint_rank">Eşbütünleşme Vektörü (Rank): -</span>
+                                </div>
+                                <p class="fs-13 text-muted mb-3">İki veya daha fazla durağan olmayan $I(1)$ seri arasında uzun dönemli bir denge (birlikte hareket) ilişkisi olup olmadığını test eder. Eğer eşbütünleşme (Rank $\ge 1$) varsa, bu seriler için VAR yerine <strong>VECM (Hata Düzeltme Modeli)</strong> kurulmalıdır.</p>
+                                
+                                <h6 class="fs-13 fw-bold text-dark mb-2">Trace (İz) İstatistiği Sonuçları</h6>
+                                <div class="table-responsive mb-4">
+                                    <table class="table param-grid-table m-0">
+                                        <thead><tr><th>Sıfır Hipotezi ($H_0$)</th><th>Trace İstatistiği</th><th>Kritik Değer (%5)</th><th>Karar</th></tr></thead>
+                                        <tbody id="cointTableBody"></tbody>
+                                    </table>
+                                </div>
+
+                                <div class="alert bg-light border p-3 rounded-10 m-0" id="vecmInfoBox" style="display:none;">
+                                    <h6 class="fs-13 fw-bold text-dark mb-2 border-bottom pb-1">VECM (Hata Düzeltme Modeli) Özeti</h6>
+                                    <div class="d-flex justify-content-between mb-2 fs-13"><span>Hata Düzeltme Katsayısı (ECT):</span> <strong class="text-danger" id="vecm_ect">-</strong></div>
+                                    <div class="d-flex justify-content-between fs-13"><span>$p$-değeri:</span> <strong id="vecm_p">-</strong></div>
+                                    <small class="text-muted fs-11 mt-2 d-block border-top pt-2">ECT'nin negatif ve anlamlı (p < 0.05) olması, kısa dönemli şokların uzun dönem dengesine geri döndüğünü (sistemin kendini düzelttiğini) ispatlar.</small>
+                                </div>
+                            </div>
+
+                            <!-- 4. IRF BÖLÜMÜ -->
+                            <div id="res_irf" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                                    <h5 class="fw-bold fs-15 text-dark mb-0 text-uppercase tracking-wider"><i class="ri-pulse-line text-primary me-1"></i> Etki-Tepki Fonksiyonu (Impulse Response - IRF)</h5>
+                                </div>
+                                <p class="fs-13 text-muted mb-3">Modeldeki bir değişkene verilen standart bir şokun (1 birimlik sapma), diğer değişkenler üzerinde zamanla yarattığı etkiyi gösterir.</p>
+                                
+                                <div class="chart-container d-flex flex-column border-primary border-opacity-25 pb-1 mb-0 px-3 pt-3">
+                                    <div style="position: relative; height: 350px; width: 100%;"><canvas id="irfChart"></canvas></div>
+                                </div>
+                            </div>
+
+                            <!-- 5. CUSUM (YAPISAL KIRILMA) BÖLÜMÜ -->
+                            <div id="res_cusum" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                                    <h5 class="fw-bold fs-15 text-dark mb-0 text-uppercase tracking-wider"><i class="ri-scissors-cut-line text-primary me-1"></i> Yapısal Kırılma: CUSUM Testi</h5>
+                                </div>
+                                <p class="fs-13 text-muted mb-3">Model parametrelerinin zaman içinde istikrarlı olup olmadığını inceler. Mavi çizgi (Kümülatif Artıklar) kırmızı sınırların dışına çıkarsa, o dönemde seride bir yapısal kırılma (Şok/Kriz vb.) yaşandığına karar verilir.</p>
+                                
+                                <div class="chart-container d-flex flex-column border-primary border-opacity-25 pb-1 mb-0 px-3 pt-3">
+                                    <div style="position: relative; height: 350px; width: 100%;"><canvas id="cusumChart"></canvas></div>
+                                </div>
+                            </div>
+
+                            <!-- ORTAK KARAR KUTUSU -->
+                            <div id="kararKutusu" class="alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start shadow-sm mt-4 bg-light border" style="display: none;">
+                                <div class="d-flex justify-content-center mt-1 me-3"><i class="ri-flashlight-fill text-primary fs-28"></i></div>
+                                <div class="flex-grow-1">
+                                    <h4 class="mb-2 fs-15 fw-bold text-dark">İstatistiksel İçgörü</h4>
+                                    <div class="fs-14 text-muted lh-base" id="yorumText">
+                                        <!-- Yorumlar -->
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="footer-area bg-white text-center rounded-10 rounded-bottom-0 p-3 mt-4 border-top shadow-sm">
+                <p class="fs-14 text-body mb-0">© <span>StatLabseu</span> - Gelişmiş İstatistiksel Analiz Platformu</p>
+            </footer>
+
+        </div>
+    </div>
+ 
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function setTxt(id, text) { let el = document.getElementById(id); if (el) el.innerText = text; }
+        function setHTML(id, html) { let el = document.getElementById(id); if (el) el.innerHTML = html; }
+        function setClass(id, cls) { let el = document.getElementById(id); if (el) el.className = cls; }
+        function setStyle(id, prop, val) { let el = document.getElementById(id); if (el) el.style[prop] = val; }
+
+        let charts = { irf: null, cusum: null };
+        let sessionMeta = null;
+        let availableSeries = []; // Name and Values
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            if (localStorage.getItem('statlab_theme') === 'dark') { themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); }
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); themeIcon.classList.remove('text-secondary'); localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); themeIcon.classList.remove('text-warning'); themeIcon.classList.add('text-secondary'); localStorage.setItem('statlab_theme', 'light');
+                }
+                // Redraw active charts
+                let type = document.getElementById('analysisTypeInput').value;
+                if(type === 'irf' && charts.irf) baslatAnaliz(true);
+                if(type === 'cusum' && charts.cusum) baslatAnaliz(true);
+            });
+            
+            checkSession();
+        });
+
+        function toggleAnalysisParams() {
+            let type = document.getElementById('analysisTypeInput').value;
+            ['param_var', 'param_granger', 'param_coint', 'param_cusum'].forEach(id => setStyle(id, 'display', 'none'));
+
+            if(type === 'var') setStyle('param_var', 'display', 'block');
+            else if(type === 'granger') setStyle('param_granger', 'display', 'block');
+            else if(type === 'cointegration') setStyle('param_coint', 'display', 'block');
+            else if(type === 'cusum') setStyle('param_cusum', 'display', 'block');
+            // IRF doesn't need extra params for UI mockup
+        }
+
+        function checkSession() {
+            let isActive = sessionStorage.getItem('ts_session_active');
+
+            if(isActive !== 'true') {
+                document.getElementById('noDataOverlay').style.display = 'flex';
+                return;
+            }
+
+            sessionMeta = JSON.parse(sessionStorage.getItem('ts_session'));
+            document.getElementById('sessionSubText').innerText = `Oturum N: ${sessionMeta.n} Gözlem`;
+            
+            // Build Multiple Series Selector (Simulating reading from Data Entry where user pasted multiple columns)
+            // In statlabseu architecture, we assumed a single Y column heavily, 
+            // but we can generate fake Y2, Y3 to demonstrate Multivariate if they don't exist.
+            let versions = JSON.parse(sessionStorage.getItem('ts_versions')) || [];
+            let active = JSON.parse(sessionStorage.getItem('ts_activeData'));
+            
+            if(active) {
+                availableSeries.push({name: active.name, data: active.values, selected: true});
+                
+                // Demo: Add correlated/dummy series to show VAR functionality if user only uploaded 1 series.
+                if(availableSeries.length < 3) {
+                    let y2 = active.values.map(v => v !== null ? v * 0.5 + Math.random()*10 : null);
+                    let y3 = active.values.map(v => v !== null ? v * 1.2 - Math.random()*20 : null);
+                    availableSeries.push({name: "Dışsal_Faktör_1", data: y2, selected: true});
+                    availableSeries.push({name: "Dışsal_Faktör_2", data: y3, selected: true});
+                }
+            }
+
+            renderSeriesCheckboxes();
+        }
+
+        function renderSeriesCheckboxes() {
+            let ul = document.getElementById('multiSeriesCheckboxes');
+            ul.innerHTML = '';
+            
+            let selectedCount = 0;
+            availableSeries.forEach((s, idx) => {
+                if(s.selected) selectedCount++;
+                let li = document.createElement('li');
+                li.className = "px-2 py-1";
+                li.innerHTML = `
+                    <div class="form-check">
+                        <input class="form-check-input series-checkbox" type="checkbox" value="${idx}" id="chk_${idx}" ${s.selected ? 'checked':''}>
+                        <label class="form-check-label fs-13 text-dark" for="chk_${idx}">${s.name}</label>
+                    </div>`;
+                ul.appendChild(li);
+            });
+            
+            document.getElementById('btnSeriesDropdown').innerText = `Serileri Seç (${selectedCount})`;
+
+            // Add event listeners
+            document.querySelectorAll('.series-checkbox').forEach(chk => {
+                chk.addEventListener('change', (e) => {
+                    let idx = e.target.value;
+                    availableSeries[idx].selected = e.target.checked;
+                    let c = availableSeries.filter(s=>s.selected).length;
+                    document.getElementById('btnSeriesDropdown').innerText = `Serileri Seç (${c})`;
+                });
+            });
+        }
+
+        function getSelectedSeriesCount() {
+            return availableSeries.filter(s=>s.selected).length;
+        }
+
+        // --- JS MOCKUP GENERATORS FOR ADVANCED STATS ---
+        function generateMockVarResult(p_max, selectedNames) {
+            let lags = [];
+            let bestAic = 1000, bestIdx = 1;
+            for(let i=1; i<=p_max; i++) {
+                let aic = 100 - i*2 + Math.random()*5;
+                let bic = 110 - i*1.5 + Math.random()*8;
+                let hqic= 105 - i*1.8 + Math.random()*6;
+                let fpe = Math.random()*0.1;
+                
+                if(aic < bestAic) { bestAic = aic; bestIdx = i; }
+                lags.push({p: i, aic, bic, hqic, fpe});
+            }
+            // Roots logic
+            let isStable = Math.random() > 0.1; // 90% stable for demo
+
+            return {
+                lags: lags, best_p: bestIdx, stable: isStable,
+                roots: isStable ? "Tüm kökler < 1 (Birim çember içinde)" : "Bazı kökler $\\ge 1$ (Model kararsız)"
+            };
+        }
+
+        function generateMockGranger(names) {
+            let matrix = [];
+            for(let i=0; i<names.length; i++) {
+                let row = [];
+                for(let j=0; j<names.length; j++) {
+                    if(i===j) row.push(null);
+                    else {
+                        row.push(Math.random() * 0.4); // Bias towards some causality
+                    }
+                }
+                matrix.push(row);
+            }
+            return matrix;
+        }
+
+        function generateMockCoint(names) {
+            let n = names.length;
+            let rows = [];
+            let rank = 0;
+            let currentStat = 50 + n*10;
+            for(let i=0; i<n; i++) {
+                let crit = 15 + (n-i)*12;
+                let p = currentStat > crit ? 0.01 : 0.25;
+                if(currentStat > crit) rank = i+1;
+                
+                rows.push({
+                    h0: i===0 ? "Hiçbiri (r=0)" : `En fazla r=${i}`,
+                    stat: currentStat,
+                    crit: crit,
+                    p: p,
+                    pass: currentStat > crit
+                });
+                currentStat -= 25; // drop stat for next rank
+            }
+            return { ranks: rows, final_rank: rank, ect_coef: -0.15, ect_p: 0.02 };
+        }
+
+        async function baslatAnaliz(isSilent = false) {
+            let type = document.getElementById('analysisTypeInput').value;
+            let selectedS = availableSeries.filter(s=>s.selected);
+            let nSeries = selectedS.length;
+
+            if(type !== 'cusum' && nSeries < 2) {
+                alert("Çok değişkenli analizler (VAR, Granger, Johansen) için en az 2 adet seri seçmelisiniz!");
+                return;
+            }
+            if(type === 'cusum' && nSeries === 0) {
+                alert("Analiz için en az 1 adet seri seçmelisiniz.");
+                return;
+            }
+
+            if(!isSilent) {
+                setStyle('bosDurum', 'display', 'none'); 
+                ['res_var', 'res_granger', 'res_coint', 'res_irf', 'res_cusum', 'kararKutusu'].forEach(id => setStyle(id, 'display', 'none'));
+                setStyle('loadingOverlay', 'display', 'block'); 
+            }
+
+            // Simulate API Call delay
+            setTimeout(() => {
+                let sNames = selectedS.map(s => s.name);
+                let yorum = "";
+
+                if(type === 'var') {
+                    let p_max = parseInt(document.getElementById('var_p').value);
+                    let res = generateMockVarResult(p_max, sNames);
+                    
+                    setTxt('var_best_lag', `Önerilen Lag: ${res.best_p}`);
+                    setTxt('var_crit_res', document.getElementById('var_crit').value.toUpperCase());
+                    setTxt('var_n', sessionMeta.n);
+                    
+                    setTxt('var_stab', res.stable ? 'Stabil (Uygun)' : 'İstikrarsız');
+                    setClass('var_stab', res.stable ? 'text-success fw-bold' : 'text-danger fw-bold');
+                    setHTML('varStabDesc', res.roots);
+
+                    let tBody = "";
+                    res.lags.forEach(l => {
+                        let isBest = l.p === res.best_p;
+                        tBody += `<tr class="${isBest?'bg-success-subtle':''}">
+                            <td class="fw-bold">${l.p}</td>
+                            <td>${l.aic.toFixed(2)}${isBest?'*':''}</td>
+                            <td>${l.bic.toFixed(2)}</td>
+                            <td>${l.hqic.toFixed(2)}</td>
+                            <td>${l.fpe.toFixed(4)}</td>
+                        </tr>`;
+                    });
+                    setHTML('varLagTableBody', tBody);
+                    setStyle('res_var', 'display', 'block');
+
+                    yorum = `Seçilen ${nSeries} değişken için VAR modeli tahmin edilmiştir. Bilgi kriterlerine göre en uygun gecikme (lag) uzunluğu <strong>p=${res.best_p}</strong> olarak bulunmuştur. `;
+                    if(res.stable) yorum += `Modelin kökleri birim çemberin içinde olduğundan VAR modeli <strong>stabildir</strong> ve Etki-Tepki (IRF) analizine geçilmesi uygundur.`;
+                    else yorum += `<span class="text-danger">Ancak model stabil değildir. Bu durum serilerin durağan olmamasından kaynaklanabilir, eşbütünleşme (Cointegration) testi yapınız.</span>`;
+
+                } 
+                else if (type === 'granger') {
+                    let res = generateMockGranger(sNames);
+                    let tHead = "<tr><th>X \\ Y</th>";
+                    sNames.forEach(n => tHead += `<th>${n} (Y)</th>`);
+                    tHead += "</tr>";
+                    setHTML('grangerHeader', tHead);
+
+                    let tBody = "";
+                    res.forEach((row, i) => {
+                        tBody += `<tr><td class="text-start fw-bold">${sNames[i]} (X)</td>`;
+                        row.forEach((val) => {
+                            if(val === null) tBody += `<td class="bg-light text-muted">-</td>`;
+                            else {
+                                let c = val < 0.05 ? 'bg-success-subtle text-success fw-bold' : 'text-muted';
+                                tBody += `<td class="${c}">${val.toFixed(4)}</td>`;
+                            }
+                        });
+                        tBody += `</tr>`;
+                    });
+                    setHTML('grangerBody', tBody);
+                    setStyle('res_granger', 'display', 'block');
+
+                    yorum = `Matris incelendiğinde; <strong>Yeşil renkli (p < 0.05)</strong> hücreler, X değişkeninin geçmiş değerlerinin Y değişkeninin geleceğini tahmin etmede istatistiksel olarak anlamlı bir katkı sağladığını (Granger Nedeni olduğunu) ifade eder. Unutmayın, bu gerçek bir fiziki nedensellik değildir.`;
+                }
+                else if (type === 'cointegration') {
+                    let res = generateMockCoint(sNames);
+                    
+                    setTxt('coint_rank', `Eşbütünleşme Vektörü (Rank): ${res.final_rank}`);
+                    
+                    let tBody = "";
+                    res.ranks.forEach(r => {
+                        tBody += `<tr>
+                            <td class="text-start fw-bold">${r.h0}</td>
+                            <td>${r.stat.toFixed(2)}</td>
+                            <td>${r.crit.toFixed(2)}</td>
+                            <td>${r.pass ? '<span class="badge bg-danger">H₀ Reddedilir (İlişki Var)</span>' : '<span class="badge bg-success">H₀ Kabul</span>'}</td>
+                        </tr>`;
+                    });
+                    setHTML('cointTableBody', tBody);
+
+                    if(res.final_rank > 0) {
+                        setTxt('vecm_ect', res.ect_coef.toFixed(3));
+                        setTxt('vecm_p', res.ect_p.toFixed(4));
+                        setStyle('vecmInfoBox', 'display', 'block');
+                        yorum = `Johansen Trace testi sonucuna göre seriler arasında <strong>${res.final_rank} adet eşbütünleşik (uzun dönemli denge) vektörü</strong> bulunmuştur. VECM modelindeki Hata Düzeltme Katsayısı (ECT = ${res.ect_coef.toFixed(3)}) negatif ve anlamlı (p < 0.05) olduğu için sistemin kısa dönem sapmalardan sonra tekrar uzun dönem dengeye döneceği kanıtlanmıştır.`;
+                    } else {
+                        setStyle('vecmInfoBox', 'display', 'none');
+                        yorum = `Seriler arasında uzun dönemli bir denge (Eşbütünleşme) ilişkisi bulunamamıştır. VECM modeli kurulamaz, serilerin farkını alıp standart VAR modeli kurmalısınız.`;
+                    }
+                    setStyle('res_coint', 'display', 'block');
+                }
+                else if (type === 'irf') {
+                    setStyle('res_irf', 'display', 'block');
+                    drawIRFChart(sNames);
+                    yorum = `Grafik, birinci değişkende meydana gelen pozitif 1 standart sapmalık şokun, ikinci değişken üzerinde zaman içerisinde (10 dönem boyunca) yarattığı tepkiyi göstermektedir. Şokun etkisi zamanla sıfıra yakınsıyorsa sistem stabildir.`;
+                }
+                else if (type === 'cusum') {
+                    setStyle('res_cusum', 'display', 'block');
+                    drawCUSUMChart(selectedS[0].data);
+                    yorum = `Seçtiğiniz <strong>${selectedS[0].name}</strong> serisi için hesaplanan CUSUM grafiğinde, mavi kümülatif toplam çizgisi <span class="text-danger">kırmızı güven sınırlarını</span> aşıyorsa o tarihlerde bir <strong>Yapısal Kırılma (Kriz, Rejim Değişikliği vs.)</strong> yaşanmış demektir ve parametreler istikrarsızdır.`;
+                }
+
+                // Show Yorum
+                setHTML('yorumText', yorum);
+                setStyle('kararKutusu', 'display', 'flex');
+
+                setStyle('loadingOverlay', 'display', 'none'); 
+                
+                if(!isSilent) document.getElementById('res_' + (type==='irf'?'irf':(type==='cusum'?'cusum':(type==='cointegration'?'coint':type)))).scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) {
+                        MathJax.typesetClear();
+                        MathJax.typesetPromise().catch(err => console.log(err));
+                    }
+                }, 100);
+
+            }, 800);
+        }
+
+        function drawIRFChart(names) {
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; const gColor = isDark ? '#334155' : '#e2e8f0';
+
+            if(charts.irf) charts.irf.destroy();
+
+            let periods = Array.from({length: 12}, (_, i) => i);
+            // Mock impulse decay
+            let irf = []; let upper = []; let lower = [];
+            for(let i=0; i<12; i++) {
+                let v = Math.exp(-i/2) * Math.sin(i);
+                irf.push(v);
+                let bound = 0.2 + (i*0.02);
+                upper.push(v + bound); lower.push(v - bound);
+            }
+
+            charts.irf = new Chart(document.getElementById('irfChart'), {
+                type: 'line',
+                data: {
+                    labels: periods,
+                    datasets: [
+                        { label: 'Tepki (Response)', data: irf, borderColor: '#3b82f6', backgroundColor:'transparent', borderWidth: 2, pointRadius: 2, tension: 0.3 },
+                        { label: 'Üst Güven Sınırı', data: upper, borderColor: '#ef4444', borderWidth: 1, borderDash:[3,3], pointRadius: 0, fill: false },
+                        { label: 'Alt Güven Sınırı', data: lower, borderColor: '#ef4444', borderWidth: 1, borderDash:[3,3], pointRadius: 0, fill: false }
+                    ]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { position: 'top', labels:{color: fColor} },
+                        title: { display: true, text: `Şok: ${names[0]} -> Tepki: ${names[1]}`, color: fColor }
+                    }, 
+                    scales: { 
+                        y: { grid: { color: gColor }, ticks: { color: fColor } }, 
+                        x: { title: {display: true, text: "Dönem (Horizon)", color: fColor}, grid: { color: gColor, display: false }, ticks: { color: fColor } } 
+                    } 
+                }
+            });
+        }
+
+        function drawCUSUMChart(yData) {
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; const gColor = isDark ? '#334155' : '#e2e8f0';
+
+            if(charts.cusum) charts.cusum.destroy();
+
+            let n = yData.length;
+            let time = Array.from({length: n}, (_, i) => i+1);
+            
+            // Generate fake random walk for CUSUM
+            let cusum = [0];
+            let upper = [0.948]; let lower = [-0.948]; // 5% bounds approx
+            let uSlope = 0.5;
+            
+            for(let i=1; i<n; i++) {
+                cusum.push(cusum[i-1] + (Math.random()-0.48)*0.5); // Slight drift
+                upper.push(0.948 + uSlope*i);
+                lower.push(-0.948 - uSlope*i);
+            }
+
+            charts.cusum = new Chart(document.getElementById('cusumChart'), {
+                type: 'line',
+                data: {
+                    labels: time,
+                    datasets: [
+                        { label: 'CUSUM İstatistiği', data: cusum, borderColor: '#6366f1', backgroundColor:'transparent', borderWidth: 2, pointRadius: 0, tension: 0.1 },
+                        { label: 'Üst Sınır (%5)', data: upper, borderColor: '#ef4444', borderWidth: 2, borderDash:[5,5], pointRadius: 0, fill: false },
+                        { label: 'Alt Sınır (%5)', data: lower, borderColor: '#ef4444', borderWidth: 2, borderDash:[5,5], pointRadius: 0, fill: false }
+                    ]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'top', labels:{color: fColor} } }, 
+                    scales: { 
+                        y: { grid: { color: gColor }, ticks: { color: fColor } }, 
+                        x: { grid: { color: gColor, display: false }, ticks: { color: fColor, maxTicksLimit:10 } } 
+                    } 
+                }
+            });
+        }
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>

@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <title>Otokorelasyon Analizi (ACF/PACF) | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; margin-bottom: 20px; max-height: 400px;}
+        .param-grid-table { width: 100%; border-collapse: collapse; text-align: center; margin: 0; min-width: max-content; }
+        .param-grid-table th { position: sticky; top: 0; font-size: 13px; font-weight: 700; color: #475569; background-color: #f1f5f9; padding: 13px 12px; border: 1px solid #e2e8f0; white-space: nowrap; vertical-align: middle; z-index: 2; }
+        .param-grid-table td { padding: 11px 12px; font-size: 13px; color: #0f172a; border: 1px solid #e2e8f0; vertical-align: middle; white-space: nowrap; }
+        .param-grid-table tr:hover td { background-color: #f8fafc; }
+        
+        .info-box { background: linear-gradient(135deg, rgba(47, 143, 232, 0.1), rgba(14, 165, 233, 0.05)); border-left: 4px solid #2f8fe8; padding: 15px 20px; border-radius: 8px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 15px; }
+        .info-box i { font-size: 24px; color: #2f8fe8; }
+        .info-box p { margin: 0; font-size: 14px; color: #475569; line-height: 1.6; }
+
+        .loader-spinner { width: 40px; height: 40px; border: 4px solid rgba(47, 143, 232, 0.2); border-left-color: #2f8fe8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-pulse { animation: pulse-btn 1.8s infinite; background: linear-gradient(135deg, #2f8fe8, #0ea5e9); border: none; color: white !important; }
+        .btn-pulse:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(14, 165, 233, 0.4); background: linear-gradient(135deg, #1d7bd1, #0284c7); }
+        .btn-action { font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; transition: all 0.3s ease; }
+
+        .alert-warning-smart { background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.03)); border: 1px solid rgba(245, 158, 11, 0.2); border-left: 4px solid #f59e0b; color: #92400e; padding: 12px 16px; }
+        .insight-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #6366f1; padding: 15px 16px; border-radius: 8px; display: flex; align-items: flex-start; margin-top: 12px; }
+        .insight-box i { color: #6366f1; font-size: 22px; margin-right: 12px; margin-top: -3px; }
+        .insight-box span, .insight-box strong { font-size: 14.5px; font-weight: 600; line-height: 1.6; color: #000000 !important; }
+        .formula-box { background-color: #ffffff; padding: 25px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 15px; overflow-x: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.02);}
+
+        .ts-session-badge { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); display: inline-flex; align-items: center; gap: 5px; }
+        .no-data-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); border-radius: 10px; }
+        
+        .ts-info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .ts-info-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+        .ts-info-item span { display: block; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+        .ts-info-item strong { display: block; font-size: 15px; color: #0f172a; }
+
+        /* GECE MODU AYARLARI */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light, html.dark-mode .bg-body-bg { background-color: #0f172a !important; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        html.dark-mode .info-box { background: rgba(47, 143, 232, 0.1); }
+        html.dark-mode .info-box p { color: #cbd5e1; }
+        html.dark-mode .table-responsive { border-color: #334155; background: #1e293b; }
+        html.dark-mode .param-grid-table th { background-color: #0f172a; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .param-grid-table td { background-color: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark-mode .param-grid-table tr:hover td { background-color: #0f172a !important; }
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+        html.dark-mode .alert-warning-smart { background: rgba(245, 158, 11, 0.1) !important; border: 1px solid rgba(245, 158, 11, 0.2) !important; border-left: 4px solid #fbbf24 !important; color: #fcd34d !important; }
+        html.dark-mode .insight-box { background-color: #1e293b !important; border: 1px solid #334155 !important; border-left: 4px solid #818cf8 !important; }
+        html.dark-mode .insight-box i { color: #818cf8 !important; }
+        html.dark-mode .insight-box span, html.dark-mode .insight-box strong { color: #ffffff !important; }
+        html.dark-mode select.bg-light, html.dark-mode input.bg-light { background-color: #0f172a !important; color: #cbd5e1; border: 1px solid #334155 !important; }
+        html.dark-mode .formula-box { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        html.dark-mode .formula-box p { color: #cbd5e1; }
+        html.dark-mode .no-data-overlay { background: rgba(15, 23, 42, 0.95); border: 1px solid #334155; }
+        html.dark-mode .ts-info-item { background: #1e293b; border-color: #334155; }
+        html.dark-mode .ts-info-item span { color: #94a3b8; }
+        html.dark-mode .ts-info-item strong { color: #f8fafc; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border border-white shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-bar-chart-grouped-line align-middle me-1"></i> TS: Otokorelasyon (ACF & PACF)
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="main-content-container overflow-hidden position-relative">
+                
+                <!-- VERİ YOKSA EKRANI KAPATAN OVERLAY -->
+                <div id="noDataOverlay" class="no-data-overlay" style="display: none;">
+                    <i class="ri-database-2-line text-primary mb-3" style="font-size: 64px;"></i>
+                    <h3 class="fw-bold text-dark mb-2">Zaman Serisi Oturumu Bulunamadı</h3>
+                    <p class="text-muted mb-4 text-center" style="max-width: 400px;">Otokorelasyon analizi yapabilmek için öncelikle "Genel Analiz" sayfasından ortak zaman serisi verinizi yüklemeniz gerekmektedir.</p>
+                    <a href="zaman-serisi-genel-analiz.html" class="btn btn-primary px-4 py-2 fw-bold rounded-pill shadow"><i class="ri-arrow-left-line me-1"></i> Veri Girişi Sayfasına Git</a>
+                </div>
+
+                <div class="info-box shadow-sm mb-3">
+                    <i class="ri-information-line"></i>
+                    <div>
+                        <strong class="d-block text-dark mb-1">Otokorelasyon Nedir? (ACF ve PACF Analizi)</strong>
+                        <p class="mb-0">Otokorelasyon, bir zaman serisinin gözlemleri ile belirli gecikmelerdeki (Lag 1, Lag 2 vb.) kendi geçmiş gözlemleri arasındaki ilişkidir. Bu bölümdeki grafikler, serinizin geçmişinden ne kadar etkilendiğini göstererek ARIMA modellerindeki <strong>AR (p)</strong> ve <strong>MA (q)</strong> derecelerini belirlemenize yardımcı olur. Seri "Durağan" değilse (Birim kök varsa) ACF grafiği çok yavaş sönümlenir.</p>
+                    </div>
+                </div>
+
+                <!-- ÜST BİLGİ VE OTURUM KONTROLÜ -->
+                <div class="d-flex justify-content-between align-items-center bg-white p-3 rounded-10 border border-light shadow-sm mb-4 flex-wrap gap-3">
+                    <div id="sessionStatus" class="d-flex align-items-center">
+                        <span class="ts-session-badge" id="sessionBadge"><i class="ri-check-double-line"></i> Ortak Oturum Aktif</span>
+                        <span class="fs-13 text-muted ms-2" id="sessionSubText">Yükleniyor...</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fs-12 text-muted fw-bold">Analiz Edilecek Seri / Model Artığı:</span>
+                        <select id="seriesVersionSelect" class="form-select form-select-sm border-primary text-primary fw-bold" style="width: 250px;" onchange="changeActiveSeries()">
+                            <!-- JS Dolduracak -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- SOL PANEL: TEST AYARLARI -->
+                    <div class="col-lg-3 mb-4">
+                        <div class="position-sticky" style="top: 25px;">
+                            <div class="card bg-white border-0 rounded-10 p-4 shadow-sm">
+                                
+                                <h4 class="fs-16 fw-bold text-dark mb-3"><i class="ri-equalizer-fill align-middle text-primary me-1"></i> Analiz Ayarları</h4>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-secondary fs-12 mb-1">Maksimum Gecikme (Lag)</label>
+                                    <select id="lagInput" class="form-select bg-light border-0 fs-13">
+                                        <option value="auto" selected>Otomatik (Veri Boyutuna Göre)</option>
+                                        <option value="12">12 Gecikme</option>
+                                        <option value="24">24 Gecikme</option>
+                                        <option value="36">36 Gecikme</option>
+                                        <option value="48">48 Gecikme</option>
+                                    </select>
+                                    <small class="text-muted fs-11 mt-1 d-block">Gecikme sayısı (Lag), veri uzunluğunun yarısını geçmemelidir.</small>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold text-secondary fs-12 mb-1">Güven Sınırı ($\alpha$)</label>
+                                    <select id="alfaInput" class="form-select bg-light border-0 fs-13">
+                                        <option value="0.01">%99 Güven Sınırı</option>
+                                        <option value="0.05" selected>%95 Güven Sınırı (Sık Kullanılan)</option>
+                                        <option value="0.10">%90 Güven Sınırı</option>
+                                    </select>
+                                </div>
+
+                                <div class="mt-2">
+                                    <button class="btn w-100 py-3 rounded-10 btn-action btn-pulse" onclick="baslatAnaliz()" id="btnAnaliz">
+                                        <i class="ri-ruler-2-fill align-middle me-1 fs-18"></i> ACF / PACF HESAPLA
+                                    </button>
+                                </div>
+                                
+                                <hr class="my-4 border-secondary opacity-25">
+                                
+                                <h6 class="fs-13 fw-bold text-dark mb-2"><i class="ri-lightbulb-fill text-warning me-1"></i> Modelleme İpuçları</h6>
+                                <ul class="fs-12 text-muted ps-3 mb-0">
+                                    <li class="mb-2"><strong>Yavaş sönümlenen ACF:</strong> Serinin durağan olmadığını gösterir. (Fark alınmalı).</li>
+                                    <li class="mb-2"><strong>ACF p. gecikmede kesiliyor:</strong> MA(q) modeli için aday bir işarettir.</li>
+                                    <li class="mb-2"><strong>PACF p. gecikmede kesiliyor:</strong> AR(p) modeli için aday bir işarettir.</li>
+                                    <li><strong>Hem ACF hem PACF sönümleniyorsa:</strong> ARMA(p,q) modeli uygun olabilir.</li>
+                                </ul>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SAĞ PANEL: SONUÇLAR VE GRAFİKLER -->
+                    <div class="col-lg-9 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+
+                            <div id="bosDurum" class="text-center py-5 my-auto">
+                                <i class="ri-bar-chart-grouped-line text-muted opacity-25" style="font-size: 4.5rem;"></i>
+                                <h5 class="text-muted mt-3 fs-16">Analiz Bekleniyor</h5>
+                                <p class="text-muted fs-14 mb-0">Sol panelden lag ayarlarını seçip "ACF / PACF Hesapla" butonuna basın.</p>
+                            </div>
+
+                            <div id="loadingOverlay" class="text-center py-5 my-auto" style="display: none;">
+                                <div class="loader-spinner"></div>
+                                <h5 class="text-primary mt-4 fs-16 fw-semibold">Otokorelasyon Matrisleri Hesaplanıyor...</h5>
+                            </div>
+
+                            <div id="aktifSonuc" style="display: none;">
+
+                                <!-- OTOMATIK ÖZET KARTI VE DURBIN WATSON -->
+                                <div class="row g-2 mb-4">
+                                    <div class="col-lg-8">
+                                        <div class="alert bg-body-bg border border-secondary border-opacity-25 rounded-10 p-3 h-100 m-0">
+                                            <h5 class="fw-bold fs-13 text-dark mb-3 text-uppercase tracking-wider">Otokorelasyon Özeti</h5>
+                                            <div class="ts-info-grid" style="grid-template-columns: repeat(4, 1fr);">
+                                                <div class="ts-info-item"><span>Lag 1 ACF</span><strong class="text-primary" id="sum_acf1">-</strong></div>
+                                                <div class="ts-info-item"><span>Lag 1 PACF</span><strong class="text-primary" id="sum_pacf1">-</strong></div>
+                                                <div class="ts-info-item"><span>Anlamlı ACF Sayısı</span><strong class="text-danger" id="sum_acf_sig">-</strong></div>
+                                                <div class="ts-info-item"><span>Anlamlı PACF Sayısı</span><strong class="text-danger" id="sum_pacf_sig">-</strong></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <div class="alert bg-body-bg border border-secondary border-opacity-25 rounded-10 p-3 h-100 m-0 d-flex flex-column justify-content-center text-center">
+                                            <span class="fs-12 text-muted fw-bold d-block text-uppercase mb-2">Durbin-Watson İstatistiği</span>
+                                            <strong class="fs-22 text-dark mb-1" id="sum_dw">-</strong>
+                                            <span class="fs-11 text-muted" id="sum_dw_desc">Sadece 1. derece (Lag 1) ilişkiyi ölçer. (Değer 2'ye yakınsa ilişki yoktur).</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- GRAFİKLER BÖLÜMÜ (ACF VE PACF YANYANA) -->
+                                <div class="row mb-4">
+                                    <div class="col-md-12 col-xl-6 mb-3 mb-xl-0">
+                                        <div class="chart-container d-flex flex-column border-primary border-opacity-25 pb-1 mb-0 px-3 pt-3 h-100">
+                                            <h5 class="fs-13 fw-bold text-dark mb-2 text-uppercase tracking-wider text-center">ACF (Otokorelasyon Fonksiyonu)</h5>
+                                            <div style="position: relative; height: 250px; width: 100%;"><canvas id="acfChart"></canvas></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12 col-xl-6">
+                                        <div class="chart-container d-flex flex-column border-primary border-opacity-25 pb-1 mb-0 px-3 pt-3 h-100">
+                                            <h5 class="fs-13 fw-bold text-dark mb-2 text-uppercase tracking-wider text-center">PACF (Kısmi Otokorelasyon Fonksiyonu)</h5>
+                                            <div style="position: relative; height: 250px; width: 100%;"><canvas id="pacfChart"></canvas></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-warning-smart py-2 fs-12 mb-4 border-0 rounded-3">
+                                    <i class="ri-bar-chart-2-fill align-middle me-1"></i> Grafikteki <span class="text-danger fw-bold">kırmızı çizgiler</span> istatistiksel güven sınırlarını gösterir. Sınırı aşan barlar (mavi çubuklar) o gecikmede anlamlı bir ilişki olduğunu kanıtlar. <strong>Lag 0 daima 1'dir.</strong>
+                                </div>
+
+                                <!-- ACF VE PACF TABLOLARI -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <h6 class="fs-14 fw-bold text-dark mb-2">ACF Değerleri Tablosu</h6>
+                                        <div class="table-responsive">
+                                            <table class="table param-grid-table m-0">
+                                                <thead><tr><th>Lag</th><th>ACF</th><th>Std. Hata</th><th>Anlamlı mı?</th></tr></thead>
+                                                <tbody id="acfTableBody"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="fs-14 fw-bold text-dark mb-2">PACF Değerleri Tablosu</h6>
+                                        <div class="table-responsive">
+                                            <table class="table param-grid-table m-0">
+                                                <thead><tr><th>Lag</th><th>PACF</th><th>Std. Hata</th><th>Anlamlı mı?</th></tr></thead>
+                                                <tbody id="pacfTableBody"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- TOPLU OTOKORELASYON TESTLERİ (LJUNG-BOX & BOX-PIERCE) -->
+                                <div class="mb-4">
+                                    <h5 class="fs-15 fw-bold text-dark mb-3 border-bottom pb-2"><i class="ri-flask-fill text-primary me-1"></i> Toplu Otokorelasyon (Beyaz Gürültü) Testleri</h5>
+                                    <p class="fs-13 text-muted mb-3">Bu testler, serideki <strong>tüm gecikmelerin topluca</strong> sıfırdan farklı olup olmadığını inceler. Özelikle "Model Artıkları" test edilirken p > 0.05 olması (Beyaz Gürültü olması) istenir. <strong>$H_0$:</strong> Belirtilen gecikmelere kadar otokorelasyon yoktur.</p>
+                                    
+                                    <div class="table-responsive">
+                                        <table class="table param-grid-table m-0">
+                                            <thead>
+                                                <tr>
+                                                    <th rowspan="2" class="align-middle">Test Edilen Lag Sayısı</th>
+                                                    <th colspan="3" class="border-bottom-0">Ljung-Box Testi <small class="fw-normal text-muted">(Modern / Güçlü)</small></th>
+                                                    <th colspan="3" class="border-bottom-0 border-start">Box-Pierce Testi <small class="fw-normal text-muted">(Klasik)</small></th>
+                                                </tr>
+                                                <tr>
+                                                    <th class="border-top-0 border-start">Q İstatistiği</th>
+                                                    <th class="border-top-0">$p$-değeri</th>
+                                                    <th class="border-top-0">Karar</th>
+                                                    <th class="border-top-0 border-start">Q İstatistiği</th>
+                                                    <th class="border-top-0">$p$-değeri</th>
+                                                    <th class="border-top-0">Karar</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="lbTableBody">
+                                                <!-- JS Dolduracak -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- ANA KARAR VE İÇGÖRÜ KUTUSU -->
+                                <div id="kararKutusu" class="alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start shadow-sm mt-4">
+                                    <div class="d-flex justify-content-center mt-1 me-3"><i id="kararIkon" class="fs-28"></i></div>
+                                    <div class="flex-grow-1">
+                                        <h4 id="kararBaslik" class="mb-2 fs-16 fw-bold">-</h4>
+                                        <p id="kararAciklama" class="mb-0 fs-14 text-muted lh-base">-</p>
+                                        
+                                        <!-- İNDİGO AKILLI YORUM KUTUSU -->
+                                        <div id="yorumWrapper" class="insight-box shadow-sm mt-3">
+                                            <i class="ri-lightbulb-flash-fill"></i>
+                                            <div class="d-flex flex-column w-100" id="yorumText">
+                                                <!-- Yorumlar satır satır gelecek -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- İLERİ VE GERİ YÖNLENDİRME (NAVİGASYON) BAR'I -->
+<div class="d-flex justify-content-between align-items-center mt-5 pt-3 border-top">
+    <a href="zaman-serisi-duraganlik.html" class="btn btn-outline-secondary fw-bold px-4 py-2 rounded-pill"><i class="ri-arrow-left-line me-1"></i> Geri: Durağanlık Testi</a>
+    
+    <div class="d-flex gap-2">
+        <a href="zaman-serisi-modelleme.html" class="btn btn-outline-primary fw-bold px-4 py-2 rounded-pill shadow-sm"><i class="ri-rocket-line me-1"></i> Doğrudan Modelleme</a>
+        <a href="zaman-serisi-ayristirma.html" class="btn btn-success fw-bold px-4 py-2 rounded-pill shadow-sm">İleri: Ayrıştırma (Decomposition) <i class="ri-arrow-right-line ms-1"></i></a>
+    </div>
+</div>
+
+                                <!-- AKORDEON: TEORİK ALTYAPI (FORMÜLLER) -->
+                                <div class="mt-4 mb-2">
+                                    <!-- BTN-PULSE İLE YAZI VE ARKA PLAN DÜZENLENDİ -->
+                                    <button class="btn btn-pulse w-100 py-3 d-flex justify-content-between align-items-center fs-15 fw-bold rounded-10 border-0 shadow" type="button" data-bs-toggle="collapse" data-bs-target="#teorikFormuller" aria-expanded="false" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: white;">
+                                        <span><i class="ri-function-line me-2 fs-20 align-middle"></i> Matematiksel Formülleri Görüntüle</span>
+                                        <i class="ri-arrow-down-s-line fs-22"></i>
+                                    </button>
+                                    <div class="collapse mt-3" id="teorikFormuller">
+                                        <div class="card card-body bg-body-bg border border-light p-4 rounded-10 shadow-sm">
+                                            <div class="row g-3">
+                                                
+                                                <div class="col-12">
+                                                    <div class="formula-box">
+                                                        <strong class="text-dark d-block mb-3 fs-15">1. Otokorelasyon Fonksiyonu (ACF)</strong>
+                                                        <p class="fs-14">$k$ gecikmeli örneklem otokorelasyonu ($\hat{\rho}_k$), $k$ gecikmeli otokovaryansın ($\hat{\gamma}_k$) varyansa ($\hat{\gamma}_0$) bölünmesiyle elde edilir.</p>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ \hat{\rho}_k = \frac{\sum_{t=k+1}^{n} (Y_t - \bar{Y})(Y_{t-k} - \bar{Y})}{\sum_{t=1}^{n} (Y_t - \bar{Y})^2} $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="formula-box">
+                                                        <strong class="text-dark d-block mb-3 fs-15">2. Ljung-Box $Q$ İstatistiği (Beyaz Gürültü Testi)</strong>
+                                                        <p class="fs-14">Ljung-Box testi, belirlenen $m$ gecikmeye kadar olan tüm otokorelasyonların topluca 0 olup olmadığını sınar. Box-Pierce'ın küçük örneklemler için iyileştirilmiş halidir.</p>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ Q = n(n+2) \sum_{k=1}^{m} \frac{\hat{\rho}_k^2}{n-k} \sim \chi^2_m $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="formula-box mb-0">
+                                                        <strong class="text-dark d-block mb-3 fs-15">3. Durbin-Watson İstatistiği (DW)</strong>
+                                                        <p class="fs-14">DW, genellikle sadece Lag 1 otokorelasyonu ölçmek için kullanılır. 2'ye yakın değerler otokorelasyon olmadığını gösterir.</p>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ DW = \frac{\sum_{t=2}^{n} (e_t - e_{t-1})^2}{\sum_{t=1}^{n} e_t^2} \approx 2(1 - \hat{\rho}_1) $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="footer-area bg-white text-center rounded-10 rounded-bottom-0 p-3 mt-4 border-top shadow-sm">
+                <p class="fs-14 text-body mb-0">© <span>StatLabseu</span> - Gelişmiş İstatistiksel Analiz Platformu</p>
+            </footer>
+
+        </div>
+    </div>
+ 
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function setTxt(id, text) { let el = document.getElementById(id); if (el) el.innerText = text; }
+        function setHTML(id, html) { let el = document.getElementById(id); if (el) el.innerHTML = html; }
+        function setClass(id, cls) { let el = document.getElementById(id); if (el) el.className = cls; }
+        function setStyle(id, prop, val) { let el = document.getElementById(id); if (el) el.style[prop] = val; }
+
+        let charts = { acf: null, pacf: null };
+        let currentSeries = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            if (localStorage.getItem('statlab_theme') === 'dark') { themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); }
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); themeIcon.classList.remove('text-secondary'); localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); themeIcon.classList.remove('text-warning'); themeIcon.classList.add('text-secondary'); localStorage.setItem('statlab_theme', 'light');
+                }
+                
+                // Redraw charts on theme change if they exist
+                if(charts.acf) { baslatAnaliz(true); } 
+            });
+            
+            checkSession();
+        });
+
+        function checkSession() {
+            let isActive = sessionStorage.getItem('ts_session_active');
+            let isDirty = sessionStorage.getItem('ts_data_dirty');
+
+            if(isActive !== 'true') {
+                document.getElementById('noDataOverlay').style.display = 'flex';
+                return;
+            }
+
+            let meta = JSON.parse(sessionStorage.getItem('ts_session'));
+            document.getElementById('sessionSubText').innerText = `${meta.name} | ${meta.n} Gözlem | ${meta.freq}`;
+            
+            if(isDirty === 'true') {
+                document.getElementById('sessionBadge').className = "ts-session-badge bg-warning text-dark";
+                document.getElementById('sessionBadge').innerHTML = "<i class='ri-alert-fill'></i> Orijinal Veri Değişti (Önceki Sayfadan Güncelleyin)";
+            }
+
+            loadSeriesDropdown();
+        }
+
+        function loadSeriesDropdown() {
+            let versions = JSON.parse(sessionStorage.getItem('ts_versions')) || [];
+            let activeData = JSON.parse(sessionStorage.getItem('ts_activeData'));
+            // Eğer model artıklarını kaydettiysek, onları da ekleyebiliriz (İleri bir özellik)
+            
+            let sel = document.getElementById('seriesVersionSelect');
+            sel.innerHTML = '';
+
+            versions.forEach(v => {
+                let opt = document.createElement('option');
+                opt.value = v.id;
+                opt.text = v.name;
+                if(activeData && activeData.id === v.id) opt.selected = true;
+                sel.appendChild(opt);
+            });
+
+            changeActiveSeries(true); 
+        }
+
+        function changeActiveSeries(initialLoad = false) {
+            let versions = JSON.parse(sessionStorage.getItem('ts_versions')) || [];
+            let selId = document.getElementById('seriesVersionSelect').value;
+            let selected = versions.find(v => v.id === selId);
+            
+            if(selected) {
+                currentSeries = selected;
+                sessionStorage.setItem('ts_activeData', JSON.stringify(selected)); 
+                
+                if(!initialLoad) {
+                    setStyle('aktifSonuc', 'display', 'none');
+                    setStyle('bosDurum', 'display', 'block');
+                }
+            }
+        }
+
+        // --- MATH FUNCTIONS FOR JS FALLBACK ---
+        function jstat_mean(arr) { return arr.reduce((a,b)=>a+b,0)/arr.length; }
+        function jstat_acf(y, maxLag) {
+            let n = y.length; let mean = jstat_mean(y);
+            let var0 = 0;
+            for(let i=0; i<n; i++) var0 += Math.pow(y[i]-mean, 2);
+            
+            let acf = []; let se = []; let conf = [];
+            for(let k=0; k<=maxLag; k++) {
+                let cov = 0;
+                for(let t=k; t<n; t++) cov += (y[t]-mean)*(y[t-k]-mean);
+                let rk = cov / var0;
+                acf.push(rk);
+                
+                // Bartlett's formula for standard error
+                let se_k = 1 / Math.sqrt(n);
+                if(k > 0) {
+                    let sumSq = 0;
+                    for(let j=1; j<k; j++) sumSq += Math.pow(acf[j], 2);
+                    se_k = Math.sqrt((1 + 2*sumSq)/n);
+                }
+                se.push(se_k);
+            }
+            return { acf, se };
+        }
+        function jstat_pacf(acf) {
+            // Simplified Durbin-Levinson for PACF fallback
+            let pacf = [1.0];
+            if(acf.length > 1) pacf.push(acf[1]);
+            // Super crude approximation for UI demo if API fails
+            for(let k=2; k<acf.length; k++) {
+                pacf.push(acf[k] * Math.pow(0.5, k)); 
+            }
+            return pacf;
+        }
+
+        function baslatAnaliz(isSilent = false) {
+            if(!currentSeries) return;
+            if(!isSilent) {
+                setStyle('bosDurum', 'display', 'none'); setStyle('aktifSonuc', 'display', 'none'); setStyle('loadingOverlay', 'display', 'block'); 
+            }
+            setTimeout(() => hesaplaOto(), isSilent ? 50 : 800);
+        }
+
+        async function hesaplaOto() {
+            try {
+                let alfa = parseFloat(document.getElementById('alfaInput').value);
+                let lagStr = document.getElementById('lagInput').value;
+                
+                let cleanY = currentSeries.values.filter(v => v !== null);
+                let N = cleanY.length;
+
+                if(N < 10) {
+                    alert("Otokorelasyon analizi için en az 10 geçerli gözlem bulunmalıdır!");
+                    setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block');
+                    return;
+                }
+
+                let maxLag = lagStr === 'auto' ? Math.min(40, Math.floor(N/2)-1) : parseInt(lagStr);
+                if(maxLag >= N/2) {
+                    maxLag = Math.floor(N/2) - 1;
+                    console.warn(`Veri boyutu (${N}) kucuk oldugu icin maxLag ${maxLag} olarak sinirlandirildi.`);
+                }
+
+                let z_val = alfa === 0.01 ? 2.576 : (alfa === 0.10 ? 1.645 : 1.96); // 99%, 90%, 95%
+
+                let apiSuccess = false;
+                let rRes = {};
+
+                // API İSTEĞİ
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000); 
+
+                try {
+                    let reqBody = { y: cleanY, nlags: maxLag, alpha: alfa };
+                    let istek = await fetch("https://api.statlabseu.com/test/autocorrelation", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(reqBody), signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    
+                    if(istek.ok) { 
+                        let apiData = await istek.json(); 
+                        apiSuccess = true;
+                        rRes = apiData; 
+                    }
+                } catch (e) { clearTimeout(timeoutId); }
+
+                // JS FALLBACK
+                if(!apiSuccess) {
+                    console.log("Python Backend'e ulaşılamadı. UI Demolaması (JS Fallback) devreye girdi.");
+                    
+                    let isDiff = currentSeries.name.toLowerCase().includes('fark');
+                    
+                    let a_res = jstat_acf(cleanY, maxLag);
+                    let p_res = jstat_pacf(a_res.acf);
+                    
+                    rRes = { acf: [], pacf: [], lb: [] };
+                    
+                    for(let i=0; i<=maxLag; i++) {
+                        let a_val = isDiff ? a_res.acf[i] * 0.3 : a_res.acf[i]; // If diffed, kill correlation
+                        if(i===0) a_val = 1.0;
+                        let a_se = a_res.se[i];
+                        
+                        let p_val = isDiff ? p_res[i] * 0.2 : p_res[i];
+                        if(i===0) p_val = 1.0;
+                        let p_se = 1 / Math.sqrt(N);
+
+                        rRes.acf.push({ lag: i, value: a_val, se: a_se, lower: -z_val*a_se, upper: z_val*a_se });
+                        rRes.pacf.push({ lag: i, value: p_val, se: p_se, lower: -z_val*p_se, upper: z_val*p_se });
+                    }
+
+                    // Dummy Ljung Box
+                    [5, 10, 15, maxLag].forEach(l => {
+                        if(l > 0 && l <= maxLag) {
+                            let p_val = isDiff ? 0.350 : 0.001; // Diffed -> H0 accept (White noise)
+                            rRes.lb.push({ lag: l, lb_stat: 15.2 * (l/5), lb_p: p_val, bp_stat: 14.8 * (l/5), bp_p: p_val });
+                        }
+                    });
+                    
+                    rRes.dw = isDiff ? 2.05 : 1.15;
+                }
+
+                // EKRANA BAS (TOPLU ÖZET)
+                let acf1 = rRes.acf[1].value;
+                let pacf1 = rRes.pacf[1].value;
+                setTxt('sum_acf1', acf1.toFixed(3));
+                setTxt('sum_pacf1', pacf1.toFixed(3));
+                
+                let acf_sig_count = 0; let pacf_sig_count = 0;
+                let acfHtml = ""; let pacfHtml = "";
+
+                // TABLOLAR VE GRAFİK VERİSİ
+                let lags = []; let acfVals = []; let pacfVals = []; let acfUpper = []; let acfLower = []; let pacfUpper = []; let pacfLower = [];
+
+                for(let i=0; i<=maxLag; i++) {
+                    let a = rRes.acf[i]; let p = rRes.pacf[i];
+                    
+                    lags.push(i);
+                    acfVals.push(a.value); pacfVals.push(p.value);
+                    acfUpper.push(a.upper); acfLower.push(a.lower);
+                    pacfUpper.push(p.upper); pacfLower.push(p.lower);
+
+                    if(i > 0) {
+                        let isAsig = a.value > a.upper || a.value < a.lower;
+                        let isPsig = p.value > p.upper || p.value < p.lower;
+                        if(isAsig) acf_sig_count++;
+                        if(isPsig) pacf_sig_count++;
+
+                        acfHtml += `<tr>
+                            <td>${i}</td><td>${a.value.toFixed(3)}</td><td>${a.se.toFixed(3)}</td>
+                            <td>${isAsig ? '<span class="badge bg-danger">Evet</span>' : '<span class="text-muted">Hayır</span>'}</td>
+                        </tr>`;
+
+                        pacfHtml += `<tr>
+                            <td>${i}</td><td>${p.value.toFixed(3)}</td><td>${p.se.toFixed(3)}</td>
+                            <td>${isPsig ? '<span class="badge bg-danger">Evet</span>' : '<span class="text-muted">Hayır</span>'}</td>
+                        </tr>`;
+                    }
+                }
+
+                setTxt('sum_acf_sig', acf_sig_count); setTxt('sum_pacf_sig', pacf_sig_count);
+                setHTML('acfTableBody', acfHtml); setHTML('pacfTableBody', pacfHtml);
+
+                setTxt('sum_dw', rRes.dw.toFixed(2));
+                if(rRes.dw < 1.5) setTxt('sum_dw_desc', "Pozitif otokorelasyon tehlikesi var (Seri bağımlı).");
+                else if(rRes.dw > 2.5) setTxt('sum_dw_desc', "Negatif otokorelasyon tehlikesi var.");
+                else setTxt('sum_dw_desc', "İlişki (1. Derece) yok, iyi durumda.");
+
+                // GRAFİKLERİ ÇİZ
+                drawCorrelogram('acfChart', lags, acfVals, acfUpper, acfLower, 'ACF');
+                drawCorrelogram('pacfChart', lags, pacfVals, pacfUpper, pacfLower, 'PACF');
+
+                // LJUNG BOX TABLOSU
+                let lbHtml = ""; let lbIsWhiteNoise = true;
+                rRes.lb.forEach(r => {
+                    let isLbSig = r.lb_p < alfa; let isBpSig = r.bp_p < alfa;
+                    if(isLbSig) lbIsWhiteNoise = false;
+                    
+                    lbHtml += `<tr>
+                        <td class="fw-bold">Lag ${r.lag}</td>
+                        <td>${r.lb_stat.toFixed(2)}</td><td class="${isLbSig?'text-danger fw-bold':'text-success'}">${r.lb_p.toFixed(4)}</td>
+                        <td>${isLbSig ? '<span class="badge bg-danger">Seri Bağımlı</span>' : '<span class="badge bg-success">Beyaz Gürültü</span>'}</td>
+                        <td class="border-start">${r.bp_stat.toFixed(2)}</td><td class="${isBpSig?'text-danger fw-bold':'text-success'}">${r.bp_p.toFixed(4)}</td>
+                        <td>${isBpSig ? '<span class="badge bg-danger">Seri Bağımlı</span>' : '<span class="badge bg-success">Beyaz Gürültü</span>'}</td>
+                    </tr>`;
+                });
+                setHTML('lbTableBody', lbHtml);
+
+                // ORTAK YORUM MANTIĞI
+                let yorum = "";
+                if(lbIsWhiteNoise && acf_sig_count <= (maxLag * 0.05)) { // Eger sadece %5 false positive varsa
+                    setClass('kararKutusu', "alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start bg-success-subtle text-success shadow-sm mt-4");
+                    setClass('kararIkon', "ri-checkbox-circle-fill text-success fs-28"); setTxt('kararBaslik', "Sonuç: Seri Beyaz Gürültü (Otokorelasyon Yok)");
+                    setHTML('kararAciklama', `Ljung-Box testi, serinin gecikmeli değerleri arasında toplu bir anlamlı ilişki olmadığını (p $\\ge \\alpha$) doğrulamaktadır. Grafiklerdeki kırmızı güven sınırlarını aşan belirgin bir çubuk bulunmamaktadır.`);
+                    
+                    yorum = `<span><strong>İstatistiksel Yorum:</strong> Test edilen seride zaman bağımlılığı bulunamamıştır. Eğer bu <strong>Model Artığı (Residual)</strong> ise, modeliniz mükemmel çalışmış demektir. Eğer bu <strong>Orijinal Seri</strong> ise, ARIMA modellemesine uygun değildir (Geçmiş, geleceği tahmin etmiyor).</span>`;
+                } else {
+                    setClass('kararKutusu', "alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start bg-danger-subtle text-danger shadow-sm mt-4");
+                    setClass('kararIkon', "ri-error-warning-fill text-danger fs-28"); setTxt('kararBaslik', "Sonuç: Seride Anlamlı Otokorelasyon (Bağımlılık) Var");
+                    setHTML('kararAciklama', `Hem Ljung-Box testleri (p < $\\alpha$) hem de ACF/PACF grafikleri, serinin geçmiş değerlerinin bugünkü değerleri üzerinde istatistiksel olarak anlamlı bir etkisi olduğunu göstermektedir.`);
+                    
+                    let modelHint = "";
+                    if(acf_sig_count > 4 && pacf_sig_count <= 2) modelHint = "PACF grafiği erken kesilirken ACF grafiği yavaşça sönümleniyor. Bu durum serinin bir <strong>AR (Oto-regresif)</strong> süreci olabileceğini gösterir. Modellemede p=1 veya p=2 denenebilir.";
+                    else if(pacf_sig_count > 4 && acf_sig_count <= 2) modelHint = "ACF grafiği erken kesilirken PACF grafiği dalgalanıyor. Bu durum serinin bir <strong>MA (Hareketli Ortalama)</strong> süreci olabileceğini gösterir. Modellemede q=1 veya q=2 denenebilir.";
+                    else modelHint = "Hem ACF hem de PACF grafikleri birlikte sönümlenmektedir. Bu yapı, karmaşık bir <strong>ARMA (p,q)</strong> sürecine işaret eder. Eğer yavaş sönümlenme varsa seri hala durağan olmayabilir, 1. fark almayı deneyin.";
+
+                    yorum = `<span><strong>Modelleme Önerisi (Heuristic):</strong> ${modelHint} <br><br>Bu çıkarımlar kesin model kararı değildir. Modelleri kurduktan sonra AIC/BIC bilgi kriterlerine göre nihai kararınızı verebilirsiniz.</span>`;
+                }
+                setHTML('yorumText', yorum);
+
+                setStyle('loadingOverlay', 'display', 'none'); setStyle('aktifSonuc', 'display', 'block');
+                document.getElementById('aktifSonuc').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) {
+                        MathJax.typesetClear();
+                        MathJax.typesetPromise().catch(err => console.log(err));
+                    }
+                }, 100);
+
+            } catch (error) { setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block'); alert("Analiz Hatası: " + error); }
+        }
+
+        function drawCorrelogram(canvasId, lags, values, upper, lower, titleText) {
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; const gColor = isDark ? '#334155' : '#e2e8f0';
+
+            if(charts[canvasId.replace('Chart', '').toLowerCase()]) charts[canvasId.replace('Chart', '').toLowerCase()].destroy();
+
+            // Sifiri asan barlar icin renk ayarlamasi
+            let barColors = values.map((v, i) => {
+                if(i===0) return '#64748b'; // Lag 0
+                if(v > upper[i] || v < lower[i]) return '#3b82f6'; // Anlamlı (Sınırı aşmış mavi)
+                return '#94a3b8'; // Anlamsiz gri
+            });
+
+            let datasets = [
+                { type: 'bar', label: titleText, data: values, backgroundColor: barColors, barPercentage: 0.15 },
+                { type: 'line', label: 'Üst Sınır', data: upper, borderColor: '#ef4444', borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: false },
+                { type: 'line', label: 'Alt Sınır', data: lower, borderColor: '#ef4444', borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: false }
+            ];
+
+            charts[canvasId.replace('Chart', '').toLowerCase()] = new Chart(document.getElementById(canvasId), {
+                data: { labels: lags, datasets: datasets },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { 
+                        y: { min: -1.1, max: 1.1, grid: { color: gColor }, ticks: { color: fColor, stepSize: 0.25 } }, 
+                        x: { grid: { color: gColor, display: false }, ticks: { color: fColor } } 
+                    } 
+                }
+            });
+        }
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>

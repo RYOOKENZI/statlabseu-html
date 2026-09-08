@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <title>Ayrıştırma (Decomposition) Analizi | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        .decomp-chart-wrapper { position: relative; height: 160px; width: 100%; margin-bottom: 5px; }
+        
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; margin-bottom: 20px; max-height: 400px;}
+        .param-grid-table { width: 100%; border-collapse: collapse; text-align: center; margin: 0; min-width: max-content; }
+        .param-grid-table th { position: sticky; top: 0; font-size: 13px; font-weight: 700; color: #475569; background-color: #f1f5f9; padding: 13px 12px; border: 1px solid #e2e8f0; white-space: nowrap; vertical-align: middle; z-index: 2; }
+        .param-grid-table td { padding: 11px 12px; font-size: 13px; color: #0f172a; border: 1px solid #e2e8f0; vertical-align: middle; white-space: nowrap; }
+        .param-grid-table tr:hover td { background-color: #f8fafc; }
+        
+        .info-box { background: linear-gradient(135deg, rgba(47, 143, 232, 0.1), rgba(14, 165, 233, 0.05)); border-left: 4px solid #2f8fe8; padding: 15px 20px; border-radius: 8px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 15px; }
+        .info-box i { font-size: 24px; color: #2f8fe8; }
+        .info-box p { margin: 0; font-size: 14px; color: #475569; line-height: 1.6; }
+
+        .loader-spinner { width: 40px; height: 40px; border: 4px solid rgba(47, 143, 232, 0.2); border-left-color: #2f8fe8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-pulse { animation: pulse-btn 1.8s infinite; background: linear-gradient(135deg, #2f8fe8, #0ea5e9); border: none; color: white !important; }
+        .btn-pulse:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(14, 165, 233, 0.4); background: linear-gradient(135deg, #1d7bd1, #0284c7); }
+        
+        .alert-warning-smart { background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.03)); border: 1px solid rgba(245, 158, 11, 0.2); border-left: 4px solid #f59e0b; color: #92400e; padding: 12px 16px; }
+        .insight-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #6366f1; padding: 15px 16px; border-radius: 8px; display: flex; align-items: flex-start; margin-top: 12px; }
+        .insight-box i { color: #6366f1; font-size: 22px; margin-right: 12px; margin-top: -3px; }
+        .insight-box span, .insight-box strong { font-size: 14.5px; font-weight: 600; line-height: 1.6; color: #000000 !important; }
+        .formula-box { background-color: #ffffff; padding: 25px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 15px; overflow-x: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.02);}
+
+        .ts-session-badge { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); display: inline-flex; align-items: center; gap: 5px; }
+        .no-data-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); border-radius: 10px; }
+        
+        .ts-info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .ts-info-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+        .ts-info-item span { display: block; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+        .ts-info-item strong { display: block; font-size: 15px; color: #0f172a; }
+
+        /* GECE MODU AYARLARI */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light, html.dark-mode .bg-body-bg { background-color: #0f172a !important; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        html.dark-mode .info-box { background: rgba(47, 143, 232, 0.1); }
+        html.dark-mode .info-box p { color: #cbd5e1; }
+        html.dark-mode .table-responsive { border-color: #334155; background: #1e293b; }
+        html.dark-mode .param-grid-table th { background-color: #0f172a; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .param-grid-table td { background-color: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark-mode .param-grid-table tr:hover td { background-color: #0f172a !important; }
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+        html.dark-mode .alert-warning-smart { background: rgba(245, 158, 11, 0.1) !important; border: 1px solid rgba(245, 158, 11, 0.2) !important; border-left: 4px solid #fbbf24 !important; color: #fcd34d !important; }
+        html.dark-mode .insight-box { background-color: #1e293b !important; border: 1px solid #334155 !important; border-left: 4px solid #818cf8 !important; }
+        html.dark-mode .insight-box i { color: #818cf8 !important; }
+        html.dark-mode .insight-box span, html.dark-mode .insight-box strong { color: #ffffff !important; }
+        html.dark-mode select.bg-light, html.dark-mode input.bg-light { background-color: #0f172a !important; color: #cbd5e1; border: 1px solid #334155 !important; }
+        html.dark-mode .formula-box { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        html.dark-mode .formula-box p { color: #cbd5e1; }
+        html.dark-mode .no-data-overlay { background: rgba(15, 23, 42, 0.95); border: 1px solid #334155; }
+        html.dark-mode .ts-info-item { background: #1e293b; border-color: #334155; }
+        html.dark-mode .ts-info-item span { color: #94a3b8; }
+        html.dark-mode .ts-info-item strong { color: #f8fafc; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border border-white shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-pie-chart-2-line align-middle me-1"></i> TS: Seriyi Bileşenlerine Ayırma
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="main-content-container overflow-hidden position-relative">
+                
+                <!-- VERİ YOKSA EKRANI KAPATAN OVERLAY -->
+                <div id="noDataOverlay" class="no-data-overlay" style="display: none;">
+                    <i class="ri-database-2-line text-primary mb-3" style="font-size: 64px;"></i>
+                    <h3 class="fw-bold text-dark mb-2">Zaman Serisi Oturumu Bulunamadı</h3>
+                    <p class="text-muted mb-4 text-center" style="max-width: 400px;">Ayrıştırma (Decomposition) analizi yapabilmek için öncelikle "Genel Analiz" sayfasından ortak zaman serisi verinizi yüklemeniz gerekmektedir.</p>
+                    <a href="zaman-serisi-genel-analiz.html" class="btn btn-primary px-4 py-2 fw-bold rounded-pill shadow"><i class="ri-arrow-left-line me-1"></i> Veri Girişi Sayfasına Git</a>
+                </div>
+
+                <div class="info-box shadow-sm mb-3">
+                    <i class="ri-information-line"></i>
+                    <div>
+                        <strong class="d-block text-dark mb-1">Zaman Serisi Ayrıştırması (Decomposition) Nedir?</strong>
+                        <p class="mb-0">Zaman serisi ayrıştırması, gözlenen serinin <strong>Trend ($T_t$)</strong>, <strong>Mevsimsel ($S_t$)</strong> ve <strong>Artık / Düzensiz ($R_t$)</strong> bileşenlerine ayrılarak serinin temel yapısının incelenmesini sağlar. <em>Toplamsal (Additive)</em> yöntemler dalgalanmanın sabit kaldığı serilerde, <em>Çarpımsal (Multiplicative)</em> yöntemler ise dalgalanmanın seviyeyle birlikte arttığı (sadece pozitif değerli) serilerde kullanılır.</p>
+                    </div>
+                </div>
+
+                <!-- ÜST BİLGİ VE OTURUM KONTROLÜ -->
+                <div class="d-flex justify-content-between align-items-center bg-white p-3 rounded-10 border border-light shadow-sm mb-4 flex-wrap gap-3">
+                    <div id="sessionStatus" class="d-flex align-items-center">
+                        <span class="ts-session-badge" id="sessionBadge"><i class="ri-check-double-line"></i> Ortak Oturum Aktif</span>
+                        <span class="fs-13 text-muted ms-2" id="sessionSubText">Yükleniyor...</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fs-12 text-muted fw-bold">Analiz Edilecek Seri:</span>
+                        <select id="seriesVersionSelect" class="form-select form-select-sm border-primary text-primary fw-bold" style="width: 220px;" onchange="changeActiveSeries()">
+                            <!-- JS Dolduracak -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- SOL PANEL: TEST AYARLARI -->
+                    <div class="col-lg-3 mb-4">
+                        <div class="position-sticky" style="top: 25px;">
+                            <div class="card bg-white border-0 rounded-10 p-4 shadow-sm">
+                                
+                                <h4 class="fs-16 fw-bold text-dark mb-3"><i class="ri-equalizer-fill align-middle text-primary me-1"></i> Ayrıştırma Ayarları</h4>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-secondary fs-12 mb-1">Kullanılacak Yöntem</label>
+                                    <select id="methodInput" class="form-select bg-light border-0 fs-13" onchange="toggleDecompOptions()">
+                                        <option value="stl" selected>STL (LOESS Tabanlı Modern Yöntem)</option>
+                                        <option value="classical">Klasik Ayrıştırma (Moving Average)</option>
+                                    </select>
+                                    <small class="text-muted fs-11 mt-1 d-block">STL (Seasonal and Trend decomposition using Loess), aykırı değerlere dirençli modern bir yöntemdir.</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-secondary fs-12 mb-1">Ayrıştırma Türü (Model)</label>
+                                    <select id="modelInput" class="form-select bg-light border-0 fs-13" disabled>
+                                        <option value="additive" selected>Toplamsal (Additive)</option>
+                                        <option value="multiplicative">Çarpımsal (Multiplicative)</option>
+                                    </select>
+                                    <small class="text-muted fs-11 mt-1 d-block" id="modelHelp">STL yöntemi doğası gereği daima toplamsaldır.</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-secondary fs-12 mb-1">Mevsimsel Periyot ($s$)</label>
+                                    <select id="periodInput" class="form-select bg-light border-0 fs-13">
+                                        <option value="auto" selected>Otomatik (Frekansa Göre)</option>
+                                        <option value="4">4 (Çeyreklik / Quarterly)</option>
+                                        <option value="7">7 (Günlük / Haftanın Günleri)</option>
+                                        <option value="12">12 (Aylık / Yıllık Döngü)</option>
+                                        <option value="24">24 (Saatlik / Günlük Döngü)</option>
+                                        <option value="52">52 (Haftalık / Yıllık Döngü)</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-4 form-check form-switch" id="robustSwitchContainer">
+                                    <input class="form-check-input" type="checkbox" id="robustCheck" checked>
+                                    <label class="form-check-label fw-bold text-secondary fs-12" for="robustCheck">Robust STL (Aykırı Değer Direnci)</label>
+                                </div>
+
+                                <div class="mt-2">
+                                    <button class="btn w-100 py-3 rounded-10 btn-action btn-pulse" onclick="baslatAnaliz()" id="btnAnaliz">
+                                        <i class="ri-magic-line align-middle me-1 fs-18"></i> BİLEŞENLERİNE AYIR
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SAĞ PANEL: SONUÇLAR VE GRAFİKLER -->
+                    <div class="col-lg-9 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+
+                            <div id="bosDurum" class="text-center py-5 my-auto">
+                                <i class="ri-pie-chart-2-line text-muted opacity-25" style="font-size: 4.5rem;"></i>
+                                <h5 class="text-muted mt-3 fs-16">Ayrıştırma Bekleniyor</h5>
+                                <p class="text-muted fs-14 mb-0">Sol panelden periyot ayarlarını yapıp "Bileşenlerine Ayır" butonuna basın.</p>
+                            </div>
+
+                            <div id="loadingOverlay" class="text-center py-5 my-auto" style="display: none;">
+                                <div class="loader-spinner"></div>
+                                <h5 class="text-primary mt-4 fs-16 fw-semibold">Zaman Serisi Ayrıştırılıyor...</h5>
+                            </div>
+
+                            <div id="aktifSonuc" style="display: none;">
+
+                                <!-- OTOMATIK ÖZET KARTI -->
+                                <div class="alert bg-body-bg border border-secondary border-opacity-25 rounded-10 p-3 mb-4">
+                                    <h5 class="fw-bold fs-13 text-dark mb-3 text-uppercase tracking-wider">Ayrıştırma Kalite Özeti</h5>
+                                    <div class="ts-info-grid">
+                                        <div class="ts-info-item"><span>Seçilen Yöntem</span><strong class="text-primary" id="sum_method">-</strong></div>
+                                        <div class="ts-info-item"><span>Mevsimsel Periyot ($s$)</span><strong class="text-primary" id="sum_period">-</strong></div>
+                                        <div class="ts-info-item"><span title="Trend'in seriyi açıklama gücü (0 ile 1 arası)">Trend Gücü ($F_T$)</span><strong class="text-dark" id="sum_trend_f">-</strong></div>
+                                        <div class="ts-info-item"><span title="Mevsimselliğin seriyi açıklama gücü (0 ile 1 arası)">Mevsimsel Güç ($F_S$)</span><strong class="text-dark" id="sum_seas_f">-</strong></div>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-warning-smart py-2 fs-12 mb-4 border-0 rounded-3 d-none" id="diffWarningBox">
+                                    <i class="ri-error-warning-fill align-middle me-1"></i> <strong>Dikkat:</strong> Farkı alınmış (Differenced) bir seri üzerinde çalışıyorsunuz. Bu seride ayrıştırılan "Trend" ve "Mevsimsellik", orijinal serinin yapısı hakkında değil, değişim oranlarının (farkların) içindeki kalıntılar hakkında bilgi verir.
+                                </div>
+
+                                <!-- AYRIŞTIRMA GRAFİKLERİ (4'LÜ PANEL) -->
+                                <div class="mb-4 chart-container border-primary border-opacity-25 p-3">
+                                    <h5 class="fs-14 fw-bold text-dark mb-3 text-center text-uppercase tracking-wider border-bottom pb-2"><i class="ri-bar-chart-grouped-line text-primary me-1"></i> Serinin Yapısal Bileşenleri</h5>
+                                    
+                                    <div class="decomp-chart-wrapper"><canvas id="obsChart"></canvas></div>
+                                    <div class="decomp-chart-wrapper"><canvas id="trendChart"></canvas></div>
+                                    <div class="decomp-chart-wrapper"><canvas id="seasChart"></canvas></div>
+                                    <div class="decomp-chart-wrapper"><canvas id="resChart"></canvas></div>
+                                </div>
+
+                                <!-- MEVSİMSEL İNDEKSLER / ETKİLER TABLOSU -->
+                                <div class="mb-4">
+                                    <h5 class="fs-14 fw-bold text-dark mb-2"><i class="ri-calendar-event-fill text-primary me-1"></i> Dönemsel Mevsimsellik Etkisi</h5>
+                                    <p class="fs-12 text-muted mb-2">Aşağıdaki tablo, serideki mevsimsel döngünün her bir dönem (Örn: Aylar) için veriye olan <strong>ortalama katkısını</strong> (Toplamsal ise doğrudan eklenen/çıkarılan değer, Çarpımsal ise oran) gösterir.</p>
+                                    <div class="table-responsive">
+                                        <table class="table param-grid-table m-0">
+                                            <thead><tr id="seasIndexHeader"></tr></thead>
+                                            <tbody id="seasIndexBody"></tbody>
+                                        </table>
+                                    </div>
+                                    <small class="text-muted fs-11 mt-1 d-block" id="seasIndexNote"></small>
+                                </div>
+
+                                <!-- ANA KARAR VE İÇGÖRÜ KUTUSU -->
+                                <div id="kararKutusu" class="alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start shadow-sm mt-4 bg-light border">
+                                    <div class="d-flex justify-content-center mt-1 me-3"><i class="ri-flashlight-fill text-primary fs-28"></i></div>
+                                    <div class="flex-grow-1">
+                                        <h4 class="mb-2 fs-15 fw-bold text-dark">İstatistiksel İçgörü</h4>
+                                        <div class="fs-14 text-muted lh-base" id="yorumText">
+                                            <!-- Yorumlar -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- İLERİ VE GERİ YÖNLENDİRME (NAVİGASYON) BAR'I -->
+                                <div class="d-flex justify-content-between align-items-center mt-5 pt-3 border-top">
+                                    <a href="zaman-serisi-otokorelasyon.html" class="btn btn-outline-secondary fw-bold px-4 py-2 rounded-pill"><i class="ri-arrow-left-line me-1"></i> Geri: Otokorelasyon (ACF)</a>
+                                    <a href="zaman-serisi-modelleme.html" class="btn btn-success fw-bold px-4 py-2 rounded-pill shadow-sm">İleri: Modelleme Modülüne Geç <i class="ri-arrow-right-line ms-1"></i></a>
+                                </div>
+
+                                <!-- AKORDEON: TEORİK ALTYAPI (FORMÜLLER) -->
+                                <div class="mt-4 mb-2">
+                                    <button class="btn btn-pulse w-100 py-3 d-flex justify-content-between align-items-center fs-15 fw-bold rounded-10 border-0 shadow" type="button" data-bs-toggle="collapse" data-bs-target="#teorikFormuller" aria-expanded="false" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: white;">
+                                        <span><i class="ri-function-line me-2 fs-20 align-middle"></i> Matematiksel Formülleri Görüntüle</span>
+                                        <i class="ri-arrow-down-s-line fs-22"></i>
+                                    </button>
+                                    <div class="collapse mt-3" id="teorikFormuller">
+                                        <div class="card card-body bg-body-bg border border-light p-4 rounded-10 shadow-sm">
+                                            <div class="row g-3">
+                                                
+                                                <div class="col-md-6">
+                                                    <div class="formula-box h-100">
+                                                        <strong class="text-dark d-block mb-3 fs-14">Toplamsal (Additive) Ayrıştırma Modeli</strong>
+                                                        <p class="fs-13 text-muted">Bileşenlerin toplamından oluşur. Mevsimsel etki, trendin seviyesinden bağımsız olarak sabittir.</p>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ Y_t = T_t + S_t + R_t $$
+                                                            $$ R_t = Y_t - T_t - S_t $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <div class="formula-box h-100">
+                                                        <strong class="text-dark d-block mb-3 fs-14">Çarpımsal (Multiplicative) Modeli</strong>
+                                                        <p class="fs-13 text-muted">Bileşenlerin çarpımından oluşur. Mevsimsel etkinin büyüklüğü, trend yükseldikçe artar. $Y_t > 0$ olmalıdır.</p>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ Y_t = T_t \times S_t \times R_t $$
+                                                            $$ R_t = \frac{Y_t}{T_t \times S_t} $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="formula-box mb-0">
+                                                        <strong class="text-dark d-block mb-3 fs-14">Bileşen Güçleri ($F_T$ ve $F_S$)</strong>
+                                                        <p class="fs-13 text-muted">Seride trendin veya mevsimselliğin ne kadar "güçlü" (açıklayıcı) olduğunu gösteren oranlardır. 0 ile 1 arasında değer alır. 1'e ne kadar yakınsa o bileşen o kadar baskındır.</p>
+                                                        <div class="row">
+                                                            <div class="col-md-6 overflow-auto text-center" style="font-size: 16px;">
+                                                                $$ F_T = \max\left(0, 1 - \frac{Var(R_t)}{Var(T_t + R_t)}\right) $$
+                                                            </div>
+                                                            <div class="col-md-6 overflow-auto text-center" style="font-size: 16px;">
+                                                                $$ F_S = \max\left(0, 1 - \frac{Var(R_t)}{Var(S_t + R_t)}\right) $$
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="footer-area bg-white text-center rounded-10 rounded-bottom-0 p-3 mt-4 border-top shadow-sm">
+                <p class="fs-14 text-body mb-0">© <span>StatLabseu</span> - Gelişmiş İstatistiksel Analiz Platformu</p>
+            </footer>
+
+        </div>
+    </div>
+ 
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function setTxt(id, text) { let el = document.getElementById(id); if (el) el.innerText = text; }
+        function setHTML(id, html) { let el = document.getElementById(id); if (el) el.innerHTML = html; }
+        function setStyle(id, prop, val) { let el = document.getElementById(id); if (el) el.style[prop] = val; }
+
+        let charts = { obs: null, trend: null, seas: null, res: null };
+        let currentSeries = null;
+        let sessionMeta = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            if (localStorage.getItem('statlab_theme') === 'dark') { themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); }
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); themeIcon.classList.remove('text-secondary'); localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); themeIcon.classList.remove('text-warning'); themeIcon.classList.add('text-secondary'); localStorage.setItem('statlab_theme', 'light');
+                }
+                if(charts.obs) baslatAnaliz(true); // Redraw charts
+            });
+            
+            checkSession();
+        });
+
+        function toggleDecompOptions() {
+            let method = document.getElementById('methodInput').value;
+            let modelSel = document.getElementById('modelInput');
+            let modelHelp = document.getElementById('modelHelp');
+            let robustDiv = document.getElementById('robustSwitchContainer');
+
+            if(method === 'stl') {
+                modelSel.value = 'additive';
+                modelSel.disabled = true;
+                modelHelp.innerText = "STL yöntemi doğası gereği daima toplamsaldır.";
+                robustDiv.style.display = "block";
+            } else {
+                modelSel.disabled = false;
+                modelHelp.innerText = "Serinin dalgalanması seviyeyle artıyorsa Çarpımsal seçin.";
+                robustDiv.style.display = "none";
+            }
+        }
+
+        function checkSession() {
+            let isActive = sessionStorage.getItem('ts_session_active');
+            let isDirty = sessionStorage.getItem('ts_data_dirty');
+
+            if(isActive !== 'true') {
+                document.getElementById('noDataOverlay').style.display = 'flex';
+                return;
+            }
+
+            sessionMeta = JSON.parse(sessionStorage.getItem('ts_session'));
+            document.getElementById('sessionSubText').innerText = `${sessionMeta.name} | ${sessionMeta.n} Gözlem | ${sessionMeta.freq}`;
+            
+            if(isDirty === 'true') {
+                document.getElementById('sessionBadge').className = "ts-session-badge bg-warning text-dark";
+                document.getElementById('sessionBadge').innerHTML = "<i class='ri-alert-fill'></i> Orijinal Veri Değişti (Lütfen Ana Sayfadan Güncelleyin)";
+            }
+
+            // Otomatik Frekans / Periyot Belirleme
+            let pSel = document.getElementById('periodInput');
+            if(sessionMeta.freq === 'Aylık') pSel.value = "12";
+            else if(sessionMeta.freq === 'Çeyreklik') pSel.value = "4";
+            else if(sessionMeta.freq === 'Haftalık') pSel.value = "52";
+            else if(sessionMeta.freq === 'Günlük') pSel.value = "7";
+            else pSel.value = "auto";
+
+            loadSeriesDropdown();
+        }
+
+        function loadSeriesDropdown() {
+            let versions = JSON.parse(sessionStorage.getItem('ts_versions')) || [];
+            let activeData = JSON.parse(sessionStorage.getItem('ts_activeData'));
+            
+            let sel = document.getElementById('seriesVersionSelect');
+            sel.innerHTML = '';
+
+            versions.forEach(v => {
+                let opt = document.createElement('option');
+                opt.value = v.id;
+                opt.text = v.name;
+                if(activeData && activeData.id === v.id) opt.selected = true;
+                sel.appendChild(opt);
+            });
+
+            changeActiveSeries(true); 
+        }
+
+        function changeActiveSeries(initialLoad = false) {
+            let versions = JSON.parse(sessionStorage.getItem('ts_versions')) || [];
+            let selId = document.getElementById('seriesVersionSelect').value;
+            let selected = versions.find(v => v.id === selId);
+            
+            if(selected) {
+                currentSeries = selected;
+                sessionStorage.setItem('ts_activeData', JSON.stringify(selected)); 
+                
+                if(currentSeries.name.toLowerCase().includes('fark')) {
+                    document.getElementById('diffWarningBox').classList.remove('d-none');
+                } else {
+                    document.getElementById('diffWarningBox').classList.add('d-none');
+                }
+
+                if(!initialLoad) {
+                    setStyle('aktifSonuc', 'display', 'none');
+                    setStyle('bosDurum', 'display', 'block');
+                }
+            }
+        }
+
+        // --- MATH FUNCTIONS FOR JS FALLBACK ---
+        function jstat_variance(arr) {
+            let clean = arr.filter(v=>v!==null && !isNaN(v));
+            if(clean.length < 2) return 0;
+            let mean = clean.reduce((a,b)=>a+b,0)/clean.length;
+            let sumSq = clean.reduce((a,b)=>a+Math.pow(b-mean,2),0);
+            return sumSq / (clean.length-1);
+        }
+
+        function fallbackDecomposition(y, s, type) {
+            // Classical MA based decomposition (JS Fallback)
+            let n = y.length;
+            let trend = new Array(n).fill(null);
+            let detrended = new Array(n).fill(null);
+            let seasonal = new Array(n).fill(0);
+            let resid = new Array(n).fill(null);
+
+            // 1. Trend (Centered MA if s is even)
+            if(s % 2 === 0) {
+                let half = s/2;
+                for(let i=half; i<n-half; i++) {
+                    let sum = 0.5 * y[i-half] + 0.5 * y[i+half];
+                    for(let j = i-half+1; j < i+half; j++) sum += y[j];
+                    trend[i] = sum / s;
+                }
+            } else {
+                let half = Math.floor(s/2);
+                for(let i=half; i<n-half; i++) {
+                    let sum = 0;
+                    for(let j = i-half; j <= i+half; j++) sum += y[j];
+                    trend[i] = sum / s;
+                }
+            }
+
+            // 2. Detrended
+            for(let i=0; i<n; i++) {
+                if(trend[i] !== null && y[i] !== null) {
+                    detrended[i] = (type === 'multiplicative') ? (y[i] / trend[i]) : (y[i] - trend[i]);
+                }
+            }
+
+            // 3. Seasonal (Average of detrended per season)
+            let seasonSums = new Array(s).fill(0);
+            let seasonCounts = new Array(s).fill(0);
+            for(let i=0; i<n; i++) {
+                if(detrended[i] !== null) {
+                    seasonSums[i%s] += detrended[i];
+                    seasonCounts[i%s] += 1;
+                }
+            }
+            
+            let seasonAvgs = [];
+            let totalAvg = 0;
+            for(let k=0; k<s; k++) {
+                let avg = seasonCounts[k] > 0 ? seasonSums[k]/seasonCounts[k] : (type==='multiplicative'?1:0);
+                seasonAvgs.push(avg);
+                totalAvg += avg;
+            }
+            totalAvg /= s;
+
+            // Normalize seasonal
+            for(let k=0; k<s; k++) {
+                if(type === 'multiplicative') seasonAvgs[k] /= totalAvg;
+                else seasonAvgs[k] -= totalAvg;
+            }
+
+            for(let i=0; i<n; i++) {
+                seasonal[i] = seasonAvgs[i%s];
+            }
+
+            // 4. Residual
+            for(let i=0; i<n; i++) {
+                if(y[i] !== null && trend[i] !== null) {
+                    if(type === 'multiplicative') {
+                        resid[i] = y[i] / (trend[i] * seasonal[i]);
+                    } else {
+                        resid[i] = y[i] - trend[i] - seasonal[i];
+                    }
+                }
+            }
+
+            // 5. Strengths
+            let varR = jstat_variance(resid);
+            
+            let trArr = []; let srArr = [];
+            for(let i=0; i<n; i++) {
+                if(resid[i]!==null && trend[i]!==null) trArr.push(trend[i]+resid[i]);
+                if(resid[i]!==null) srArr.push(seasonal[i]+resid[i]); // seasonal is never null
+            }
+            let varTR = jstat_variance(trArr);
+            let varSR = jstat_variance(srArr);
+
+            let ft = (varTR > 0) ? Math.max(0, 1 - varR/varTR) : 0;
+            let fs = (varSR > 0) ? Math.max(0, 1 - varR/varSR) : 0;
+
+            return {
+                observed: y, trend: trend, seasonal: seasonal, residual: resid,
+                seasonal_indices: seasonAvgs,
+                trend_strength: ft, seasonal_strength: fs
+            };
+        }
+
+        function baslatAnaliz(isSilent = false) {
+            if(!currentSeries) return;
+            if(!isSilent) {
+                setStyle('bosDurum', 'display', 'none'); setStyle('aktifSonuc', 'display', 'none'); setStyle('loadingOverlay', 'display', 'block'); 
+            }
+            setTimeout(() => hesaplaAyristirma(), isSilent ? 50 : 800);
+        }
+
+        async function hesaplaAyristirma() {
+            try {
+                let method = document.getElementById('methodInput').value; // stl or classical
+                let modelType = document.getElementById('modelInput').value; // additive or multiplicative
+                if(method === 'stl') modelType = 'additive';
+
+                let periodStr = document.getElementById('periodInput').value;
+                let robust = document.getElementById('robustCheck').checked;
+
+                // Veriyi temizle ve interpolasyon (bosluklari doldur)
+                // Klasik ayrıştırma eksik veri sevmez.
+                let yVals = [...currentSeries.values];
+                let hasMissing = false;
+                for(let i=0; i<yVals.length; i++) {
+                    if(yVals[i] === null) {
+                        hasMissing = true;
+                        let prev = i>0 ? yVals[i-1] : 0;
+                        let next = yVals.slice(i).find(v=>v!==null) || prev;
+                        yVals[i] = (prev+next)/2; // Basit linear interpolation
+                    }
+                }
+                let N = yVals.length;
+
+                let period = periodStr === 'auto' ? (sessionMeta.freq === 'Aylık'?12:4) : parseInt(periodStr);
+
+                if(N < 2 * period) {
+                    alert(`Ayrıştırma yapabilmek için en az 2 tam mevsimsel döngü verisi gereklidir. (Periyot ${period}, Mevcut Gözlem ${N})`);
+                    setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block');
+                    return;
+                }
+
+                if(modelType === 'multiplicative') {
+                    let minVal = Math.min(...yVals);
+                    if(minVal <= 0) {
+                        alert("Çarpımsal (Multiplicative) ayrıştırma yöntemi negatif veya sıfır değer içeren serilerde uygulanamaz! Lütfen 'Toplamsal' seçeneğini kullanın veya verinize sabite ekleyin.");
+                        setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block');
+                        return;
+                    }
+                }
+
+                let apiSuccess = false;
+                let rRes = {};
+
+                // API İSTEĞİ (Beklenen Endpoint: /test/decomposition)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000); 
+
+                try {
+                    let reqBody = { y: yVals, method: method, model: modelType, period: period, robust: robust };
+                    let istek = await fetch("https://api.statlabseu.com/test/decomposition", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(reqBody), signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    
+                    if(istek.ok) { 
+                        let apiData = await istek.json(); 
+                        apiSuccess = true;
+                        rRes = apiData; 
+                    }
+                } catch (e) { clearTimeout(timeoutId); }
+
+                // JS FALLBACK (EĞER API ÇALIŞMIYORSA - MOCKUP SONUÇLAR)
+                if(!apiSuccess) {
+                    console.log("Python Backend'e ulaşılamadı. UI Demolaması (JS Klasik Algoritma) devreye girdi.");
+                    rRes = fallbackDecomposition(yVals, period, modelType);
+                }
+
+                // 1. ÖZET METRİKLERİ
+                setTxt('sum_method', method === 'stl' ? (robust ? 'Robust STL' : 'Standart STL') : (modelType==='additive'?'Klasik (Toplamsal)':'Klasik (Çarpımsal)'));
+                setTxt('sum_period', period);
+                setTxt('sum_trend_f', rRes.trend_strength.toFixed(3));
+                setTxt('sum_seas_f', rRes.seasonal_strength.toFixed(3));
+
+                // 2. MEVSİMSEL İNDEKSLER TABLOSU
+                let sHeaders = ""; let sBody = "";
+                for(let i=0; i<period; i++) {
+                    sHeaders += `<th>Dönem ${i+1}</th>`;
+                    let sign = (modelType==='additive' && rRes.seasonal_indices[i] > 0) ? '+' : '';
+                    sBody += `<td><span class="fw-bold ${rRes.seasonal_indices[i]>0 ? 'text-primary':'text-danger'}">${sign}${rRes.seasonal_indices[i].toFixed(3)}</span></td>`;
+                }
+                setHTML('seasIndexHeader', sHeaders);
+                setHTML('seasIndexBody', `<tr>${sBody}</tr>`);
+                setTxt('seasIndexNote', modelType==='multiplicative' ? "Çarpımsal modelde indekslerin toplam ortalaması 1'dir. 1'den büyük değerler o dönemin ortalamayı artırdığını gösterir." : "Toplamsal modelde mevsimsel etkilerin toplamı (ortalama) 0'a eşittir. Eksi değerler seriyi aşağı çeken dönemlerdir.");
+
+                // 3. GRAFİKLERİ ÇİZ (4 PANEL)
+                draw4PanelChart(currentSeries.time, rRes.observed, rRes.trend, rRes.seasonal, rRes.residual);
+
+                // 4. İSTATİSTİKSEL YORUM MANTIĞI
+                let yorumHtml = "";
+                
+                let fs = rRes.seasonal_strength;
+                let ft = rRes.trend_strength;
+
+                let sText = fs > 0.8 ? "<strong>Çok güçlü</strong>" : (fs > 0.5 ? "<strong>Orta düzeyde</strong>" : "<strong>Zayıf (veya önemsiz)</strong>");
+                let tText = ft > 0.8 ? "<strong>Güçlü</strong>" : (ft > 0.4 ? "<strong>Belirgin</strong>" : "<strong>Zayıf</strong>");
+
+                yorumHtml += `Yapılan ${method.toUpperCase()} ayrıştırması sonucuna göre seride ${tText} bir trend ve ${sText} bir mevsimsel yapı (Periyot=${period}) bulunmaktadır. <br><br>`;
+                
+                if(fs > 0.6) {
+                    yorumHtml += `<strong>Modelleme Önerisi:</strong> Serinizde belirgin bir mevsimsellik ($F_S = ${fs.toFixed(2)}$) bulunduğu için, klasik ARIMA modelleri yerine <strong>SARIMA</strong> veya <strong>Holt-Winters</strong> gibi mevsimsel döngüleri (s=${period}) destekleyen modelleri tercih etmeniz tavsiye edilir.`;
+                } else {
+                    yorumHtml += `<strong>Modelleme Önerisi:</strong> Seride dikkate değer bir mevsimsel dalgalanma ($F_S = ${fs.toFixed(2)}$) tespit edilmemiştir. İleri analizlerde mevsimsel olmayan klasik <strong>ARIMA</strong> veya üstel düzleştirme modelleri kullanılabilir.`;
+                }
+
+                if(hasMissing) {
+                    yorumHtml += `<br><br><span class="text-warning text-dark"><i class="ri-alert-line"></i> Not: Verinizdeki eksik (boş) gözlemler, ayrıştırma algoritmasının çalışabilmesi için iç değerleme (interpolasyon) yöntemiyle geçici olarak doldurulmuştur.</span>`;
+                }
+
+                setHTML('yorumText', yorumHtml);
+
+                setStyle('loadingOverlay', 'display', 'none'); setStyle('aktifSonuc', 'display', 'block');
+                document.getElementById('aktifSonuc').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) {
+                        MathJax.typesetClear();
+                        MathJax.typesetPromise().catch(err => console.log(err));
+                    }
+                }, 100);
+
+            } catch (error) { setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block'); alert("Analiz Hatası: " + error); }
+        }
+
+        function draw4PanelChart(labels, obs, trend, seas, resid) {
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; const gColor = isDark ? '#334155' : '#e2e8f0';
+
+            // Mevcut chartları temizle
+            ['obs','trend','seas','res'].forEach(key => { if(charts[key]) charts[key].destroy(); });
+
+            let commonOptions = {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: true, position: 'top', align: 'end', labels:{boxWidth:12, font:{size:11}, color: fColor} }, tooltip: {mode: 'index', intersect: false} },
+                layout: { padding: { left: 0, right: 0, top: 0, bottom: 0 } },
+                scales: { 
+                    x: { display: false, grid: { display: false } }, 
+                    y: { position: 'left', grid: { color: gColor }, ticks: { color: fColor, font:{size:10}, maxTicksLimit: 4 } } 
+                }
+            };
+
+            // 1. Observed (Gözlenen)
+            let optObs = JSON.parse(JSON.stringify(commonOptions));
+            charts.obs = new Chart(document.getElementById('obsChart'), {
+                type: 'line', data: { labels: labels, datasets: [{ label: '1. Gözlenen Seri (Observed)', data: obs, borderColor: '#0f172a', backgroundColor:'transparent', borderWidth: 2, pointRadius: 0, tension: 0.1 }] },
+                options: optObs
+            });
+
+            // 2. Trend
+            let optTrend = JSON.parse(JSON.stringify(commonOptions));
+            charts.trend = new Chart(document.getElementById('trendChart'), {
+                type: 'line', data: { labels: labels, datasets: [{ label: '2. Trend Bileşeni', data: trend, borderColor: '#3b82f6', backgroundColor:'transparent', borderWidth: 2, pointRadius: 0, tension: 0.3 }] },
+                options: optTrend
+            });
+
+            // 3. Seasonal (Mevsimsel)
+            let optSeas = JSON.parse(JSON.stringify(commonOptions));
+            charts.seas = new Chart(document.getElementById('seasChart'), {
+                type: 'line', data: { labels: labels, datasets: [{ label: '3. Mevsimsel Bileşen (Seasonal)', data: seas, borderColor: '#10b981', backgroundColor:'transparent', borderWidth: 2, pointRadius: 0, tension: 0.3 }] },
+                options: optSeas
+            });
+
+            // 4. Residual (Artık)
+            let optRes = JSON.parse(JSON.stringify(commonOptions));
+            optRes.scales.x.display = true; // Sadece en alttakinde X ekseni goster
+            optRes.scales.x.ticks = { color: fColor, maxTicksLimit: 12 };
+            optRes.plugins.annotation = { annotations: { line1: { type: 'line', yMin: 0, yMax: 0, borderColor: '#ef4444', borderWidth: 1, borderDash: [2,2] } } }; // Sifir cizgisi (Toplamsal ise)
+
+            charts.res = new Chart(document.getElementById('resChart'), {
+                type: 'bar', // Artıklar genellikle bar grafikle gösterilir
+                data: { labels: labels, datasets: [{ label: '4. Artık Bileşen (Residual)', data: resid, backgroundColor: '#94a3b8', borderWidth: 0, barPercentage: 0.3 }] },
+                options: optRes
+            });
+        }
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>

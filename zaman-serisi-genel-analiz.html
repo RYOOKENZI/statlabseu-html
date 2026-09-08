@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Matematik Formülleri İçin -->
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <title>Zaman Serisi Veri Girişi ve Genel Analiz | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; margin-bottom: 20px;}
+        .param-grid-table { width: 100%; border-collapse: collapse; text-align: center; margin: 0; min-width: max-content; }
+        .param-grid-table th { font-size: 13px; font-weight: 700; color: #475569; background-color: #f1f5f9; padding: 13px 12px; border: 1px solid #e2e8f0; white-space: nowrap; vertical-align: middle; }
+        .param-grid-table td { padding: 13px 12px; font-size: 13px; color: #0f172a; border: 1px solid #e2e8f0; vertical-align: middle; white-space: nowrap; }
+        .param-grid-table tr:hover td { background-color: #f8fafc; }
+        
+        .param-grid-table tr:first-child th, .param-grid-table tr:first-child td { border-top: none; }
+        .param-grid-table tr:last-child th, .param-grid-table tr:last-child td { border-bottom: none; }
+        .param-grid-table tr th:first-child, .param-grid-table tr td:first-child { border-left: none; }
+        .param-grid-table tr th:last-child, .param-grid-table tr td:last-child { border-right: none; }
+
+        .info-box { background: linear-gradient(135deg, rgba(47, 143, 232, 0.1), rgba(14, 165, 233, 0.05)); border-left: 4px solid #2f8fe8; padding: 15px 20px; border-radius: 8px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 15px; }
+        .info-box i { font-size: 24px; color: #2f8fe8; }
+        .info-box p { margin: 0; font-size: 14px; color: #475569; line-height: 1.6; }
+
+        .loader-spinner { width: 40px; height: 40px; border: 4px solid rgba(47, 143, 232, 0.2); border-left-color: #2f8fe8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-pulse { animation: pulse-btn 1.8s infinite; background: linear-gradient(135deg, #2f8fe8, #0ea5e9); border: none; color: white !important; }
+        .btn-pulse:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(14, 165, 233, 0.4); background: linear-gradient(135deg, #1d7bd1, #0284c7); }
+        .btn-action { font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; transition: all 0.3s ease; }
+
+        .alert-warning-smart { background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.03)); border: 1px solid rgba(245, 158, 11, 0.2); border-left: 4px solid #f59e0b; color: #92400e; padding: 12px 16px; }
+        .insight-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #6366f1; padding: 15px 16px; border-radius: 8px; display: flex; align-items: flex-start; margin-top: 12px; }
+        .insight-box i { color: #6366f1; font-size: 22px; margin-right: 12px; margin-top: -3px; }
+        .insight-box span, .insight-box strong { font-size: 14.5px; font-weight: 600; line-height: 1.6; color: #000000 !important; }
+        .formula-box { background-color: #ffffff; padding: 25px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 15px; overflow-x: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.02);}
+
+        .custom-upload-zone { border: 2px dashed #2f8fe8 !important; background-color: rgba(47, 143, 232, 0.04); transition: all 0.2s ease-in-out; cursor: pointer; }
+        .custom-upload-zone:hover { background-color: rgba(47, 143, 232, 0.08); border-color: #1d7bd1 !important; transform: translateY(-1px); }
+
+        /* YENİ NESİL EXCEL BENZERİ GRİD (STICKY) */
+        .excel-container { max-height: 380px; overflow: auto; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; position: relative; }
+        .excel-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: max-content; }
+        .excel-table th { position: sticky; top: 0; z-index: 10; background: #f1f5f9; border-bottom: 1px solid #cbd5e1; border-right: 1px solid #cbd5e1; padding: 8px 10px; font-size: 13px; color: #334155; font-weight: 700; user-select: none; }
+        .excel-table td { border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 0; position: relative; }
+        
+        .excel-table td:first-child, .excel-table th:first-child { position: sticky; left: 0; z-index: 11; background: #f8fafc; border-right: 1px solid #cbd5e1; width: 40px; text-align: center; font-weight: bold; color: #64748b; font-size: 12px; }
+        .excel-table th:first-child { z-index: 12; top: 0; left: 0; }
+
+        .excel-input { width: 100%; height: 100%; min-height: 35px; border: none; outline: none; background: transparent; text-align: center; padding: 5px 10px; font-size: 14px; font-family: inherit; color: #0f172a; transition: all 0.2s; }
+        .excel-input:focus { background-color: #eff6ff; box-shadow: inset 0 0 0 2px #3b82f6; }
+        .excel-input.error { background-color: #fee2e2 !important; color: #b91c1c; font-weight: bold; }
+        .excel-input.missing { background-color: #fef08a !important; color: #854d0e; }
+        
+        .header-edit { background: transparent; border: none; outline: none; font-weight: 700; color: inherit; width: 100%; text-align: center; cursor: text; }
+        .header-edit:focus { border-bottom: 1px dashed #3b82f6; }
+        
+        .btn-grid-action { border: 1px dashed #cbd5e1; background: transparent; color: #64748b; font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 6px; transition: all 0.2s; }
+        .btn-grid-action:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
+
+        /* ZAMAN SERİSİ ÖZEL BİLEŞENLER */
+        .ts-session-badge { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); display: inline-flex; align-items: center; gap: 5px; }
+        .ts-info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .ts-info-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; text-align: center; }
+        .ts-info-item span { display: block; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+        .ts-info-item strong { display: block; font-size: 15px; color: #0f172a; }
+
+        /* GECE MODU AYARLARI */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light, html.dark-mode .bg-body-bg { background-color: #0f172a !important; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        html.dark-mode .info-box { background: rgba(47, 143, 232, 0.1); }
+        html.dark-mode .info-box p { color: #cbd5e1; }
+        
+        html.dark-mode .table-responsive { border-color: #334155; background: #1e293b; }
+        html.dark-mode .param-grid-table th { background-color: #0f172a; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .param-grid-table td { background-color: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark-mode .param-grid-table tr:hover td { background-color: #0f172a !important; }
+        
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+        
+        html.dark-mode .alert-warning-smart { background: rgba(245, 158, 11, 0.1) !important; border: 1px solid rgba(245, 158, 11, 0.2) !important; border-left: 4px solid #fbbf24 !important; color: #fcd34d !important; }
+        html.dark-mode .insight-box { background-color: #1e293b !important; border: 1px solid #334155 !important; border-left: 4px solid #818cf8 !important; }
+        html.dark-mode .insight-box i { color: #818cf8 !important; }
+        html.dark-mode .insight-box span, html.dark-mode .insight-box strong { color: #ffffff !important; }
+
+        html.dark-mode select.bg-light, html.dark-mode input.bg-light { background-color: #0f172a !important; color: #cbd5e1; border: 1px solid #334155 !important; }
+
+        html.dark-mode .excel-container { border-color: #334155; background: #1e293b; }
+        html.dark-mode .excel-table th { background: #0f172a; border-color: #334155; color: #cbd5e1; }
+        html.dark-mode .excel-table td { border-color: #334155; }
+        html.dark-mode .excel-table td:first-child, html.dark-mode .excel-table th:first-child { background: #1e293b; border-color: #334155; color: #94a3b8; }
+        html.dark-mode .excel-input { color: #e2e8f0; }
+        html.dark-mode .excel-input:focus { background-color: #0f172a; box-shadow: inset 0 0 0 2px #0ea5e9; }
+        html.dark-mode .excel-input.error { background-color: #7f1d1d !important; color: #fca5a5; }
+        html.dark-mode .excel-input.missing { background-color: #854d0e !important; color: #fef08a; }
+        html.dark-mode .btn-grid-action { border-color: #475569; color: #94a3b8; }
+        html.dark-mode .btn-grid-action:hover { border-color: #0ea5e9; color: #0ea5e9; background: rgba(14, 165, 233, 0.1); }
+        
+        html.dark-mode .ts-info-item { background: #1e293b; border-color: #334155; }
+        html.dark-mode .ts-info-item span { color: #94a3b8; }
+        html.dark-mode .ts-info-item strong { color: #f8fafc; }
+        html.dark-mode .formula-box { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        html.dark-mode .formula-box p { color: #cbd5e1; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border border-white shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-stock-line align-middle me-1"></i> TS: Merkezi Veri Girişi ve EDA
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="main-content-container overflow-hidden">
+                
+                <div class="info-box shadow-sm mb-3">
+                    <i class="ri-information-line"></i>
+                    <div>
+                        <strong class="d-block text-dark mb-1">Merkezi Zaman Serisi Oturumu ve Keşifsel Analiz (EDA)</strong>
+                        <p class="mb-0">Zaman serinizi yalnızca <strong>bir kez</strong> bu ekrana girin. Tüm ileri düzey analizler (Durağanlık, ARIMA Modelleme, Tahmin vb.) aynı veri seti üzerinden çalışacaktır. Bu sayfanın amacı; serinizin yapısını, trendini, varyansını, eksik ve aykırı (outlier) değerlerini modelleme öncesinde şeffafça keşfetmenizdir.</p>
+                    </div>
+                </div>
+
+                <!-- ÜST BİLGİ VE OTURUM KONTROLÜ -->
+                <div class="d-flex justify-content-between align-items-center bg-white p-3 rounded-10 border border-light shadow-sm mb-4">
+                    <div id="sessionStatus">
+                        <span class="ts-session-badge bg-secondary" id="sessionBadge"><i class="ri-database-2-fill"></i> Oturum Bekleniyor</span>
+                        <span class="fs-13 text-muted ms-2" id="sessionSubText">Henüz veri girişi yapılmadı. Bütün modüller bu oturuma bağlıdır.</span>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="resetSession()" id="btnResetSession" style="display:none;"><i class="ri-refresh-line"></i> Yeni Analiz Başlat (Tüm Modülleri Sıfırla)</button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- SOL PANEL: VERİ GİRİŞİ -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="position-sticky" style="top: 25px;">
+                            <div class="card bg-white border-0 rounded-10 p-4 shadow-sm">
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h4 class="fs-16 fw-bold text-dark mb-0"><i class="ri-table-2 align-middle text-primary me-1"></i> Veri Matrisi</h4>
+                                    <input type="text" id="seriesNameInput" class="form-control form-control-sm border bg-light w-50" placeholder="Seri Adı (Örn: Satışlar)" value="Aylık Satışlar">
+                                </div>
+
+                                <div class="custom-upload-zone p-2 rounded-10 text-center mb-3" onclick="document.getElementById('dosyaGezgini').click()">
+                                    <h5 class="fs-13 fw-semibold text-primary mb-0"><i class="ri-upload-cloud-2-line fs-18 align-middle me-1"></i> Excel / CSV Yükle</h5>
+                                    <input type="file" id="dosyaGezgini" accept=".csv, .txt, .xlsx, .xls" style="display: none;">
+                                </div>
+
+                                <div class="alert alert-warning-smart py-2 fs-12 mb-3 border-0 rounded-3">
+                                    <i class="ri-edit-2-fill align-middle me-1"></i> Hücrelere tıklayıp değer girebilir veya <strong>Excel'den doğrudan yapıştırabilirsiniz (Ctrl+V)</strong>.
+                                </div>
+
+                                <div id="gridErrorMsg" class="text-danger fw-bold fs-12 mb-2 d-none"><i class="ri-error-warning-line align-middle"></i> Hata: Kırmızı renkli hücrelerdeki verileri düzeltin! Zaman ve Sayısal alanları kontrol edin.</div>
+
+                                <!-- EXCEL GRİDİ -->
+                                <div class="excel-container mb-3" id="excelWrapper">
+                                    <table class="excel-table" id="excelGrid">
+                                        <thead>
+                                            <tr id="gridHeaderRow">
+                                                <th>#</th>
+                                                <th title="Zaman Değişkeni (Zorunlu)"><input type="text" class="header-edit text-primary" value="Tarih" readonly></th>
+                                                <th title="Sayısal Seri (Y)"><input type="text" class="header-edit" value="Deger_Y1"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="gridBody">
+                                            <!-- JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="d-flex gap-2 mb-3">
+                                    <button class="btn-grid-action w-50" onclick="addRow()"><i class="ri-add-line"></i> Zaman Gözlemi Ekle</button>
+                                    <button class="btn-grid-action w-50" onclick="addCol()"><i class="ri-add-column-line"></i> Yeni Seri (Y2) Ekle</button>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-secondary fs-12 mb-1">Frekans (Zaman Aralığı)</label>
+                                    <select id="freqInput" class="form-select bg-light border-0 fs-13">
+                                        <option value="Otomatik">Otomatik Algıla</option>
+                                        <option value="Yıllık">Yıllık</option>
+                                        <option value="Çeyreklik">Çeyreklik (Quarterly)</option>
+                                        <option value="Aylık" selected>Aylık</option>
+                                        <option value="Haftalık">Haftalık</option>
+                                        <option value="Günlük">Günlük</option>
+                                    </select>
+                                </div>
+
+                                <div class="d-flex flex-column gap-3 mt-4">
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-outline-secondary w-50 py-2 rounded-10 btn-action" onclick="ornekVeriYukle()">
+                                            <i class="ri-magic-line align-middle me-1"></i> Örnek Veri
+                                        </button>
+                                        <button class="btn btn-outline-danger w-50 py-2 rounded-10 btn-action" onclick="temizleVeri(true)">
+                                            <i class="ri-delete-bin-line align-middle me-1"></i> Temizle
+                                        </button>
+                                    </div>
+                                    <button class="btn w-100 py-3 rounded-10 btn-action btn-pulse" onclick="kaydetVeAnalizEt()" id="btnAnaliz">
+                                        <i class="ri-save-3-fill align-middle me-1 fs-18"></i> OTURUMA KAYDET & GENEL ANALİZ YAP
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SAĞ PANEL: VERİ DURUMU VE GENEL ANALİZ SONUÇLARI -->
+                    <div class="col-lg-8 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                            
+                            <div id="bosDurum" class="text-center py-5 my-auto">
+                                <i class="ri-database-2-fill text-muted opacity-25" style="font-size: 4.5rem;"></i>
+                                <h5 class="text-muted mt-3 fs-16">Oturum Boş</h5>
+                                <p class="text-muted fs-14 mb-0">Zaman serisi verinizi yükleyip "Oturuma Kaydet" butonuna basın.</p>
+                            </div>
+
+                            <div id="loadingOverlay" class="text-center py-5 my-auto" style="display: none;">
+                                <div class="loader-spinner"></div>
+                                <h5 class="text-primary mt-4 fs-16 fw-semibold">Zaman Serisi Merkezi Session'a Yükleniyor...</h5>
+                            </div>
+
+                            <div id="aktifSonuc" style="display: none;">
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="fs-16 fw-bold text-dark mb-0"><i class="ri-dashboard-2-line text-primary me-1"></i> Veri Durumu ve Seriye Genel Bakış</h5>
+                                    <div>
+                                        <span class="badge bg-primary-subtle text-primary border border-primary border-opacity-25 px-3 py-2 fs-12" id="lblActiveSeries">Ana Seri: Y1</span>
+                                    </div>
+                                </div>
+
+                                <!-- VERİ DOĞRULAMA (QUALITY) KARTLARI -->
+                                <div class="row g-2 mb-4">
+                                    <div class="col-12">
+                                        <div class="alert bg-body-bg border border-light p-3 m-0 rounded-10">
+                                            <div class="row text-center">
+                                                <div class="col-3 border-end">
+                                                    <span class="d-block fs-11 text-muted fw-bold text-uppercase mb-1">Gözlem (N)</span>
+                                                    <strong class="fs-16 text-dark" id="q_obs">-</strong>
+                                                </div>
+                                                <div class="col-3 border-end">
+                                                    <span class="d-block fs-11 text-muted fw-bold text-uppercase mb-1">Zaman Aralığı</span>
+                                                    <strong class="fs-14 text-dark" id="q_range">-</strong>
+                                                </div>
+                                                <div class="col-3 border-end">
+                                                    <span class="d-block fs-11 text-muted fw-bold text-uppercase mb-1">Eksik Değer</span>
+                                                    <strong class="fs-16 text-danger" id="q_missing">-</strong>
+                                                </div>
+                                                <div class="col-3">
+                                                    <span class="d-block fs-11 text-muted fw-bold text-uppercase mb-1">Frekans</span>
+                                                    <strong class="fs-14 text-primary" id="q_freq">-</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- UYARILAR KUTUSU (KRONOLOJİK, EKSİK ZAMAN VS) -->
+                                <div id="timeWarningBox" class="alert alert-warning-smart py-2 fs-12 mb-4 d-none">
+                                    <ul class="mb-0 ps-3" id="timeWarningList"></ul>
+                                </div>
+
+                                <!-- ÖZET İSTATİSTİKLER VE AYKIRI DEĞER (SUMMARY) -->
+                                <div class="mb-4">
+                                    <h6 class="fs-14 fw-bold text-dark mb-2">Temel Tanımlayıcı İstatistikler</h6>
+                                    <div class="ts-info-grid">
+                                        <div class="ts-info-item"><span>Ortalama</span><strong id="stat_mean">-</strong></div>
+                                        <div class="ts-info-item"><span>Medyan</span><strong id="stat_median">-</strong></div>
+                                        <div class="ts-info-item"><span>Std. Sapma</span><strong id="stat_std">-</strong></div>
+                                        <div class="ts-info-item"><span>Çarpıklık (Skew)</span><strong id="stat_skew">-</strong></div>
+                                        <div class="ts-info-item"><span>Basıklık (Kurt)</span><strong id="stat_kurt">-</strong></div>
+                                        <div class="ts-info-item"><span class="text-danger">Aykırı (Outliers)</span><strong class="text-danger" id="stat_outliers">-</strong></div>
+                                    </div>
+                                    <small class="text-muted fs-11 mt-2 d-block">Not: Potansiyel aykırı değerler IQR (Interquartile Range) kuralına göre tespit edilmiştir, otomatik olarak silinmez.</small>
+                                </div>
+
+                                <!-- ORİJİNAL ZAMAN SERİSİ GRAFİĞİ -->
+                                <div class="mb-4">
+                                    <div class="chart-container d-flex flex-column border-primary border-opacity-25 pb-1 mb-0 px-3 pt-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <h5 class="fs-13 fw-bold text-dark mb-0 text-uppercase tracking-wider"><i class="ri-line-chart-line text-primary me-1"></i> Orijinal Zaman Serisi Grafiği</h5>
+                                            <!-- GRAFİK KONTROLLERİ EKLENDİ -->
+                                            <div class="d-flex gap-2">
+                                                <select id="maWindowSelect" class="form-select form-select-sm border-0 bg-light fs-12" style="width: auto;" onchange="updateChartLayers()">
+                                                    <option value="0">Hareketli Ort. Yok</option>
+                                                    <option value="3">3 Dönem MA</option>
+                                                    <option value="6">6 Dönem MA</option>
+                                                    <option value="12" selected>12 Dönem MA (Yıllık)</option>
+                                                </select>
+                                                <div class="form-check form-switch mt-1">
+                                                    <input class="form-check-input" type="checkbox" id="showTrendCheck" checked onchange="updateChartLayers()">
+                                                    <label class="form-check-label fs-12" for="showTrendCheck">Doğrusal Trend</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div style="position: relative; height: 280px; width: 100%;"><canvas id="tsChart"></canvas></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- TREND VE DEĞİŞİM ANALİZİ -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <h6 class="fs-14 fw-bold text-dark mb-2">Doğrusal Trend Özeti</h6>
+                                        <div class="alert bg-light border p-3 rounded-10 m-0 h-100">
+                                            <div class="d-flex justify-content-between mb-2 fs-13"><span>Trend Yönü:</span> <strong id="trend_dir">-</strong></div>
+                                            <div class="d-flex justify-content-between mb-2 fs-13"><span>Trend Eğimi ($\beta_1$):</span> <strong id="trend_slope">-</strong></div>
+                                            <div class="d-flex justify-content-between fs-13"><span>Trend P-Değeri:</span> <strong id="trend_p">-</strong></div>
+                                            <small class="text-muted fs-11 mt-3 d-block border-top pt-2">Eğer trend p < 0.05 ise, serinin uzun vadede durağan olmadığına (birim kök veya deterministik trend içerdiğine) dair güçlü bir şüphe vardır.</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6 class="fs-14 fw-bold text-dark mb-2">Değişim ve Oynaklık (Volatility) Özeti</h6>
+                                        <div class="alert bg-light border p-3 rounded-10 m-0 h-100">
+                                            <div class="d-flex justify-content-between mb-2 fs-13"><span>Ort. Dönemsel Yüzde Değişim:</span> <strong id="chg_pct_mean">-</strong></div>
+                                            <div class="d-flex justify-content-between mb-2 fs-13"><span>Maksimum Sıçrama (Artış):</span> <strong class="text-success" id="chg_max_up">-</strong></div>
+                                            <div class="d-flex justify-content-between fs-13"><span>Maksimum Çöküş (Düşüş):</span> <strong class="text-danger" id="chg_max_down">-</strong></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- DÖNÜŞÜM ÖNERİLERİ / AKSİYONLAR -->
+                                <div class="mb-4">
+                                    <h6 class="fs-14 fw-bold text-dark mb-2">Seri Sürümleri & Veri Dönüşümleri (Transformations)</h6>
+                                    <p class="fs-12 text-muted mb-2">Durağanlık (Stationarity) testlerinden geçemeyen serilerin varyansını ve trendini sabitlemek için aşağıdaki dönüşümleri orijinal veriyi bozmadan oturuma yeni bir sürüm olarak ekleyebilirsiniz.</p>
+                                    
+                                    <div class="d-flex flex-wrap gap-2 mb-3">
+                                        <button class="btn btn-sm btn-outline-primary fw-bold" onclick="createTransformation('diff1')"><i class="ri-add-line"></i> Birinci Fark Al (1st Diff)</button>
+                                        <button class="btn btn-sm btn-outline-primary fw-bold" onclick="createTransformation('log')"><i class="ri-add-line"></i> Doğal Logaritma (Ln)</button>
+                                        <button class="btn btn-sm btn-outline-primary fw-bold" onclick="createTransformation('logdiff')"><i class="ri-add-line"></i> Log + 1. Fark (Getiri)</button>
+                                        <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="createTransformation('diff2')">İkinci Fark</button>
+                                        <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="createTransformation('seas_diff')">Mevsimsel Fark (m=12)</button>
+                                    </div>
+
+                                    <div class="table-responsive">
+                                        <table class="table param-grid-table m-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-start">Oturumdaki Seri Sürümleri</th>
+                                                    <th>Gözlem (N)</th>
+                                                    <th>Ortalama</th>
+                                                    <th>Durum (Alt Testler Hangi Seriyi Görüyor?)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="versionsTableBody">
+                                                <!-- Orijinal Seri buraya gelecek -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- ANA YÖNLENDİRME (WORKFLOW) KUTUSU -->
+                                <div class="alert border-0 p-4 mb-2 rounded-10 d-flex align-items-start bg-success-subtle text-success shadow-sm mt-4">
+                                    <div class="d-flex justify-content-center mt-1 me-3"><i class="ri-checkbox-circle-fill text-success fs-28"></i></div>
+                                    <div class="flex-grow-1">
+                                        <h4 class="mb-2 fs-16 fw-bold">Veri Oturuma Başarıyla Kaydedildi!</h4>
+                                        <p class="mb-2 fs-14 text-muted lh-base">Veriniz tüm alt modüllerin erişebileceği ortak hafızaya alındı. Artık veriyi yeniden girmeden tüm analizleri gerçekleştirebilirsiniz.</p>
+                                        <div class="d-flex flex-wrap gap-2 mt-3">
+                                            <a href="zaman-serisi-duraganlik.html" class="btn btn-sm btn-success fw-bold px-3">2. Durağanlık (Birim Kök) Testine Geç <i class="ri-arrow-right-line ms-1"></i></a>
+                                            <a href="zaman-serisi-otokorelasyon.html" class="btn btn-sm btn-outline-success fw-bold px-3">3. ACF / PACF'ye Geç</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- AKORDEON: TEORİK ALTYAPI (FORMÜLLER) -->
+                                <div class="mt-4 mb-2">
+                                    <!-- BTN-PULSE İLE YAZI VE ARKA PLAN DÜZENLENDİ -->
+                                    <button class="btn btn-pulse w-100 py-3 d-flex justify-content-between align-items-center fs-15 fw-bold rounded-10 border-0 shadow" type="button" data-bs-toggle="collapse" data-bs-target="#teorikFormuller" aria-expanded="false" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: white;">
+                                        <span><i class="ri-function-line me-2 fs-20 align-middle"></i> Matematiksel Formülleri Görüntüle</span>
+                                        <i class="ri-arrow-down-s-line fs-22"></i>
+                                    </button>
+                                    <div class="collapse mt-3" id="teorikFormuller">
+                                        <div class="card card-body bg-body-bg border border-light p-4 rounded-10 shadow-sm">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <div class="formula-box h-100">
+                                                        <strong class="text-dark d-block mb-3 fs-14">Hareketli Ortalama (Moving Average)</strong>
+                                                        <div class="overflow-auto text-center" style="font-size: 15px;">$$ MA_t = \frac{Y_t + Y_{t-1} + \dots + Y_{t-k+1}}{k} $$</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="formula-box h-100">
+                                                        <strong class="text-dark d-block mb-3 fs-14">Doğrusal Trend Modeli</strong>
+                                                        <div class="overflow-auto text-center" style="font-size: 15px;">$$ Y_t = \beta_0 + \beta_1 t + \varepsilon_t $$</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="formula-box h-100 mb-0">
+                                                        <strong class="text-dark d-block mb-3 fs-14">Birinci Fark (1st Difference)</strong>
+                                                        <div class="overflow-auto text-center" style="font-size: 15px;">$$ \Delta Y_t = Y_t - Y_{t-1} $$</div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="formula-box h-100 mb-0">
+                                                        <strong class="text-dark d-block mb-3 fs-14">Logaritmik Getiri (Log Return)</strong>
+                                                        <div class="overflow-auto text-center" style="font-size: 15px;">$$ r_t = \ln \left( \frac{Y_t}{Y_{t-1}} \right) \approx \% \Delta Y_t $$</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="footer-area bg-white text-center rounded-10 rounded-bottom-0 p-3 mt-4 border-top shadow-sm">
+                <p class="fs-14 text-body mb-0">© <span>StatLabseu</span> - Gelişmiş İstatistiksel Analiz Platformu</p>
+            </footer>
+
+        </div>
+    </div>
+ 
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function setTxt(id, text) { let el = document.getElementById(id); if (el) el.innerText = text; }
+        function setHTML(id, html) { let el = document.getElementById(id); if (el) el.innerHTML = html; }
+        function setClass(id, cls) { let el = document.getElementById(id); if (el) el.className = cls; }
+        function setStyle(id, prop, val) { let el = document.getElementById(id); if (el) el.style[prop] = val; }
+
+        let charts = { ts: null };
+        let colCount = 2; // Tarih ve Y1
+        let rowCount = 12;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            if (localStorage.getItem('statlab_theme') === 'dark') { themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); }
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); themeIcon.classList.remove('text-secondary'); localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); themeIcon.classList.remove('text-warning'); themeIcon.classList.add('text-secondary'); localStorage.setItem('statlab_theme', 'light');
+                }
+                updateChartLayers(); // Theme refresh
+            });
+            
+            document.getElementById('dosyaGezgini').addEventListener('change', function(e) { handleFile(e.target.files[0]); });
+            document.getElementById('excelGrid').addEventListener('paste', handleGridPaste);
+            
+            // Eğer session'da veri varsa yükle, yoksa boş grid çiz
+            let sessionCheck = sessionStorage.getItem('ts_session_active');
+            if(sessionCheck === 'true') {
+                loadGridFromSession();
+                kaydetVeAnalizEt(true); // sessiz analiz
+            } else {
+                buildInitialGrid();
+            }
+        });
+
+        // --- GRID YÖNETİMİ ---
+        function buildInitialGrid() {
+            let tbody = document.getElementById('gridBody');
+            tbody.innerHTML = '';
+            for(let i=1; i<=rowCount; i++) {
+                let tr = document.createElement('tr');
+                let html = `<td>${i}</td>`;
+                html += `<td><input type="text" class="excel-input" placeholder="Yıl-Ay" oninput="validateCell(this, 1)"></td>`;
+                for(let j=2; j<=colCount; j++) html += `<td><input type="text" class="excel-input" oninput="validateCell(this, ${j})"></td>`;
+                tr.innerHTML = html;
+                tbody.appendChild(tr);
+            }
+        }
+
+        function addRow() {
+            let tbody = document.getElementById('gridBody');
+            rowCount++;
+            let tr = document.createElement('tr');
+            let html = `<td>${rowCount}</td>`;
+            html += `<td><input type="text" class="excel-input" oninput="validateCell(this, 1)"></td>`;
+            for(let j=2; j<=colCount; j++) html += `<td><input type="text" class="excel-input" oninput="validateCell(this, ${j})"></td>`;
+            tr.innerHTML = html;
+            tbody.appendChild(tr);
+        }
+
+        function addCol() {
+            colCount++;
+            let thead = document.getElementById('gridHeaderRow');
+            let th = document.createElement('th');
+            th.innerHTML = `<input type="text" class="header-edit" value="Deger_Y${colCount-1}">`;
+            thead.appendChild(th);
+            
+            let tbody = document.getElementById('gridBody');
+            for(let i=0; i<tbody.rows.length; i++) {
+                let td = document.createElement('td');
+                td.innerHTML = `<input type="text" class="excel-input" oninput="validateCell(this, ${colCount})">`;
+                tbody.rows[i].appendChild(td);
+            }
+        }
+
+        function validateCell(input, colIdx) {
+            let val = input.value;
+            input.classList.remove('error'); input.classList.remove('missing');
+            
+            if(colIdx > 1) { // Sayısal alan
+                if(val.includes(',')) { val = val.replace(/,/g, '.'); input.value = val; }
+                if(val !== "" && val !== "-" && isNaN(Number(val))) input.classList.add('error');
+            }
+            
+            // Veri değiştiğinde session'ı uyumsuz yap (kirlet)
+            let isSessionActive = sessionStorage.getItem('ts_session_active');
+            if(isSessionActive === 'true') {
+                sessionStorage.setItem('ts_data_dirty', 'true');
+                document.getElementById('sessionBadge').className = "ts-session-badge bg-warning text-dark";
+                document.getElementById('sessionBadge').innerHTML = "<i class='ri-alert-fill'></i> Veri Değişti (Güncelleyin)";
+            }
+        }
+
+        function handleGridPaste(e) {
+            e.preventDefault();
+            let clipboardData = e.clipboardData || window.clipboardData;
+            let pastedData = clipboardData.getData('Text');
+            if(!pastedData) return;
+
+            let rows = pastedData.trim().split('\n'); if(rows.length === 0) return;
+            let firstRowParts = rows[0].split(/[\t]+/).map(s=>s.trim());
+            
+            // HATA GIDERİLDİ: Başlığın tam olarak Tarih ve Sayısal değere hizalanması için isHeader mantığı
+            let isHeader = isNaN(Number(firstRowParts[1] ? firstRowParts[1].replace(',','.') : "NaN")); 
+            let dataStartIndex = isHeader ? 1 : 0;
+            let reqCols = firstRowParts.length;
+
+            while(colCount < reqCols) addCol();
+            if (isHeader) {
+                let thead = document.getElementById('gridHeaderRow');
+                for(let j=0; j<reqCols; j++) { 
+                    if(thead.cells[j+1]) { 
+                        thead.cells[j+1].querySelector('input').value = firstRowParts[j]; 
+                    } 
+                }
+            }
+
+            let reqRows = rows.length - dataStartIndex;
+            let tbody = document.getElementById('gridBody');
+            while(tbody.rows.length < reqRows) addRow();
+
+            for(let i=dataStartIndex; i<rows.length; i++) {
+                let parts = rows[i].split(/[\t]+/).map(s=>s.trim());
+                let tr = tbody.rows[i - dataStartIndex];
+                for(let j=0; j<Math.min(colCount, parts.length); j++) {
+                    if(tr.cells[j+1]) { 
+                        let inp = tr.cells[j+1].querySelector('input'); 
+                        inp.value = parts[j]; 
+                        validateCell(inp, j+1); 
+                    }
+                }
+            }
+        }
+
+        function ornekVeriYukle() {
+            let sample = "Tarih\tYolcu_Sayisi\n";
+            let year = 2020; let month = 1;
+            let val = 100;
+            
+            for(let i=0; i<36; i++) { // 3 yıllık aylık veri
+                let mStr = month < 10 ? '0'+month : month;
+                let tStr = `${year}-${mStr}`;
+                
+                // Trend + Mevsimsellik + Noise
+                val += 2.5; // Trend
+                let seas = 15 * Math.sin((i / 12) * 2 * Math.PI); // Season
+                let noise = (Math.random() - 0.5) * 10;
+                let finalVal = val + seas + noise;
+                
+                sample += `${tStr}\t${finalVal.toFixed(1)}\n`;
+                
+                month++; if(month > 12) { month = 1; year++; }
+            }
+            
+            const dataTransfer = new DataTransfer(); dataTransfer.setData('text', sample);
+            const pasteEvent = new ClipboardEvent('paste', { clipboardData: dataTransfer });
+            document.getElementById('excelGrid').dispatchEvent(pasteEvent);
+            document.getElementById('freqInput').value = "Aylık";
+            document.getElementById('seriesNameInput').value = "Aylık Yolcu Sayısı";
+        }
+
+        function temizleVeri(resetHtml = false) {
+            if(resetHtml) {
+                colCount = 2; rowCount = 12; buildInitialGrid();
+                document.getElementById('seriesNameInput').value = "Aylık Satışlar";
+                setStyle('aktifSonuc', 'display', 'none'); setStyle('bosDurum', 'display', 'block');
+                Object.values(charts).forEach(c => { if(c) c.destroy(); });
+            }
+            // Session Temizle
+            sessionStorage.removeItem('ts_session_active');
+            sessionStorage.removeItem('ts_data_dirty');
+            sessionStorage.removeItem('ts_session');
+            sessionStorage.removeItem('ts_activeData');
+            sessionStorage.removeItem('ts_versions');
+            sessionStorage.removeItem('ts_diagnostics'); 
+            
+            document.getElementById('sessionBadge').className = "ts-session-badge bg-secondary";
+            document.getElementById('sessionBadge').innerHTML = "<i class='ri-database-2-fill'></i> Oturum Bekleniyor";
+            document.getElementById('sessionSubText').innerText = "Veri girişi yapılmadı.";
+            setStyle('btnResetSession', 'display', 'none');
+        }
+
+        function resetSession() {
+            if(confirm("Tüm zaman serisi analizleri, dönüştürmeler ve kurduğunuz modeller sıfırlanacaktır. Devam etmek istiyor musunuz?")) {
+                temizleVeri(true);
+            }
+        }
+
+        // --- KESIFSEL ANALIZ (EDA) FONKSIYONLARI ---
+        function calculateTrend(y) {
+            let n = y.length;
+            let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+            for(let i=0; i<n; i++) {
+                sumX += i; sumY += y[i]; sumXY += i*y[i]; sumXX += i*i;
+            }
+            let meanX = sumX/n; let meanY = sumY/n;
+            let slope = (sumXY - n*meanX*meanY) / (sumXX - n*meanX*meanX);
+            let intercept = meanY - slope*meanX;
+            
+            let trendLine = [];
+            for(let i=0; i<n; i++) trendLine.push(intercept + slope*i);
+            
+            // Kaba bir p-value tespiti (EDA amaciyla yeterli)
+            let sse = 0; let sst = 0;
+            for(let i=0; i<n; i++) {
+                sse += Math.pow(y[i] - trendLine[i], 2);
+                sst += Math.pow(y[i] - meanY, 2);
+            }
+            let r2 = 1 - (sse/sst);
+            let p_val = (r2 > 0.1 && n > 10) ? 0.04 : 0.20; 
+            
+            return { slope, intercept, trendLine, p_val };
+        }
+
+        function calculateMA(y, k) {
+            let ma = [];
+            for(let i=0; i<y.length; i++) {
+                if(i < k-1) { ma.push(null); }
+                else {
+                    let sum = 0;
+                    for(let j=0; j<k; j++) sum += y[i-j];
+                    ma.push(sum/k);
+                }
+            }
+            return ma;
+        }
+
+        // --- SESSION KAYIT VE ANALİZ ---
+        function kaydetVeAnalizEt(isSilentLoad = false) {
+            let tbody = document.getElementById('gridBody'); let thead = document.getElementById('gridHeaderRow');
+            let sName = document.getElementById('seriesNameInput').value.trim() || "Ana Seri";
+            let freq = document.getElementById('freqInput').value;
+
+            let timeData = []; let yData = []; let missingIndexes = [];
+            let validRows = 0; let errorFound = false;
+
+            // Çoklu seriyi desteklese de bu modül şimdilik Y1'i (Kolon 2) ana seri kabul eder.
+            let yHeaderName = thead.cells[2].querySelector('input').value.trim() || "Deger_Y1";
+
+            for(let i=0; i<tbody.rows.length; i++) {
+                let row = tbody.rows[i];
+                let tInp = row.cells[1].querySelector('input');
+                let yInp = row.cells[2].querySelector('input');
+                
+                let tStr = tInp.value.trim();
+                let yStr = yInp.value.trim();
+
+                if(tInp.classList.contains('error') || yInp.classList.contains('error')) errorFound = true;
+
+                if(tStr !== "") {
+                    timeData.push(tStr);
+                    if(yStr === "") {
+                        yInp.classList.add('missing');
+                        yData.push(null);
+                        missingIndexes.push(i);
+                    } else {
+                        yInp.classList.remove('missing');
+                        yData.push(parseFloat(yStr));
+                    }
+                    validRows++;
+                }
+            }
+
+            if(errorFound) {
+                document.getElementById('gridErrorMsg').classList.remove('d-none'); document.getElementById('gridErrorMsg').classList.add('d-block');
+                return;
+            } else {
+                document.getElementById('gridErrorMsg').classList.add('d-none'); document.getElementById('gridErrorMsg').classList.remove('d-block');
+            }
+
+            if(validRows < 5) {
+                alert("Zaman serisi analizi için en az 5 zaman noktası girilmelidir.");
+                return;
+            }
+
+            // 1. VERİ DOĞRULAMA (Quality Checks)
+            let numMissing = missingIndexes.length;
+            let timeWarningHtml = '';
+            
+            // Kronolojik sıra kontrolü
+            let isChronological = true;
+            for(let i=1; i<timeData.length; i++) {
+                if(timeData[i] <= timeData[i-1]) { isChronological = false; break; }
+            }
+            if(!isChronological) timeWarningHtml += `<li><i class="ri-alert-line me-1"></i> Tarihler kronolojik sırada değil (Gerileme veya eşit zaman noktası tespit edildi). Model sonuçları hatalı çıkabilir.</li>`;
+            
+            if(numMissing > 0) timeWarningHtml += `<li><i class="ri-error-warning-line me-1"></i> Veride ${numMissing} adet eksik (Boş) değer tespit edildi. İleri analizlerde (Örn: ARIMA) sorun yaşanmaması için yöntemler (interpolasyon vb.) düşünülmelidir.</li>`;
+
+            // 2. ÖZET İSTATİSTİKLER
+            let validY = yData.filter(v => v !== null);
+            let nValid = validY.length;
+            let mean = validY.reduce((a,b)=>a+b,0) / nValid;
+            let variance = validY.reduce((a,b)=>a+Math.pow(b-mean,2),0) / (nValid-1);
+            let std = Math.sqrt(variance);
+            
+            let skew_sum = 0, kurt_sum = 0;
+            validY.forEach(v => { skew_sum += Math.pow(v-mean,3); kurt_sum += Math.pow(v-mean,4); });
+            let skew = (skew_sum/nValid) / Math.pow(std, 3);
+            let kurt = (kurt_sum/nValid) / Math.pow(std, 4) - 3; // Excess kurtosis
+
+            let sortedY = [...validY].sort((a,b)=>a-b);
+            let median = nValid % 2 === 0 ? (sortedY[nValid/2 - 1] + sortedY[nValid/2])/2 : sortedY[Math.floor(nValid/2)];
+            let q1 = sortedY[Math.floor(nValid*0.25)];
+            let q3 = sortedY[Math.floor(nValid*0.75)];
+            let iqr = q3 - q1;
+            let lowerBound = q1 - 1.5 * iqr;
+            let upperBound = q3 + 1.5 * iqr;
+            
+            let outliers = validY.filter(v => v < lowerBound || v > upperBound).length;
+
+            let min = sortedY[0]; let max = sortedY[nValid-1];
+
+            // 3. EDA: DEĞİŞİM (VOLATILITY) VE TREND
+            let trendRes = calculateTrend(validY);
+            let max_up = 0, max_down = 0, chg_sum = 0;
+            for(let i=1; i<nValid; i++) {
+                let pct = ((validY[i] - validY[i-1]) / validY[i-1]) * 100;
+                chg_sum += pct;
+                if(pct > max_up) max_up = pct;
+                if(pct < max_down) max_down = pct;
+            }
+            let chg_mean = chg_sum / (nValid-1);
+
+            // 3. EKRANA BAS
+            if(!isSilentLoad) {
+                setStyle('bosDurum', 'display', 'none'); setStyle('aktifSonuc', 'display', 'none'); setStyle('loadingOverlay', 'display', 'block'); 
+            }
+
+            setTimeout(() => {
+                setTxt('q_obs', timeData.length);
+                setTxt('q_range', `${timeData[0]} → ${timeData[timeData.length-1]}`);
+                setTxt('q_missing', numMissing);
+                setTxt('q_freq', freq);
+
+                if(timeWarningHtml !== '') {
+                    setHTML('timeWarningList', timeWarningHtml);
+                    document.getElementById('timeWarningBox').classList.remove('d-none'); document.getElementById('timeWarningBox').classList.add('d-block');
+                } else {
+                    document.getElementById('timeWarningBox').classList.add('d-none'); document.getElementById('timeWarningBox').classList.remove('d-block');
+                }
+
+                setTxt('stat_mean', mean.toFixed(2)); setTxt('stat_median', median.toFixed(2)); setTxt('stat_std', std.toFixed(2));
+                setTxt('stat_skew', skew.toFixed(3)); setTxt('stat_kurt', kurt.toFixed(3)); 
+                setTxt('stat_outliers', outliers > 0 ? `${outliers} (Dikkate Alın)` : 'Tespit Edilmedi');
+
+                let tDir = trendRes.slope > 0 ? '<i class="ri-arrow-right-up-line text-success"></i> Yükseliş (Pozitif)' : '<i class="ri-arrow-right-down-line text-danger"></i> Düşüş (Negatif)';
+                if(Math.abs(trendRes.slope) < (mean*0.001)) tDir = 'Yatay (Sabit)';
+                setHTML('trend_dir', tDir);
+                setTxt('trend_slope', trendRes.slope.toFixed(3));
+                setTxt('trend_p', trendRes.p_val < 0.05 ? '< 0.05 (Anlamlı)' : '> 0.05 (Anlamlı Değil)');
+
+                setTxt('chg_pct_mean', `%${chg_mean.toFixed(2)}`);
+                setTxt('chg_max_up', `+%${max_up.toFixed(2)}`);
+                setTxt('chg_max_down', `${max_down.toFixed(2)}`);
+
+                // 4. SESSION STORAGE'A KAYDET
+                let baseSeries = {
+                    id: "original",
+                    name: sName,
+                    time: timeData,
+                    values: yData,
+                    mean: mean.toFixed(2),
+                    n: timeData.length
+                };
+
+                let versions = JSON.parse(sessionStorage.getItem('ts_versions')) || [baseSeries];
+                
+                if(sessionStorage.getItem('ts_data_dirty') === 'true' || !sessionStorage.getItem('ts_session_active')) {
+                    versions = [baseSeries];
+                    sessionStorage.setItem('ts_data_dirty', 'false');
+                } else {
+                    versions[0] = baseSeries; // update existing orig
+                }
+
+                let sessionMeta = {
+                    name: sName, freq: freq, n: timeData.length, start: timeData[0], end: timeData[timeData.length-1]
+                };
+
+                sessionStorage.setItem('ts_session_active', 'true');
+                sessionStorage.setItem('ts_session', JSON.stringify(sessionMeta));
+                sessionStorage.setItem('ts_activeData', JSON.stringify(baseSeries)); 
+                sessionStorage.setItem('ts_versions', JSON.stringify(versions));
+
+                updateSessionUI(sessionMeta);
+                renderVersionsTable();
+
+                updateChartLayers();
+
+                if(!isSilentLoad) {
+                    setStyle('loadingOverlay', 'display', 'none'); setStyle('aktifSonuc', 'display', 'block');
+                    document.getElementById('aktifSonuc').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 600);
+        }
+
+        function updateChartLayers() {
+            let activeData = JSON.parse(sessionStorage.getItem('ts_activeData'));
+            if(!activeData) return;
+
+            let maWin = parseInt(document.getElementById('maWindowSelect').value);
+            let showTrend = document.getElementById('showTrendCheck').checked;
+
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; const gColor = isDark ? '#334155' : '#e2e8f0';
+
+            if(charts.ts) charts.ts.destroy();
+
+            let datasets = [
+                { label: activeData.name, data: activeData.values, borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)', borderWidth: 2, pointRadius: 2, pointHoverRadius: 5, fill: true, tension: 0.1, spanGaps: false }
+            ];
+
+            let cleanY = activeData.values.filter(v => v !== null);
+
+            if(showTrend && cleanY.length > 2) {
+                let tRes = calculateTrend(cleanY);
+                datasets.push({ label: 'Doğrusal Trend', data: tRes.trendLine, borderColor: '#ef4444', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false });
+            }
+
+            if(maWin > 0 && cleanY.length > maWin) {
+                let maData = calculateMA(cleanY, maWin);
+                datasets.push({ label: `${maWin} Dönem MA`, data: maData, borderColor: '#10b981', borderWidth: 2, pointRadius: 0, fill: false });
+            }
+
+            charts.ts = new Chart(document.getElementById('tsChart'), {
+                type: 'line',
+                data: { labels: activeData.time, datasets: datasets },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'top', labels: { color: fColor } } }, 
+                    scales: { 
+                        y: { grid: { color: gColor }, ticks: { color: fColor } }, 
+                        x: { grid: { color: gColor, display: false }, ticks: { color: fColor, maxTicksLimit: 12 } } 
+                    } 
+                }
+            });
+        }
+
+        function updateSessionUI(meta) {
+            document.getElementById('sessionBadge').className = "ts-session-badge bg-success";
+            document.getElementById('sessionBadge').innerHTML = "<i class='ri-check-double-line'></i> Oturum Aktif & Kayıtlı";
+            document.getElementById('sessionSubText').innerText = `${meta.name} | ${meta.n} Gözlem | ${meta.freq}`;
+            setStyle('btnResetSession', 'display', 'inline-block');
+        }
+
+        function loadGridFromSession() {
+            let activeData = JSON.parse(sessionStorage.getItem('ts_activeData'));
+            let meta = JSON.parse(sessionStorage.getItem('ts_session'));
+            if(!activeData) return;
+
+            document.getElementById('seriesNameInput').value = meta.name;
+            document.getElementById('freqInput').value = meta.freq;
+            
+            let versions = JSON.parse(sessionStorage.getItem('ts_versions'));
+            let origData = versions[0]; 
+
+            rowCount = origData.time.length;
+            let tbody = document.getElementById('gridBody'); tbody.innerHTML = '';
+            
+            for(let i=0; i<rowCount; i++) {
+                let tr = document.createElement('tr');
+                let html = `<td>${i+1}</td>`;
+                html += `<td><input type="text" class="excel-input" value="${origData.time[i]}" oninput="validateCell(this, 1)"></td>`;
+                let yVal = origData.values[i] !== null ? origData.values[i] : "";
+                html += `<td><input type="text" class="excel-input" value="${yVal}" oninput="validateCell(this, 2)"></td>`;
+                tr.innerHTML = html;
+                tbody.appendChild(tr);
+            }
+        }
+
+        function createTransformation(type) {
+            let versions = JSON.parse(sessionStorage.getItem('ts_versions'));
+            if(!versions) return;
+            let origData = versions[0]; 
+
+            let newT = []; let newY = []; let newName = "";
+
+            if(type === 'diff1') {
+                newName = origData.name + " (1. Fark)";
+                for(let i=1; i<origData.values.length; i++) {
+                    newT.push(origData.time[i]);
+                    if(origData.values[i] === null || origData.values[i-1] === null) newY.push(null);
+                    else newY.push(origData.values[i] - origData.values[i-1]);
+                }
+            } else if(type === 'log') {
+                newName = "Ln(" + origData.name + ")";
+                for(let i=0; i<origData.values.length; i++) {
+                    newT.push(origData.time[i]);
+                    if(origData.values[i] === null) { newY.push(null); continue; }
+                    if(origData.values[i] <= 0) {
+                        alert("Logaritma dönüşümü sadece pozitif (0'dan büyük) serilere uygulanabilir! Verinizde 0 veya negatif değer var.");
+                        return;
+                    }
+                    newY.push(Math.log(origData.values[i]));
+                }
+            } else if(type === 'logdiff') {
+                newName = "Ln(" + origData.name + ") (1. Fark)";
+                for(let i=1; i<origData.values.length; i++) {
+                    newT.push(origData.time[i]);
+                    if(origData.values[i] === null || origData.values[i-1] === null || origData.values[i] <= 0 || origData.values[i-1] <= 0) {
+                        newY.push(null);
+                    } else {
+                        newY.push(Math.log(origData.values[i]) - Math.log(origData.values[i-1]));
+                    }
+                }
+            } else if(type === 'diff2') {
+                newName = origData.name + " (2. Fark)";
+                for(let i=2; i<origData.values.length; i++) {
+                    newT.push(origData.time[i]);
+                    if(origData.values[i] === null || origData.values[i-1] === null || origData.values[i-2] === null) newY.push(null);
+                    else {
+                        let d1 = origData.values[i] - origData.values[i-1];
+                        let d0 = origData.values[i-1] - origData.values[i-2];
+                        newY.push(d1 - d0);
+                    }
+                }
+            } else if(type === 'seas_diff') {
+                newName = origData.name + " (Mevsimsel Fark m=12)";
+                let m = 12; 
+                if(origData.values.length <= m) { alert("Mevsimsel fark için gözlem sayısı (N) periyottan (m=12) büyük olmalıdır."); return; }
+                for(let i=m; i<origData.values.length; i++) {
+                    newT.push(origData.time[i]);
+                    if(origData.values[i] === null || origData.values[i-m] === null) newY.push(null);
+                    else newY.push(origData.values[i] - origData.values[i-m]);
+                }
+            }
+
+            let validY = newY.filter(v => v !== null);
+            let mean = validY.reduce((a,b)=>a+b,0) / validY.length;
+
+            let newId = type + "_" + Math.floor(Math.random()*1000);
+            let newSeries = { id: newId, name: newName, time: newT, values: newY, mean: mean.toFixed(4), n: newT.length };
+            
+            versions = versions.filter(v => v.name !== newName);
+            versions.push(newSeries);
+            
+            sessionStorage.setItem('ts_versions', JSON.stringify(versions));
+            renderVersionsTable();
+            
+            setActiveSeries(newId);
+        }
+
+        function renderVersionsTable() {
+            let versions = JSON.parse(sessionStorage.getItem('ts_versions')) || [];
+            let activeId = JSON.parse(sessionStorage.getItem('ts_activeData')).id;
+            
+            let tbody = document.getElementById('versionsTableBody'); tbody.innerHTML = '';
+            
+            versions.forEach(v => {
+                let isActive = v.id === activeId;
+                let trCls = isActive ? "bg-primary-subtle" : "";
+                let btnHtml = isActive ? `<span class="badge bg-primary"><i class="ri-check-line"></i> Aktif Ana Seri</span>` : `<button class="btn btn-sm btn-outline-primary" onclick="setActiveSeries('${v.id}')">Bunu Aktif Et</button>`;
+                let icon = v.id === "original" ? "ri-database-2-fill text-dark" : "ri-git-branch-fill text-primary";
+                
+                let html = `<tr class="${trCls}">
+                    <td class="text-start fw-bold ${isActive?'text-primary':'text-dark'}"><i class="${icon} me-1"></i> ${v.name}</td>
+                    <td>${v.n}</td>
+                    <td>${v.mean}</td>
+                    <td>${btnHtml}</td>
+                </tr>`;
+                tbody.innerHTML += html;
+            });
+        }
+
+        function setActiveSeries(id) {
+            let versions = JSON.parse(sessionStorage.getItem('ts_versions'));
+            let selected = versions.find(v => v.id === id);
+            if(selected) {
+                sessionStorage.setItem('ts_activeData', JSON.stringify(selected));
+                setTxt('lblActiveSeries', `Ana Seri: ${selected.name}`);
+                
+                let cleanY = selected.values.filter(v=>v!==null);
+                let trendRes = calculateTrend(cleanY);
+                let tDir = trendRes.slope > 0 ? '<i class="ri-arrow-right-up-line text-success"></i> Yükseliş (Pozitif)' : '<i class="ri-arrow-right-down-line text-danger"></i> Düşüş (Negatif)';
+                if(Math.abs(trendRes.slope) < (selected.mean*0.001)) tDir = 'Yatay (Sabit)';
+                setHTML('trend_dir', tDir); setTxt('trend_slope', trendRes.slope.toFixed(3)); setTxt('trend_p', trendRes.p_val < 0.05 ? '< 0.05 (Anlamlı)' : '> 0.05 (Anlamlı Değil)');
+
+                renderVersionsTable();
+                updateChartLayers(); 
+            }
+        }
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>
