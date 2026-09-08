@@ -1038,7 +1038,7 @@
 
                 try {
                     let reqBody = { time: pData.t, event: pData.e, group: pData.g, conf_level: ci_lvl };
-                    let istek = await fetch("https://api.statlabseu.com/test/kaplan-meier", {
+                    let istek = await fetch("https://api.statlabseu.com/test/log-rank", {
                         method: "POST", headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(reqBody), signal: controller.signal
                     });
