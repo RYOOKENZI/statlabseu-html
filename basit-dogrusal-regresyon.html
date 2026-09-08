@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { 
+                inlineMath: [['$', '$'], ['\\(', '\\)']], 
+                displayMath: [['$$', '$$'], ['\\[', '\\]']] 
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <title>Basit Doğrusal Regresyon | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        @font-face {
+            font-family: 'STIX Two Math';
+            src: url('assets/fonts/STIXTwoMath-Regular.ttf') format('truetype');
+            font-weight: normal; font-style: normal;
+        }
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+        .math-var { font-family: 'STIX Two Math', serif !important; font-style: italic; font-weight: normal; color: inherit; display: inline-block; }
+
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff; margin-bottom: 20px;}
+        .param-grid-table { width: 100%; border-collapse: collapse; text-align: center; margin: 0; min-width: max-content; }
+        .param-grid-table th { font-size: 13px; font-weight: 700; color: #475569; background-color: #f1f5f9; padding: 13px 12px; border: 1px solid #e2e8f0; white-space: nowrap; vertical-align: middle; }
+        .param-grid-table td { padding: 13px 12px; font-size: 13px; color: #0f172a; border: 1px solid #e2e8f0; vertical-align: middle; white-space: nowrap; }
+        .param-grid-table tr:hover td { background-color: #f8fafc; }
+        
+        .param-grid-table tr:first-child th, .param-grid-table tr:first-child td { border-top: none; }
+        .param-grid-table tr:last-child th, .param-grid-table tr:last-child td { border-bottom: none; }
+        .param-grid-table tr th:first-child, .param-grid-table tr td:first-child { border-left: none; }
+        .param-grid-table tr th:last-child, .param-grid-table tr td:last-child { border-right: none; }
+
+        .info-box { background: linear-gradient(135deg, rgba(47, 143, 232, 0.1), rgba(14, 165, 233, 0.05)); border-left: 4px solid #2f8fe8; padding: 15px 20px; border-radius: 8px; margin-bottom: 25px; display: flex; align-items: flex-start; gap: 15px; }
+        .info-box i { font-size: 24px; color: #2f8fe8; }
+        .info-box p { margin: 0; font-size: 14px; color: #475569; line-height: 1.6; }
+
+        .loader-spinner { width: 40px; height: 40px; border: 4px solid rgba(47, 143, 232, 0.2); border-left-color: #2f8fe8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .btn-pulse { animation: pulse-btn 1.8s infinite; background: linear-gradient(135deg, #2f8fe8, #0ea5e9); border: none; color: white !important; }
+        .btn-pulse:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(14, 165, 233, 0.4); background: linear-gradient(135deg, #1d7bd1, #0284c7); }
+        .btn-action { font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 13px; transition: all 0.3s ease; }
+
+        .alert-warning-smart { background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.03)); border: 1px solid rgba(245, 158, 11, 0.2); border-left: 4px solid #f59e0b; color: #92400e; padding: 12px 16px; }
+        .insight-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #6366f1; padding: 15px 16px; border-radius: 8px; display: flex; align-items: flex-start; margin-top: 12px; }
+        .insight-box i { color: #6366f1; font-size: 22px; margin-right: 12px; margin-top: -3px; }
+        .insight-box span, .insight-box strong { font-size: 14.5px; font-weight: 600; line-height: 1.6; color: #000000 !important; }
+
+        .formula-box { background-color: #ffffff; padding: 25px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 15px; overflow-x: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.02);}
+
+        .custom-upload-zone { border: 2px dashed #2f8fe8 !important; background-color: rgba(47, 143, 232, 0.04); transition: all 0.2s ease-in-out; cursor: pointer; }
+        .custom-upload-zone:hover { background-color: rgba(47, 143, 232, 0.08); border-color: #1d7bd1 !important; transform: translateY(-1px); }
+
+        .var-chip { font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; color: #475569; transition: all 0.2s; user-select: none; display: inline-flex; align-items: center; gap: 5px; }
+        .var-chip.active { background: #2f8fe8; color: #fff; border-color: #2f8fe8; }
+        .var-chip i { font-size: 14px; }
+        .var-chip:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        /* YENİ NESİL EXCEL BENZERİ GRİD (STICKY) */
+        .excel-container { max-height: 350px; overflow: auto; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; position: relative; }
+        .excel-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: max-content; }
+        .excel-table th { position: sticky; top: 0; z-index: 10; background: #f1f5f9; border-bottom: 1px solid #cbd5e1; border-right: 1px solid #cbd5e1; padding: 8px 10px; font-size: 13px; color: #334155; font-weight: 700; user-select: none; }
+        .excel-table th.draggable { cursor: grab; }
+        .excel-table th.draggable:active { cursor: grabbing; background-color: #e2e8f0; }
+        .excel-table th.dragging { opacity: 0.5; background-color: #cbd5e1; }
+        .excel-table td { border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 0; position: relative; }
+        
+        .excel-table td:first-child, .excel-table th:first-child { position: sticky; left: 0; z-index: 11; background: #f8fafc; border-right: 1px solid #cbd5e1; width: 40px; text-align: center; font-weight: bold; color: #64748b; font-size: 12px; }
+        .excel-table th:first-child { z-index: 12; top: 0; left: 0; }
+
+        .excel-input { width: 100%; height: 100%; min-height: 35px; border: none; outline: none; background: transparent; text-align: right; padding: 5px 10px; font-size: 14px; font-family: inherit; color: #0f172a; transition: all 0.2s; }
+        .excel-input:focus { background-color: #eff6ff; box-shadow: inset 0 0 0 2px #3b82f6; }
+        .excel-input.error { background-color: #fee2e2 !important; color: #b91c1c; font-weight: bold; }
+        
+        .header-edit { background: transparent; border: none; outline: none; font-weight: 700; color: inherit; width: 100%; text-align: center; cursor: text; }
+        .header-edit:focus { border-bottom: 1px dashed #3b82f6; }
+        
+        .btn-grid-action { border: 1px dashed #cbd5e1; background: transparent; color: #64748b; font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 6px; transition: all 0.2s; }
+        .btn-grid-action:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
+
+        /* REGRESYON ÖZEL TASARIMLARI */
+        .eq-box { background: linear-gradient(135deg, #1e293b, #0f172a); color: #38bdf8; border-radius: 12px; padding: 25px; text-align: center; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .eq-box h2 { font-size: 32px; font-weight: 800; margin: 0; letter-spacing: 1px; font-family: 'STIX Two Math', serif;}
+        
+        .pred-box { background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 20px; }
+        .pred-result { font-size: 24px; font-weight: 800; color: #166534; }
+
+        /* GECE MODU AYARLARI */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light, html.dark-mode .bg-body-bg { background-color: #0f172a !important; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        html.dark-mode .info-box { background: rgba(47, 143, 232, 0.1); }
+        html.dark-mode .info-box p { color: #cbd5e1; }
+        
+        html.dark-mode .table-responsive { border-color: #334155; background: #1e293b; }
+        html.dark-mode .param-grid-table th { background-color: #0f172a; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .param-grid-table td { background-color: #1e293b; color: #e2e8f0; border-color: #334155; }
+        html.dark-mode .param-grid-table tr:hover td { background-color: #0f172a !important; }
+        
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+        html.dark-mode .formula-box { background-color: #1e293b; border-color: #334155; box-shadow: none; }
+        html.dark-mode .formula-box p { color: #cbd5e1; }
+        html.dark-mode mjx-container { color: #e2e8f0 !important; }
+        
+        html.dark-mode .alert-warning-smart { background: rgba(245, 158, 11, 0.1) !important; border: 1px solid rgba(245, 158, 11, 0.2) !important; border-left: 4px solid #fbbf24 !important; color: #fcd34d !important; }
+        html.dark-mode .insight-box { background-color: #1e293b !important; border: 1px solid #334155 !important; border-left: 4px solid #818cf8 !important; }
+        html.dark-mode .insight-box i { color: #818cf8 !important; }
+        html.dark-mode .insight-box span, html.dark-mode .insight-box strong { color: #ffffff !important; }
+
+        html.dark-mode .var-chip { background: #1e293b; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .var-chip.active { background: #0ea5e9; color: #0f172a; border-color: #0ea5e9; }
+        html.dark-mode select.bg-light, html.dark-mode input.bg-light { background-color: #0f172a !important; color: #cbd5e1; border: 1px solid #334155 !important; }
+
+        html.dark-mode .excel-container { border-color: #334155; background: #1e293b; }
+        html.dark-mode .excel-table th { background: #0f172a; border-color: #334155; color: #cbd5e1; }
+        html.dark-mode .excel-table td { border-color: #334155; }
+        html.dark-mode .excel-table td:first-child, html.dark-mode .excel-table th:first-child { background: #1e293b; border-color: #334155; color: #94a3b8; }
+        html.dark-mode .excel-input { color: #e2e8f0; }
+        html.dark-mode .excel-input:focus { background-color: #0f172a; box-shadow: inset 0 0 0 2px #0ea5e9; }
+        html.dark-mode .excel-input.error { background-color: #7f1d1d !important; color: #fca5a5; }
+        html.dark-mode .btn-grid-action { border-color: #475569; color: #94a3b8; }
+        html.dark-mode .btn-grid-action:hover { border-color: #0ea5e9; color: #0ea5e9; background: rgba(14, 165, 233, 0.1); }
+        
+        html.dark-mode .pred-box { background-color: #064e3b; border-color: #065f46; }
+        html.dark-mode .pred-result { color: #6ee7b7; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border border-white shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-line-chart-line align-middle me-1"></i> Basit Doğrusal Regresyon
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="main-content-container overflow-hidden">
+                
+                <div class="info-box shadow-sm">
+                    <i class="ri-information-line"></i>
+                    <div>
+                        <strong class="d-block text-dark mb-1">Basit Doğrusal Regresyon (Simple Linear Regression)</strong>
+                        <p class="mb-1">Bir Bağımsız Değişken (X) ile bir Bağımlı Değişken (Y) arasındaki doğrusal ilişkiyi modeller ($Y = \beta_0 + \beta_1X + \varepsilon$). Gelecekteki Y değerlerini tahmin etmek ve değişkenler arasındaki etkinin büyüklüğünü ölçmek için kullanılır.</p>
+                        <p class="mb-0 text-danger fw-semibold fs-13"><i class="ri-error-warning-fill align-middle"></i> Kritik Uyarı: Modelin anlamlı çıkması (p < 0.05), X'in kesinlikle Y'ye <strong>neden olduğunu (causality) göstermez.</strong> Sadece doğrusal bir tahmin gücü olduğunu kanıtlar.</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- SOL PANEL: VERİ GİRİŞİ VE KALİTE YÖNETİMİ -->
+                    <div class="col-lg-5 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm">
+                            
+                            <h4 class="fs-16 fw-bold text-dark mb-3"><i class="ri-table-2 align-middle text-primary me-1"></i> Veri Matrisi</h4>
+
+                            <!-- HIZLI YÜKLEME BUTONU -->
+                            <div class="custom-upload-zone p-2 rounded-10 text-center mb-3" onclick="document.getElementById('dosyaGezgini').click()">
+                                <h5 class="fs-13 fw-semibold text-primary mb-0"><i class="ri-upload-cloud-2-line fs-18 align-middle me-1"></i> Excel (.xlsx) veya CSV Yükle</h5>
+                                <input type="file" id="dosyaGezgini" accept=".csv, .txt, .xlsx, .xls" style="display: none;">
+                            </div>
+
+                            <div class="alert alert-warning-smart py-2 fs-12 mb-3 border-0 rounded-3">
+                                <i class="ri-edit-2-fill align-middle me-1"></i> Hücrelere tıklayıp değer girebilir, Excel'den doğrudan kopyalayıp buraya <strong>yapıştırabilirsiniz (Ctrl+V)</strong>. Sütun başlıklarını sürükleyerek yerlerini değiştirebilirsiniz.
+                            </div>
+
+                            <div id="gridErrorMsg" class="text-danger fw-bold fs-12 mb-2 d-none"><i class="ri-error-warning-line align-middle"></i> Hata: Kırmızı renkli hücrelerdeki geçersiz verileri düzeltin! Sadece sayı kabul edilir.</div>
+
+                            <!-- EXCEL GRİDİ -->
+                            <div class="excel-container mb-3" id="excelWrapper">
+                                <table class="excel-table" id="excelGrid">
+                                    <thead>
+                                        <tr id="gridHeaderRow">
+                                            <th></th>
+                                            <th draggable="true" data-col="1" class="draggable">
+                                                <input type="text" class="header-edit" value="X_Bagimsiz" onblur="updateVarChips()">
+                                            </th>
+                                            <th draggable="true" data-col="2" class="draggable">
+                                                <input type="text" class="header-edit" value="Y_Bagimli" onblur="updateVarChips()">
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="gridBody">
+                                        <!-- Satırlar JS ile oluşturulacak -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="d-flex gap-2 mb-3">
+                                <button class="btn-grid-action w-50" onclick="addRow()"><i class="ri-add-line"></i> Satır (Gözlem) Ekle</button>
+                                <button class="btn-grid-action w-50" onclick="addCol()"><i class="ri-add-column-line"></i> Sütun (Değişken) Ekle</button>
+                            </div>
+
+                            <!-- VERİ KALİTE ÖZETİ -->
+                            <div id="dataQualityBox" class="bg-light p-3 rounded-3 border mb-3">
+                                <h6 class="fs-13 fw-bold text-dark mb-2"><i class="ri-bar-chart-box-line text-primary me-1"></i>Veri Kalite Özeti</h6>
+                                <div class="d-flex justify-content-between fs-12 mb-1"><span>Toplam Satır:</span> <strong id="dqTotal">0</strong></div>
+                                <div class="d-flex justify-content-between fs-12 mb-1"><span>Geçerli Gözlem (N):</span> <strong id="dqValid" class="text-success">0</strong></div>
+                                <div class="d-flex justify-content-between fs-12 mb-2"><span>Eksik Verili Satır:</span> <strong id="dqMissing" class="text-danger">0</strong></div>
+                            </div>
+
+                            <!-- DEĞİŞKEN SEÇİMİ VE YÖNETİMİ -->
+                            <div id="variableManagerBox" class="mb-3">
+                                <hr class="border-secondary opacity-25 my-3">
+                                
+                                <label class="form-label fw-bold text-secondary fs-12 mb-2">Analiz Odak Çifti</label>
+                                <div class="d-flex gap-2">
+                                    <div class="w-50">
+                                        <span class="fs-11 text-muted d-block mb-1">Bağımsız Değişken (X)</span>
+                                        <select id="xVarSelect" class="form-select bg-light border-0 fs-12"></select>
+                                    </div>
+                                    <div class="w-50">
+                                        <span class="fs-11 text-muted d-block mb-1">Bağımlı Değişken (Y)</span>
+                                        <select id="yVarSelect" class="form-select bg-light border-0 fs-12"></select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="border-secondary opacity-25 my-3">
+
+                            <div class="row g-2 mb-4">
+                                <div class="col-6">
+                                    <label class="form-label fw-bold text-secondary fs-11 mb-1">Anlamlılık Düzeyi ($\alpha$)</label>
+                                    <select id="alfaInput" class="form-select bg-light border-0 rounded-10 py-1 fs-12">
+                                        <option value="0.05" selected>0.05</option>
+                                        <option value="0.01">0.01</option>
+                                        <option value="0.10">0.10</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label fw-bold text-secondary fs-11 mb-1">Güven Düzeyi (CI)</label>
+                                    <select id="ciInput" class="form-select bg-light border-0 rounded-10 py-1 fs-12">
+                                        <option value="0.95" selected>%95</option>
+                                        <option value="0.99">%99</option>
+                                        <option value="0.90">%90</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-column gap-3 mt-4">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-secondary w-50 py-2 rounded-10 btn-action" onclick="ornekVeriYukle()">
+                                        <i class="ri-magic-line align-middle me-1"></i> Örnek Veri
+                                    </button>
+                                    <button class="btn btn-outline-danger w-50 py-2 rounded-10 btn-action" onclick="temizleVeri()">
+                                        <i class="ri-delete-bin-line align-middle me-1"></i> Temizle
+                                    </button>
+                                </div>
+                                <button class="btn w-100 py-3 rounded-10 btn-action btn-pulse" onclick="baslatAnaliz()" id="btnAnaliz">
+                                    <i class="ri-bar-chart-2-fill align-middle me-1 fs-18"></i> ANALİZ ET
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- TAHMİN / PREDİCTİON BÖLÜMÜ (Başlangıçta Gizli) -->
+                        <div id="predictSection" class="mt-4" style="display: none;">
+                            <div class="card bg-white border-0 rounded-10 p-4 shadow-sm">
+                                <h5 class="fw-bold fs-15 text-dark mb-3"><i class="ri-focus-3-line text-primary me-1"></i> Yeni Değer İçin Tahmin Yap ($\hat{Y}$)</h5>
+                                <p class="fs-12 text-muted mb-3">Model kurulduktan sonra, yeni bir X değeri girerek Y'nin ne olacağını tahmin edebilirsiniz.</p>
+                                
+                                <div class="input-group mb-3 shadow-sm rounded-3 overflow-hidden">
+                                    <span class="input-group-text bg-light border-0 fw-bold text-secondary" id="lblPredX">X Değeri:</span>
+                                    <input type="number" id="inputPredX" class="form-control border-0 bg-light" placeholder="Bir değer girin..." step="any">
+                                    <button class="btn btn-primary fw-bold px-4" onclick="hesaplaTahmin()"><i class="ri-calculator-line me-1"></i> Tahmin Et</button>
+                                </div>
+
+                                <div id="predictResultBox" style="display:none;">
+                                    <div class="pred-box text-center mb-3">
+                                        <span class="d-block text-success fw-bold mb-1">Nokta Tahmini ($\hat{Y}$)</span>
+                                        <div class="pred-result" id="resPredY">-</div>
+                                    </div>
+                                    
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <div class="bg-body-bg p-3 rounded-3 border">
+                                                <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase text-center">Ortalama İçin Güven Aralığı</span>
+                                                <div class="text-center fw-bold text-dark fs-13" id="resPredCI">-</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="bg-body-bg p-3 rounded-3 border">
+                                                <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase text-center">Bireysel Tahmin Aralığı (PI)</span>
+                                                <div class="text-center fw-bold text-dark fs-13" id="resPredPI">-</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="extrapolationWarning" class="alert alert-warning-smart py-2 fs-11 mt-3 mb-0 d-none text-center">
+                                        <i class="ri-error-warning-fill me-1"></i> <strong>Uyarı:</strong> Girilen X değeri modelin eğitildiği verilerin dışındadır (Ekstrapolasyon). Tahmin sınırları güvenilir olmayabilir.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- SAĞ PANEL: SONUÇLAR -->
+                    <div class="col-lg-7 mb-4">
+                        <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                            
+                            <div id="bosDurum" class="text-center py-5 my-auto">
+                                <i class="ri-line-chart-line text-muted opacity-25" style="font-size: 4.5rem;"></i>
+                                <h5 class="text-muted mt-3 fs-16">Analiz Bekleniyor</h5>
+                                <p class="text-muted fs-14 mb-0">Sol panelden bağımlı ve bağımsız değişkenlerinizi girin.</p>
+                            </div>
+
+                            <div id="loadingOverlay" class="text-center py-5 my-auto" style="display: none;">
+                                <div class="loader-spinner"></div>
+                                <h5 class="text-primary mt-4 fs-16 fw-semibold">Regresyon Modeli Eğitiliyor...</h5>
+                            </div>
+
+                            <div id="aktifSonuc" style="display: none;">
+
+                                <!-- 1. REGRESYON DENKLEMİ KUTUSU -->
+                                <div class="eq-box">
+                                    <span class="d-block text-light opacity-75 fs-13 text-uppercase fw-bold mb-2 tracking-wider">Tahmin Edilen Regresyon Denklemi</span>
+                                    <h2 id="resEquation">$\hat{Y} = \beta_0 + \beta_1 X$</h2>
+                                </div>
+
+                                <!-- ÜST İSTATİSTİK KARTLARI (MODEL ÖZETİ) -->
+                                <div class="row g-3 text-center mb-4">
+                                    <div class="col-md-3">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Açıklanan Varyans ($R^2$)</span>
+                                            <h3 id="resR2" class="text-primary mb-0 fw-bold fs-22">-</h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Düzeltilmiş $R^2$</span>
+                                            <h3 id="resAdjR2" class="text-secondary mb-0 fw-bold fs-22">-</h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Model P-Değeri (F)</span>
+                                            <h3 id="resP" class="text-dark mb-0 fw-bold fs-20">-</h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="p-3 bg-body-bg rounded-10 border border-light h-100 d-flex flex-column justify-content-center">
+                                            <span class="d-block text-muted fs-11 fw-bold mb-1 text-uppercase">Tahmin Hatası ($S_e$)</span>
+                                            <h4 id="resSe" class="text-dark mb-0 fw-bold fs-18">-</h4>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="p-2 bg-body-bg rounded-10 border border-light d-flex justify-content-around px-2 align-items-center">
+                                            <div><span class="text-muted fs-12 fw-semibold">Gözlem ($n$):</span> <span id="resN" class="text-dark fw-bold fs-14 ms-1">-</span></div>
+                                            <div><span class="text-muted fs-12 fw-semibold">Korelasyon ($R$):</span> <span id="resBigR" class="text-dark fw-bold fs-14 ms-1">-</span></div>
+                                            <div><span class="text-muted fs-12 fw-semibold">F İstatistiği:</span> <span id="resF" class="text-dark fw-bold fs-14 ms-1">-</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 2. KATSAYILAR TABLOSU (COEFFICIENTS) -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="fs-14 fw-bold text-dark mb-0"><i class="ri-functions text-primary me-1"></i> Regresyon Katsayıları ve Anlamlılık Testi</h5>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table param-grid-table m-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-start">Değişken / Parametre</th>
+                                                    <th>Katsayı ($b$)</th>
+                                                    <th>Standart Hata</th>
+                                                    <th>$t$ İstatistiği</th>
+                                                    <th>$p$-değeri</th>
+                                                    <th id="thCI">Güven Aralığı</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td class="text-start fw-bold text-dark">Sabit ($b_0$ / Intercept)</td>
+                                                    <td id="b0_est" class="fw-bold">-</td>
+                                                    <td id="b0_se">-</td>
+                                                    <td id="b0_t">-</td>
+                                                    <td id="b0_p" class="fw-bold">-</td>
+                                                    <td id="b0_ci" class="text-muted">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-start fw-bold text-primary" id="xVarNameRow">X Değişkeni ($b_1$)</td>
+                                                    <td id="b1_est" class="fw-bold text-primary">-</td>
+                                                    <td id="b1_se">-</td>
+                                                    <td id="b1_t">-</td>
+                                                    <td id="b1_p" class="fw-bold text-dark">-</td>
+                                                    <td id="b1_ci" class="text-muted">-</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <small class="text-muted fs-11 mt-2 d-block"><i class="ri-information-fill text-primary me-1"></i>Eğim katsayısı ($b_1$), bağımsız değişkendeki 1 birimlik artışa karşılık bağımlı değişkendeki ortalama değişimi gösterir. Sabit ($b_0$) ise X=0 olduğunda beklenen Y değeridir.</small>
+                                </div>
+
+                                <!-- 3. ANOVA TABLOSU -->
+                                <div class="mb-4">
+                                    <h5 class="fs-14 fw-bold text-dark mb-2"><i class="ri-table-line text-primary me-1"></i> Regresyon ANOVA Tablosu (Genel Anlamlılık)</h5>
+                                    <div class="table-responsive">
+                                        <table class="table param-grid-table m-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-start">Varyans Kaynağı</th>
+                                                    <th>Kareler Toplamı (SS)</th>
+                                                    <th>Serbestlik Der. ($df$)</th>
+                                                    <th>Ortalama Kare (MS)</th>
+                                                    <th>$F$ Değeri</th>
+                                                    <th>$p$-value</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td class="text-start fw-bold text-success">Model (Regresyon)</td>
+                                                    <td id="aov_ssr">-</td>
+                                                    <td id="aov_dfr">-</td>
+                                                    <td id="aov_msr">-</td>
+                                                    <td id="aov_f" rowspan="2" class="align-middle fw-bold text-dark">-</td>
+                                                    <td id="aov_p" rowspan="2" class="align-middle fw-bold text-dark">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-start fw-bold text-danger">Hata (Residuals)</td>
+                                                    <td id="aov_sse">-</td>
+                                                    <td id="aov_dfe">-</td>
+                                                    <td id="aov_mse">-</td>
+                                                </tr>
+                                                <tr class="bg-light">
+                                                    <td class="text-start fw-bold text-dark">Genel Toplam</td>
+                                                    <td id="aov_sst" class="fw-bold">-</td>
+                                                    <td id="aov_dft" class="fw-bold">-</td>
+                                                    <td></td><td></td><td></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- GRAFİKLER BÖLÜMÜ -->
+                                <div class="row mt-4">
+                                    <!-- SAÇILIM VE REGRESYON GRAFİĞİ -->
+                                    <div class="col-12 mb-4">
+                                        <div class="chart-container h-100 d-flex flex-column border-primary border-opacity-25">
+                                            <h5 class="fs-14 fw-bold text-dark mb-2 text-center text-uppercase tracking-wider">Saçılım Grafiği ve Regresyon Eğilimi</h5>
+                                            <span class="fs-12 text-muted mb-3 text-center d-block">Mavi noktalar gözlemlenen gerçek verileri, kırmızı çizgi ise en küçük kareler yöntemiyle (OLS) oluşturulan tahmin modelini temsil eder.</span>
+                                            <div style="position: relative; height: 380px; width: 100%;"><canvas id="scatterChart"></canvas></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- ARTIKLAR GRAFİĞİ -->
+                                    <div class="col-12 mb-4">
+                                        <div class="chart-container h-100 d-flex flex-column border-primary border-opacity-25">
+                                            <h5 class="fs-14 fw-bold text-dark mb-2 text-center text-uppercase tracking-wider">Artıklar (Residuals) ve Sabit Varyans Kontrolü</h5>
+                                            <span class="fs-12 text-muted mb-3 text-center d-block">X ekseni tahmin edilen Y değerlerini, Y ekseni ise Hata (Gerçek - Tahmin) miktarını gösterir. Noktaların 0 çizgisi etrafında rastgele dağılması (huni/desen olmaması) beklenir.</span>
+                                            <div style="position: relative; height: 300px; width: 100%;"><canvas id="residChart"></canvas></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 4. VARSAYIM VE MODEL TANILARI (DIAGNOSTICS) -->
+                                <div class="mb-4">
+                                    <h5 class="fs-14 fw-bold text-dark mb-2"><i class="ri-shield-check-line text-primary me-1"></i> Model Varsayım Kontrolleri (Tanı Testleri)</h5>
+                                    <div class="table-responsive">
+                                        <table class="table param-grid-table m-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-start">Varsayım (Test)</th>
+                                                    <th>Test İstatistiği</th>
+                                                    <th>$p$-value</th>
+                                                    <th>Durum / Karar</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td class="text-start fw-bold">Artıkların Normalliği (Shapiro-Wilk)</td>
+                                                    <td id="diag_norm_s">-</td>
+                                                    <td id="diag_norm_p" class="fw-bold">-</td>
+                                                    <td id="diag_norm_res">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-start fw-bold">Sabit Varyans - Homoscedasticity (Breusch-Pagan)</td>
+                                                    <td id="diag_bp_s">-</td>
+                                                    <td id="diag_bp_p" class="fw-bold">-</td>
+                                                    <td id="diag_bp_res">-</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- 5. ETKİLİ GÖZLEMLER VE ARTIKLAR TABLOSU (TÜM GÖZLEMLER) -->
+                                <div class="mb-4">
+                                    <h5 class="fs-14 fw-bold text-dark mb-2"><i class="ri-search-eye-line text-primary me-1"></i> Artıklar (Residuals) ve Etkili Gözlemler Özeti</h5>
+                                    <p class="fs-12 text-muted mb-2">Modeli aşırı derecede saptıran aykırı/etkili gözlemleri tespit etmek için Studentized Artıklar ve Cook's Distance kullanılır.</p>
+                                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                        <table class="table param-grid-table m-0">
+                                            <thead style="position: sticky; top: 0; z-index: 5;">
+                                                <tr>
+                                                    <th class="text-start">#</th>
+                                                    <th>Gerçek Y ($y$)</th>
+                                                    <th>Tahmin ($\hat{y}$)</th>
+                                                    <th>Artık ($e$)</th>
+                                                    <th>Studentized Artık</th>
+                                                    <th>Cook's Distance</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="residualsBody">
+                                                <!-- JS Dolduracak -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div id="cooksWarning" class="alert alert-warning-smart py-2 fs-12 mt-2 mb-0 d-none">
+                                        <i class="ri-error-warning-fill me-1"></i> <strong>Uyarı:</strong> Cook's Distance değeri yüksek (model eğilimini tek başına çeken) etkili gözlemler tespit edildi. Veri doğruluğunu kontrol edin. (Otomatik silinmez).
+                                    </div>
+                                </div>
+
+                                <!-- ANA KARAR VE İÇGÖRÜ KUTUSU -->
+                                <div id="kararKutusu" class="alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start shadow-sm mt-4">
+                                    <div class="d-flex justify-content-center mt-1 me-3"><i id="kararIkon" class="fs-28"></i></div>
+                                    <div class="flex-grow-1">
+                                        <h4 id="kararBaslik" class="mb-2 fs-16 fw-bold">-</h4>
+                                        <p id="kararAciklama" class="mb-0 fs-14 text-muted lh-base">-</p>
+                                        
+                                        <!-- İNDİGO AKILLI YORUM KUTUSU -->
+                                        <div id="yorumWrapper" class="insight-box shadow-sm mt-3">
+                                            <i class="ri-lightbulb-flash-fill"></i>
+                                            <div class="d-flex flex-column w-100" id="yorumText">
+                                                <!-- Yorumlar satır satır gelecek -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- AKORDEON: ADIM ADIM HESAPLAMALARI GÖSTER -->
+                                <div class="mt-4 mb-4">
+                                    <button class="btn w-100 py-3 d-flex justify-content-between align-items-center fs-15 fw-bold rounded-10 border-0 shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#adimAdimHesaplama" aria-expanded="false" style="background-color: #f8fafc; border: 1px solid #e2e8f0 !important; color: #0f172a;">
+                                        <span><i class="ri-calculator-line text-primary me-2 fs-20 align-middle"></i> Hesaplama Ayrıntılarını Göster</span>
+                                        <i class="ri-arrow-down-s-line fs-22 text-secondary"></i>
+                                    </button>
+                                    <div class="collapse mt-3" id="adimAdimHesaplama">
+                                        <div class="card card-body bg-white border border-light p-4 rounded-10 shadow-sm fs-14 text-dark" id="hesaplamaDetayIcerik">
+                                            <!-- JS TABLOLARLA DOLDURACAK -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- AKORDEON: TEORİK ALTYAPI (FORMÜLLER) -->
+                                <div class="mt-4 mb-2">
+                                    <button class="btn btn-pulse w-100 py-3 d-flex justify-content-between align-items-center fs-15 fw-bold rounded-10 border-0 shadow" type="button" data-bs-toggle="collapse" data-bs-target="#teorikFormuller" aria-expanded="false" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: white;">
+                                        <span><i class="ri-function-line me-2 fs-20 align-middle"></i> Matematiksel Formülleri Görüntüle</span>
+                                        <i class="ri-arrow-down-s-line fs-22"></i>
+                                    </button>
+                                    <div class="collapse mt-3" id="teorikFormuller">
+                                        <div class="card card-body bg-body-bg border border-light p-4 rounded-10 shadow-sm">
+                                            <div class="row g-3">
+                                                
+                                                <div class="col-12">
+                                                    <div class="formula-box">
+                                                        <strong class="text-dark d-block mb-3 fs-15">1. En Küçük Kareler (OLS) Katsayı Tahmini</strong>
+                                                        <p class="fs-14">Regresyon doğrusu, gözlemlenen noktalar ile çizgi arasındaki dikey sapmaların (hataların) kareler toplamını en aza indirecek şekilde çizilir.</p>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ b_1 = \frac{\sum (X_i - \bar{X})(Y_i - \bar{Y})}{\sum (X_i - \bar{X})^2} $$<br>
+                                                            $$ b_0 = \bar{Y} - b_1\bar{X} $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="formula-box">
+                                                        <strong class="text-dark d-block mb-3 fs-15">2. Kareler Toplamı (Sum of Squares)</strong>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ SST = \sum (Y_i - \bar{Y})^2 \quad (\text{Toplam Varyasyon}) $$<br>
+                                                            $$ SSR = \sum (\hat{Y}_i - \bar{Y})^2 \quad (\text{Modelin Açıkladığı}) $$<br>
+                                                            $$ SSE = \sum (Y_i - \hat{Y}_i)^2 \quad (\text{Açıklanamayan Hata}) $$<br>
+                                                            $$ SST = SSR + SSE \quad \rightarrow \quad R^2 = \frac{SSR}{SST} = 1 - \frac{SSE}{SST} $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="formula-box mb-0">
+                                                        <strong class="text-dark d-block mb-3 fs-15">3. Standart Hata ve t-Testi</strong>
+                                                        <div class="overflow-auto text-center" style="font-size: 16px;">
+                                                            $$ MSE = \frac{SSE}{n - 2} \quad , \quad S_e = \sqrt{MSE} $$<br>
+                                                            $$ SE(b_1) = \frac{S_e}{\sqrt{\sum (X_i - \bar{X})^2}} \quad \rightarrow \quad t_{b_1} = \frac{b_1}{SE(b_1)} $$<br>
+                                                            $$ SE(b_0) = S_e \sqrt{\frac{1}{n} + \frac{\bar{X}^2}{\sum (X_i - \bar{X})^2}} \quad \rightarrow \quad t_{b_0} = \frac{b_0}{SE(b_0)} $$
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <div class="alert bg-warning-subtle text-dark border-0 rounded-10 p-4">
+                                        <h5 class="fw-bold fs-15 text-warning mb-2"><i class="ri-alert-line me-1"></i> Modelin Sınırları ve Önemli Uyarılar</h5>
+                                        <ul class="mb-0 fs-13 lh-lg ps-3 text-muted">
+                                            <li><strong>Nedensellik:</strong> $R^2$ ne kadar yüksek olursa olsun, "X değişkeni Y'yi değiştirir" demek mantıksal bir safsatadır. İkisi de üçüncü bir değişkenden etkileniyor olabilir.</li>
+                                            <li><strong>Ekstrapolasyon:</strong> Regresyon modeli yalnızca eldeki verilerin Minimum X ve Maksimum X aralığında güvenilirdir. Bu sınırların dışında yapılacak bir yeni X tahmini (Ekstrapolasyon) mantıksız sonuçlar (örn. negatif boy) verebilir.</li>
+                                            <li><strong>Aykırı Değer Etkisi:</strong> Regresyon "Kareler" toplamını kullandığı için, tek bir hatalı veri bile tüm doğrunun eğimini kendine çekebilir. Bu yüzden Etkili Gözlemler (Cook's D) tablosunu kontrol etmek şarttır.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="footer-area bg-white text-center rounded-10 rounded-bottom-0 p-3 mt-4 border-top shadow-sm">
+                <p class="fs-14 text-body mb-0">© <span>StatLabseu</span> - Gelişmiş İstatistiksel Analiz Platformu</p>
+            </footer>
+
+        </div>
+    </div>
+ 
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function setTxt(id, text) { let el = document.getElementById(id); if (el) el.innerText = text; }
+        function setHTML(id, html) { let el = document.getElementById(id); if (el) el.innerHTML = html; }
+        function setClass(id, cls) { let el = document.getElementById(id); if (el) el.className = cls; }
+        function setStyle(id, prop, val) { let el = document.getElementById(id); if (el) el.style[prop] = val; }
+
+        let charts = { scatter: null, resid: null };
+        let parsedDataCache = {}; 
+        let rawVariableData = {}; 
+        let allVarNames = []; 
+        let regModelCache = null; // Tahmin için saklar
+        
+        let colCount = 2; 
+        let rowCount = 5;
+        let draggedColIndex = -1;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            if (localStorage.getItem('statlab_theme') === 'dark') { themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); }
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); themeIcon.classList.add('text-warning'); themeIcon.classList.remove('text-secondary'); localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); themeIcon.classList.remove('text-warning'); themeIcon.classList.add('text-secondary'); localStorage.setItem('statlab_theme', 'light');
+                }
+                let aktifEl = document.getElementById('aktifSonuc'); if(aktifEl && aktifEl.style.display === 'block') baslatAnaliz();
+            });
+            
+            document.getElementById('dosyaGezgini').addEventListener('change', function(e) { handleFile(e.target.files[0]); });
+            setupDragAndDrop();
+            document.getElementById('excelGrid').addEventListener('paste', handleGridPaste);
+            buildInitialGrid();
+        });
+
+        // --- GRID YÖNETİMİ ---
+        function buildInitialGrid() {
+            let tbody = document.getElementById('gridBody');
+            tbody.innerHTML = '';
+            for(let i=1; i<=rowCount; i++) {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `<td>${i}</td>
+                                <td><input type="text" class="excel-input" oninput="validateCell(this)"></td>
+                                <td><input type="text" class="excel-input" oninput="validateCell(this)"></td>`;
+                tbody.appendChild(tr);
+            }
+            updateDataQuality();
+        }
+
+        function addRow() {
+            let tbody = document.getElementById('gridBody');
+            rowCount++;
+            let tr = document.createElement('tr');
+            let html = `<td>${rowCount}</td>`;
+            for(let j=0; j<colCount; j++) html += `<td><input type="text" class="excel-input" oninput="validateCell(this)"></td>`;
+            tr.innerHTML = html;
+            tbody.appendChild(tr);
+            updateDataQuality();
+        }
+
+        function addCol() {
+            colCount++;
+            let thead = document.getElementById('gridHeaderRow');
+            let th = document.createElement('th');
+            th.draggable = true; th.className = "draggable"; th.setAttribute('data-col', colCount);
+            th.innerHTML = `<input type="text" class="header-edit" value="Degisken_${colCount}" onblur="updateVarChips()">`;
+            thead.appendChild(th);
+            
+            let tbody = document.getElementById('gridBody');
+            for(let i=0; i<tbody.rows.length; i++) {
+                let td = document.createElement('td');
+                td.innerHTML = `<input type="text" class="excel-input" oninput="validateCell(this)">`;
+                tbody.rows[i].appendChild(td);
+            }
+            setupDragAndDrop(); updateVarChips(); updateDataQuality();
+        }
+
+        function validateCell(input) {
+            let val = input.value;
+            if(val.includes(',')) { val = val.replace(/,/g, '.'); input.value = val; }
+            if(val !== "" && val !== "-" && isNaN(Number(val))) input.classList.add('error');
+            else input.classList.remove('error');
+            updateDataQuality();
+        }
+
+        function setupDragAndDrop() {
+            let headers = document.querySelectorAll('.excel-table th.draggable');
+            headers.forEach(th => {
+                th.removeEventListener('dragstart', handleDragStart); th.removeEventListener('dragover', handleDragOver);
+                th.removeEventListener('drop', handleDrop); th.removeEventListener('dragend', handleDragEnd);
+
+                th.addEventListener('dragstart', handleDragStart); th.addEventListener('dragover', handleDragOver);
+                th.addEventListener('drop', handleDrop); th.addEventListener('dragend', handleDragEnd);
+            });
+        }
+        function handleDragStart(e) { draggedColIndex = e.target.closest('th').cellIndex; e.target.closest('th').classList.add('dragging'); }
+        function handleDragOver(e) { e.preventDefault(); }
+        function handleDragEnd(e) { e.target.closest('th').classList.remove('dragging'); }
+        function handleDrop(e) {
+            e.preventDefault();
+            let targetTh = e.target.closest('th'); if(!targetTh) return;
+            let targetIndex = targetTh.cellIndex;
+            if(draggedColIndex === targetIndex || targetIndex === 0 || draggedColIndex === 0) return;
+
+            let table = document.getElementById('excelGrid');
+            for(let i=0; i<table.rows.length; i++) {
+                let row = table.rows[i]; let cells = row.cells; let elem = cells[draggedColIndex];
+                if (targetIndex > draggedColIndex) row.insertBefore(elem, cells[targetIndex+1]);
+                else row.insertBefore(elem, cells[targetIndex]);
+            }
+            
+            let newHeaders = document.querySelectorAll('.excel-table th.draggable');
+            newHeaders.forEach((th, idx) => { th.setAttribute('data-col', idx+1); });
+            updateVarChips();
+        }
+
+        function handleGridPaste(e) {
+            e.preventDefault();
+            let clipboardData = e.clipboardData || window.clipboardData;
+            let pastedData = clipboardData.getData('Text');
+            if(!pastedData) return;
+
+            let rows = pastedData.trim().split('\n'); if(rows.length === 0) return;
+            let firstRowParts = rows[0].split(/[\t]+/).map(s=>s.trim());
+            let isHeader = isNaN(Number(firstRowParts[0].replace(',','.')));
+            let dataStartIndex = isHeader ? 1 : 0;
+            let reqCols = firstRowParts.length;
+
+            while(colCount < reqCols) addCol();
+            if (isHeader) {
+                let thead = document.getElementById('gridHeaderRow');
+                for(let j=0; j<reqCols; j++) { if(thead.cells[j+1]) thead.cells[j+1].querySelector('input').value = firstRowParts[j]; }
+            }
+
+            let reqRows = rows.length - dataStartIndex;
+            let tbody = document.getElementById('gridBody');
+            while(tbody.rows.length < reqRows) addRow();
+
+            for(let i=dataStartIndex; i<rows.length; i++) {
+                let parts = rows[i].split(/[\t]+/).map(s=>s.trim());
+                let tr = tbody.rows[i - dataStartIndex];
+                for(let j=0; j<parts.length; j++) {
+                    if(tr.cells[j+1]) { let inp = tr.cells[j+1].querySelector('input'); inp.value = parts[j]; validateCell(inp); }
+                }
+            }
+            updateVarChips(); updateDataQuality();
+        }
+
+        async function handleFile(file) {
+            if (!file) return;
+            const ext = file.name.split('.').pop().toLowerCase();
+            try {
+                let csvStr = "";
+                if(ext === 'csv' || ext === 'txt') { csvStr = await file.text(); } 
+                else if (ext === 'xlsx' || ext === 'xls') {
+                    const data = await file.arrayBuffer();
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    csvStr = XLSX.utils.sheet_to_csv(firstSheet, {FS: "\t"});
+                } else { alert("Sadece .csv, .txt, .xls ve .xlsx formatları desteklenir."); return; }
+                
+                const dataTransfer = new DataTransfer(); dataTransfer.setData('text', csvStr);
+                const pasteEvent = new ClipboardEvent('paste', { clipboardData: dataTransfer });
+                document.getElementById('excelGrid').dispatchEvent(pasteEvent);
+            } catch (err) { alert("Dosya okuma hatası: " + err); }
+            document.getElementById('dosyaGezgini').value = ""; 
+        }
+
+        function updateDataQuality() {
+            let table = document.getElementById('excelGrid'); let thead = document.getElementById('gridHeaderRow'); let tbody = document.getElementById('gridBody');
+            let btnAnaliz = document.getElementById('btnAnaliz'); let errBox = document.getElementById('gridErrorMsg');
+
+            let headers = [];
+            for(let j=1; j<=colCount; j++) headers.push(thead.cells[j].querySelector('input').value.trim() || `Var_${j}`);
+
+            let totalRows = tbody.rows.length; let validRowsCount = 0; let hasGlobalError = false;
+
+            for(let i=0; i<totalRows; i++) {
+                let row = tbody.rows[i]; let rowIsEmpty = true; let rowHasError = false;
+                for(let j=1; j<=colCount; j++) {
+                    let inp = row.cells[j].querySelector('input');
+                    if (inp.classList.contains('error')) { rowHasError = true; hasGlobalError = true; }
+                    if (inp.value.trim() !== "") rowIsEmpty = false;
+                }
+                if(!rowIsEmpty && !rowHasError) validRowsCount++;
+            }
+
+            if(hasGlobalError) { errBox.classList.remove('d-none'); errBox.classList.add('d-block'); btnAnaliz.disabled = true; } 
+            else { errBox.classList.add('d-none'); errBox.classList.remove('d-block'); btnAnaliz.disabled = false; }
+
+            setTxt('dqTotal', totalRows); setTxt('dqValid', validRowsCount); setTxt('dqMissing', totalRows - validRowsCount);
+            
+            if(validRowsCount >= 3 && !hasGlobalError) { updateVarChips(headers); } 
+            else { btnAnaliz.disabled = true; }
+        }
+
+        function updateVarChips(forcedHeaders = null) {
+            let thead = document.getElementById('gridHeaderRow');
+            let headers = forcedHeaders;
+            if(!headers) { headers = []; for(let j=1; j<=colCount; j++) headers.push(thead.cells[j].querySelector('input').value.trim() || `Var_${j}`); }
+
+            let selX = document.getElementById('xVarSelect'); let selY = document.getElementById('yVarSelect');
+            let oldX = selX.value; let oldY = selY.value;
+            
+            selX.innerHTML = ''; selY.innerHTML = '';
+            headers.forEach(v => { selX.add(new Option(v, v)); selY.add(new Option(v, v)); });
+            
+            if(headers.includes(oldX)) selX.value = oldX; else selX.selectedIndex = 0;
+            if(headers.includes(oldY)) selY.value = oldY; else selY.selectedIndex = headers.length > 1 ? 1 : 0;
+        }
+
+        function getPreparedData() {
+            let table = document.getElementById('excelGrid'); let thead = document.getElementById('gridHeaderRow'); let tbody = document.getElementById('gridBody');
+            
+            let selX = document.getElementById('xVarSelect').value;
+            let selY = document.getElementById('yVarSelect').value;
+            
+            if(!selX || !selY || selX === selY) return "X ve Y olarak iki farklı değişken seçilmelidir.";
+
+            let colMap = {};
+            for(let j=1; j<=colCount; j++) {
+                let hName = thead.cells[j].querySelector('input').value.trim() || `Var_${j}`;
+                colMap[hName] = j;
+            }
+
+            let xData = []; let yData = [];
+            let validN = 0;
+
+            for(let i=0; i<tbody.rows.length; i++) {
+                let row = tbody.rows[i];
+                let vxStr = row.cells[colMap[selX]].querySelector('input').value.trim();
+                let vyStr = row.cells[colMap[selY]].querySelector('input').value.trim();
+                
+                if(vxStr !== "" && vyStr !== "") {
+                    xData.push(parseFloat(vxStr));
+                    yData.push(parseFloat(vyStr));
+                    validN++;
+                }
+            }
+
+            let xMean = xData.reduce((a,b)=>a+b,0)/validN;
+            let xVar = xData.reduce((a,b)=>a+Math.pow(b-xMean,2),0);
+            if(xVar === 0) return `Hata: Bağımsız Değişken (X) varyansı sıfır. Regresyon hesaplanamaz.`;
+
+            let yMean = yData.reduce((a,b)=>a+b,0)/validN;
+            let yVar = yData.reduce((a,b)=>a+Math.pow(b-yMean,2),0);
+            if(yVar === 0) return `Hata: Bağımlı Değişken (Y) varyansı sıfır. Regresyon hesaplanamaz.`;
+
+            return { xName: selX, yName: selY, x: xData, y: yData, n: validN };
+        }
+
+        function ornekVeriYukle() {
+            let sample = "Yas\tGelir_USD\n";
+            let n = 40 + Math.floor(Math.random() * 10);
+            
+            for(let i=0; i<n; i++) {
+                let yas = 20 + Math.floor(Math.random() * 40);
+                // Gelir = 1500 + 120 * Yas + Error
+                let gelir = 1500 + (yas * 120) + (Math.random() * 3000 - 1500);
+                sample += `${yas}\t${gelir.toFixed(0)}\n`;
+            }
+            
+            const dataTransfer = new DataTransfer(); dataTransfer.setData('text', sample);
+            const pasteEvent = new ClipboardEvent('paste', { clipboardData: dataTransfer });
+            document.getElementById('excelGrid').dispatchEvent(pasteEvent);
+            document.getElementById('alfaInput').value = "0.05";
+        }
+
+        function temizleVeri() {
+            colCount = 2; rowCount = 5; buildInitialGrid();
+            setStyle('aktifSonuc', 'display', 'none'); setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block'); setStyle('predictSection', 'display', 'none');
+            Object.values(charts).forEach(c => { if(c) c.destroy(); });
+        }
+
+
+        // --- İSTATİSTİKSEL HESAPLAMALAR (JS YEREL YEDEK / OLS MOTORU) ---
+        function normalCDF(z) {
+            let absZ = Math.abs(z);
+            if (absZ > 8.0) return z > 0 ? 1.0 : 0.0;
+            let p = 0.2316419; let a1 = 0.31938153; let a2 = -0.356563782; let a3 = 1.781477937; let a4 = -1.821255978; let a5 = 1.330274429;
+            let t = 1.0 / (1.0 + p * absZ);
+            let d = (1.0 / Math.sqrt(2 * Math.PI)) * Math.exp(-0.5 * z * z);
+            let prob = d * t * (a1 + t * (a2 + t * (a3 + t * (a4 + t * a5))));
+            return z > 0 ? 1.0 - prob : prob;
+        }
+
+        function simpleOLS(x, y, alpha, conf_level) {
+            let n = x.length;
+            let x_mean = x.reduce((a,b)=>a+b,0)/n;
+            let y_mean = y.reduce((a,b)=>a+b,0)/n;
+            
+            let ss_xx=0, ss_yy=0, sp_xy=0;
+            for(let i=0; i<n; i++) {
+                ss_xx += Math.pow(x[i] - x_mean, 2);
+                ss_yy += Math.pow(y[i] - y_mean, 2);
+                sp_xy += (x[i] - x_mean) * (y[i] - y_mean);
+            }
+            
+            let b1 = sp_xy / ss_xx;
+            let b0 = y_mean - b1 * x_mean;
+            
+            let sst = ss_yy;
+            let ssr = Math.pow(b1, 2) * ss_xx;
+            let sse = sst - ssr;
+            if(sse < 0) sse = 0;
+
+            let df_r = 1; let df_e = n - 2; let df_t = n - 1;
+            let msr = ssr / df_r; let mse = sse / df_e;
+            let f_stat = mse === 0 ? 0 : msr / mse;
+            let f_p = 2 * (1 - normalCDF(Math.sqrt(f_stat))); // Fallback approx
+
+            let r_sq = sst === 0 ? 0 : ssr / sst;
+            let r_val = Math.sqrt(r_sq) * Math.sign(b1);
+            let adj_r_sq = 1 - (1 - r_sq) * (n - 1) / df_e;
+
+            let s_e = Math.sqrt(mse);
+            let se_b1 = s_e / Math.sqrt(ss_xx);
+            let se_b0 = s_e * Math.sqrt(1/n + Math.pow(x_mean, 2)/ss_xx);
+
+            let t_b1 = se_b1 === 0 ? 0 : b1 / se_b1;
+            let t_b0 = se_b0 === 0 ? 0 : b0 / se_b0;
+
+            let p_b1 = 2 * (1 - normalCDF(Math.abs(t_b1))); // Approx
+            let p_b0 = 2 * (1 - normalCDF(Math.abs(t_b0)));
+
+            let t_crit = conf_level === 0.99 ? 2.576 : (conf_level === 0.90 ? 1.645 : 1.96); // Z approx
+            let ci_b1 = [b1 - t_crit * se_b1, b1 + t_crit * se_b1];
+            let ci_b0 = [b0 - t_crit * se_b0, b0 + t_crit * se_b0];
+
+            let y_pred = []; let resid = []; let std_resid = []; let cook = []; let leverage = [];
+            for(let i=0; i<n; i++) {
+                let yp = b0 + b1 * x[i]; y_pred.push(yp);
+                let e = y[i] - yp; resid.push(e);
+                
+                let lev = 1/n + Math.pow(x[i] - x_mean, 2)/ss_xx;
+                leverage.push(lev);
+                let sr = s_e > 0 ? e / (s_e * Math.sqrt(1 - lev)) : 0;
+                std_resid.push(sr);
+                
+                let cd = (Math.pow(sr, 2) / 2) * (lev / (1 - lev));
+                cook.push(cd);
+            }
+
+            return {
+                b0, b1, sst, ssr, sse, df_r, df_e, df_t, msr, mse, f_stat, f_p, r_sq, adj_r_sq, r_val, s_e,
+                se_b1, se_b0, t_b1, t_b0, p_b1, p_b0, ci_b1, ci_b0, y_pred, resid, std_resid, cook, leverage, x_mean, y_mean, ss_xx, sp_xy
+            };
+        }
+
+        // --- GRAFİKLER ---
+        function drawCharts(xData, yData, yPred, resid, xName, yName) {
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; const gColor = isDark ? '#334155' : '#e2e8f0';
+
+            Object.values(charts).forEach(c => { if(c) c.destroy(); });
+
+            // 1. SCATTER PLOT
+            let scatterPts = [];
+            for(let i=0; i<xData.length; i++) scatterPts.push({x: xData[i], y: yData[i]});
+            
+            let minX = Math.min(...xData); let maxX = Math.max(...xData);
+            let minYp = yPred[xData.indexOf(minX)] || (regModelCache.b0 + regModelCache.b1*minX);
+            let maxYp = yPred[xData.indexOf(maxX)] || (regModelCache.b0 + regModelCache.b1*maxX);
+            
+            charts.scatter = new Chart(document.getElementById('scatterChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        { label: 'Gerçek Gözlemler', data: scatterPts, backgroundColor: 'rgba(47, 143, 232, 0.6)', borderColor: '#2f8fe8', borderWidth: 1, pointRadius: 5, pointHoverRadius: 7 },
+                        { label: 'Regresyon Modeli', data: [{x: minX, y: minYp}, {x: maxX, y: maxYp}], type: 'line', borderColor: '#ef4444', borderWidth: 3, fill: false, pointRadius: 0, tension: 0 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { color: fColor } } }, scales: { y: { title: {display:true, text: yName, color: fColor}, grid: { color: gColor }, ticks: { color: fColor } }, x: { title: {display:true, text: xName, color: fColor}, grid: { color: gColor }, ticks: { color: fColor } } } }
+            });
+
+            // 2. RESIDUALS PLOT (Artıklar vs Tahmin)
+            let residPts = [];
+            for(let i=0; i<yPred.length; i++) residPts.push({x: yPred[i], y: resid[i]});
+
+            charts.resid = new Chart(document.getElementById('residChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        { label: 'Artıklar (Hata)', data: residPts, backgroundColor: 'rgba(16, 185, 129, 0.6)', borderColor: '#10b981', borderWidth: 1, pointRadius: 4 },
+                        { label: 'Sıfır Hattı (Mükemmel Tahmin)', data: [{x: Math.min(...yPred), y: 0}, {x: Math.max(...yPred), y: 0}], type: 'line', borderColor: '#94a3b8', borderDash: [5, 5], borderWidth: 2, fill: false, pointRadius: 0 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { color: fColor } } }, scales: { y: { title: {display:true, text: "Artık (Residual)", color: fColor}, grid: { color: gColor }, ticks: { color: fColor } }, x: { title: {display:true, text: `Tahmin Edilen ${yName}`, color: fColor}, grid: { color: gColor }, ticks: { color: fColor } } } }
+            });
+        }
+
+        // TAHMİN (PREDICTION) SİSTEMİ
+        function hesaplaTahmin() {
+            if(!regModelCache) return;
+            let newX = parseFloat(document.getElementById('inputPredX').value);
+            if(isNaN(newX)) return;
+
+            let b0 = regModelCache.b0; let b1 = regModelCache.b1; let se = regModelCache.s_e;
+            let n = regModelCache.n; let xMean = regModelCache.x_mean; let ss_xx = regModelCache.ss_xx;
+            let minX = regModelCache.min_x; let maxX = regModelCache.max_x;
+
+            let conf_level = parseFloat(document.getElementById('ciInput').value);
+            let t_crit = conf_level === 0.99 ? 2.576 : (conf_level === 0.90 ? 1.645 : 1.96); 
+
+            let y_hat = b0 + b1 * newX;
+            
+            // Güven Aralığı (Mean response)
+            let se_mean = se * Math.sqrt(1/n + Math.pow(newX - xMean, 2)/ss_xx);
+            let ci = [y_hat - t_crit * se_mean, y_hat + t_crit * se_mean];
+            
+            // Tahmin Aralığı (Individual PI)
+            let se_pred = se * Math.sqrt(1 + 1/n + Math.pow(newX - xMean, 2)/ss_xx);
+            let pi = [y_hat - t_crit * se_pred, y_hat + t_crit * se_pred];
+
+            document.getElementById('resPredY').innerText = y_hat.toFixed(3);
+            document.getElementById('resPredCI').innerText = `[${ci[0].toFixed(3)} , ${ci[1].toFixed(3)}]`;
+            document.getElementById('resPredPI').innerText = `[${pi[0].toFixed(3)} , ${pi[1].toFixed(3)}]`;
+
+            if(newX < minX || newX > maxX) {
+                document.getElementById('extrapolationWarning').classList.remove('d-none');
+                document.getElementById('extrapolationWarning').classList.add('d-block');
+            } else {
+                document.getElementById('extrapolationWarning').classList.add('d-none');
+                document.getElementById('extrapolationWarning').classList.remove('d-block');
+            }
+
+            setStyle('predictResultBox', 'display', 'block');
+        }
+
+        function baslatAnaliz() {
+            let parseRes = getPreparedData();
+            if (typeof parseRes === "string") { alert(parseRes); return; }
+            
+            parsedDataCache = parseRes; 
+
+            setStyle('bosDurum', 'display', 'none'); setStyle('aktifSonuc', 'display', 'none'); setStyle('predictSection', 'display', 'none'); setStyle('loadingOverlay', 'display', 'block'); 
+            setTimeout(() => hesaplaRegresyon(parseRes), 800);
+        }
+
+        async function hesaplaRegresyon(pData) {
+            try {
+                let alfa = parseFloat(document.getElementById('alfaInput').value);
+                let ci_lvl = parseFloat(document.getElementById('ciInput').value);
+                
+                let xName = pData.xName; 
+                let yName = pData.yName;
+                let xData = pData.x; 
+                let yData = pData.y;
+                let N = pData.n;
+
+                // JS OLS Fallback
+                let rRes = simpleOLS(xData, yData, alfa, ci_lvl);
+                rRes.n = N; rRes.min_x = Math.min(...xData); rRes.max_x = Math.max(...xData);
+                let apiSuccess = false;
+
+                // API İSTEĞİ (Statsmodels ile Exact Hesap)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3500); 
+
+                try {
+                    let reqBody = { x: xData, y: yData, alpha: alfa, conf_level: ci_lvl };
+                    let istek = await fetch("https://api.statlabseu.com/test/simple-linear-regression", {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(reqBody), signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    
+                    if(istek.ok) { 
+                        let apiData = await istek.json(); 
+                        apiSuccess = true;
+                        
+                        rRes.b0 = apiData.intercept; rRes.b1 = apiData.slope;
+                        rRes.r_sq = apiData.r_squared; rRes.adj_r_sq = apiData.adjusted_r_squared; rRes.r_val = apiData.r;
+                        rRes.sst = apiData.sst; rRes.ssr = apiData.ssr; rRes.sse = apiData.sse;
+                        rRes.msr = apiData.ssr / 1; rRes.mse = apiData.mse; rRes.s_e = Math.sqrt(apiData.mse);
+                        rRes.f_stat = apiData.f_statistic; rRes.f_p = apiData.f_p_value;
+                        
+                        rRes.se_b0 = apiData.coefficients.intercept.std_error; rRes.t_b0 = apiData.coefficients.intercept.t; rRes.p_b0 = apiData.coefficients.intercept.p_value;
+                        rRes.ci_b0 = [apiData.coefficients.intercept.ci_lower, apiData.coefficients.intercept.ci_upper];
+                        
+                        rRes.se_b1 = apiData.coefficients.slope.std_error; rRes.t_b1 = apiData.coefficients.slope.t; rRes.p_b1 = apiData.coefficients.slope.p_value;
+                        rRes.ci_b1 = [apiData.coefficients.slope.ci_lower, apiData.coefficients.slope.ci_upper];
+
+                        rRes.resid = apiData.residuals.resid; rRes.std_resid = apiData.residuals.std_resid; rRes.cook = apiData.residuals.cooks_d; rRes.y_pred = apiData.predictions;
+                        
+                        // Diagnostics
+                        rRes.sw_w = apiData.diagnostics.shapiro_w; rRes.sw_p = apiData.diagnostics.shapiro_p;
+                        rRes.bp_lm = apiData.diagnostics.bp_lm; rRes.bp_p = apiData.diagnostics.bp_p;
+                    }
+                } catch (e) { clearTimeout(timeoutId); }
+
+                // Veri hesaplaması kontrol (API gelmezse JS yedekte kalsın)
+                let xMean = xData.reduce((a,b)=>a+b,0)/N;
+                let yMean = yData.reduce((a,b)=>a+b,0)/N;
+                let ss_xx = 0, sp_xy = 0;
+                for(let i=0; i<N; i++) {
+                    ss_xx += Math.pow(xData[i]-xMean, 2);
+                    sp_xy += (xData[i]-xMean)*(yData[i]-yMean);
+                }
+                rRes.x_mean = xMean; rRes.y_mean = yMean; rRes.ss_xx = ss_xx; rRes.sp_xy = sp_xy;
+
+                regModelCache = rRes; // Tahmin için kaydet
+                setStyle('predictSection', 'display', 'block'); 
+                document.getElementById('predictResultBox').style.display = 'none'; document.getElementById('inputPredX').value = '';
+
+                let isSig = rRes.p_b1 < alfa;
+                let sign = rRes.b1 >= 0 ? '+' : '-';
+
+                // EQUATION BOX
+                if (window.MathJax) {
+                    document.getElementById('resEquation').innerHTML = `$\\hat{Y}_{${yName}} = ${rRes.b0.toFixed(3)} ${sign} ${Math.abs(rRes.b1).toFixed(3)} X_{${xName}}$`;
+                }
+
+                // TOP CARDS
+                setTxt('resR2', rRes.r_sq.toFixed(3)); setTxt('resAdjR2', rRes.adj_r_sq.toFixed(3));
+                setTxt('resP', rRes.f_p.toFixed(4)); setTxt('resSe', rRes.s_e.toFixed(3));
+                setTxt('resN', N); setTxt('resBigR', rRes.r_val.toFixed(3)); setTxt('resF', rRes.f_stat.toFixed(3));
+
+                // KATSAYILAR TABLOSU
+                setTxt('thCI', `%${ci_lvl*100} Güven Aralığı`);
+                setTxt('b0_est', rRes.b0.toFixed(4)); setTxt('b0_se', rRes.se_b0.toFixed(4)); setTxt('b0_t', rRes.t_b0.toFixed(3)); setTxt('b0_p', rRes.p_b0.toFixed(4)); setTxt('b0_ci', `[${rRes.ci_b0[0].toFixed(3)} , ${rRes.ci_b0[1].toFixed(3)}]`);
+                
+                document.getElementById('xVarNameRow').innerText = `${xName} ($b_1$)`;
+                setTxt('b1_est', rRes.b1.toFixed(4)); setTxt('b1_se', rRes.se_b1.toFixed(4)); setTxt('b1_t', rRes.t_b1.toFixed(3)); setTxt('b1_p', rRes.p_b1.toFixed(4)); setTxt('b1_ci', `[${rRes.ci_b1[0].toFixed(3)} , ${rRes.ci_b1[1].toFixed(3)}]`);
+                if(isSig) setClass('b1_p', 'fw-bold text-danger'); else setClass('b1_p', 'fw-bold text-dark');
+
+                // ANOVA TABLOSU
+                setTxt('aov_ssr', rRes.ssr.toFixed(2)); setTxt('aov_dfr', rRes.df_r); setTxt('aov_msr', rRes.msr.toFixed(2));
+                setTxt('aov_sse', rRes.sse.toFixed(2)); setTxt('aov_dfe', rRes.df_e); setTxt('aov_mse', rRes.mse.toFixed(2));
+                setTxt('aov_sst', rRes.sst.toFixed(2)); setTxt('aov_dft', rRes.df_t);
+                setTxt('aov_f', rRes.f_stat.toFixed(3)); setTxt('aov_p', rRes.f_p.toFixed(4));
+                if(rRes.f_p < alfa) setClass('aov_p', 'align-middle fw-bold text-danger'); else setClass('aov_p', 'align-middle fw-bold text-dark');
+
+                // DIAGNOSTICS TABLOSU
+                if(apiSuccess) {
+                    setTxt('diag_norm_s', rRes.sw_w.toFixed(3)); setTxt('diag_norm_p', rRes.sw_p.toFixed(4));
+                    setTxt('diag_norm_res', rRes.sw_p >= alfa ? "Normal Dağılım" : "Normal Değil (İhlal)"); setClass('diag_norm_res', rRes.sw_p >= alfa ? 'text-success fw-bold' : 'text-danger fw-bold');
+                    
+                    setTxt('diag_bp_s', rRes.bp_lm.toFixed(3)); setTxt('diag_bp_p', rRes.bp_p.toFixed(4));
+                    setTxt('diag_bp_res', rRes.bp_p >= alfa ? "Sabit Varyans (Homoscedasticity)" : "Değişen Varyans (İhlal)"); setClass('diag_bp_res', rRes.bp_p >= alfa ? 'text-success fw-bold' : 'text-danger fw-bold');
+                } else {
+                    setTxt('diag_norm_s', "API Gerekli"); setTxt('diag_norm_p', "-"); setTxt('diag_norm_res', "-");
+                    setTxt('diag_bp_s', "API Gerekli"); setTxt('diag_bp_p', "-"); setTxt('diag_bp_res', "-");
+                }
+
+                // ARTIKLAR TABLOSU (Tüm Gözlemler)
+                let rHtml = ''; let hasCookWarn = false;
+                let lim = N; // Artık Sınır Yok, tümü eklenecek
+                for(let i=0; i<lim; i++) {
+                    let cd = rRes.cook[i];
+                    if(cd > (4/N)) hasCookWarn = true; 
+                    let trCls = cd > (4/N) ? "bg-warning-subtle" : "";
+                    rHtml += `<tr class="${trCls}">
+                        <td>${i+1}</td>
+                        <td class="fw-bold">${yData[i].toFixed(2)}</td>
+                        <td>${rRes.y_pred[i].toFixed(2)}</td>
+                        <td class="${rRes.resid[i]<0?'text-danger':'text-success'}">${rRes.resid[i].toFixed(2)}</td>
+                        <td>${rRes.std_resid[i].toFixed(3)}</td>
+                        <td class="fw-bold ${cd > (4/N)?'text-danger':'text-dark'}">${cd.toFixed(4)}</td>
+                    </tr>`;
+                }
+                setHTML('residualsBody', rHtml);
+
+                if(hasCookWarn) {
+                    document.getElementById('cooksWarning').classList.remove('d-none'); document.getElementById('cooksWarning').classList.add('d-block');
+                } else {
+                    document.getElementById('cooksWarning').classList.add('d-none'); document.getElementById('cooksWarning').classList.remove('d-block');
+                }
+
+                // KARAR METNİ VE YORUM
+                let yorum = "";
+                if (isSig) {
+                    setClass('kararKutusu', "alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start bg-danger-subtle text-danger shadow-sm mt-4");
+                    setClass('kararIkon', "ri-error-warning-fill text-danger fs-28"); setTxt('kararBaslik', "H₀ Reddedilir (Regresyon Modeli Anlamlı)");
+                    setHTML('kararAciklama', `p $\\lt \\alpha$ olduğu için, bağımsız değişkenin (X) bağımlı değişken (Y) üzerinde doğrusal bir etkisi olduğu kabul edilir.`);
+                    
+                    let dirStr = rRes.b1 > 0 ? "pozitif" : "negatif";
+                    yorum = `<span><strong>İstatistiksel Yorum:</strong> Basit doğrusal regresyon analizi sonucunda, <strong>${xName}</strong> ile <strong>${yName}</strong> arasında ${dirStr} yönlü ve istatistiksel olarak anlamlı bir doğrusal ilişki bulunmuştur ($b_1 = ${rRes.b1.toFixed(3)}, t = ${rRes.t_b1.toFixed(2)}, p = ${rRes.p_b1.toFixed(4)}$). 
+                    <br><br>Model, ${yName} değişkenindeki varyansın <strong>%${(rRes.r_sq*100).toFixed(1)}'ini</strong> açıklamaktadır ($R^2 = ${rRes.r_sq.toFixed(3)}$). ${xName}'deki her 1 birimlik artış için, modelin tahmin ettiği ${yName} değeri ortalama olarak <strong>${Math.abs(rRes.b1).toFixed(3)} birim ${dirStr==='pozitif'?'artmaktadır':'azalmaktadır'}</strong>.</span>`;
+                } else {
+                    setClass('kararKutusu', "alert border-0 p-4 mb-4 rounded-10 d-flex align-items-start bg-success-subtle text-success shadow-sm mt-4");
+                    setClass('kararIkon', "ri-checkbox-circle-fill text-success fs-28"); setTxt('kararBaslik', "H₀ Reddedilemez (Anlamlı Model Bulunamadı)");
+                    setHTML('kararAciklama', `p $\\ge \\alpha$ olduğu için, X'in Y'yi tahmin etmede istatistiksel olarak anlamlı bir doğrusal katkısı olmadığı sonucuna varılmıştır.`);
+                    
+                    yorum = `<span><strong>İstatistiksel Yorum:</strong> Regresyon analizi sonucunda, <strong>${xName}</strong> ile <strong>${yName}</strong> arasında istatistiksel olarak anlamlı bir doğrusal regresyon ilişkisine dair yeterli kanıt bulunamamıştır ($b_1 = ${rRes.b1.toFixed(3)}, p = ${rRes.p_b1.toFixed(4)}$). Kurulan modelin tahmin gücü istatistiksel şans sınırları içerisindedir.</span>`;
+                }
+                setHTML('yorumText', yorum);
+
+                // ADIM ADIM TABLOLU HESAPLAMALAR
+                let calcDetHTML = `
+                    <h6 class="fw-bold mb-3 text-dark"><i class="ri-function-add-line align-middle me-1"></i> Adım 1: Sapmalar ve Kareler Toplamı</h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table param-grid-table m-0">
+                            <thead><tr><th class="text-start">Parametre</th><th>Formül</th><th>Değer</th></tr></thead>
+                            <tbody>
+                                <tr><td class="text-start fw-bold">X Ortalaması ($\\bar{X}$)</td><td>$\\sum X / n$</td><td>${rRes.x_mean.toFixed(3)}</td></tr>
+                                <tr><td class="text-start fw-bold">Y Ortalaması ($\\bar{Y}$)</td><td>$\\sum Y / n$</td><td>${rRes.y_mean.toFixed(3)}</td></tr>
+                                <tr><td class="text-start fw-bold">Çarpımlar Toplamı ($SP_{XY}$)</td><td>$\\sum (X - \\bar{X})(Y - \\bar{Y})$</td><td>${rRes.sp_xy.toFixed(3)}</td></tr>
+                                <tr><td class="text-start fw-bold">X Kareler Top. ($SS_{XX}$)</td><td>$\\sum (X - \\bar{X})^2$</td><td>${rRes.ss_xx.toFixed(3)}</td></tr>
+                                <tr class="bg-light"><td class="text-start fw-bold text-dark">Toplam Kareler ($SST$)</td><td>$\\sum (Y - \\bar{Y})^2$</td><td class="fw-bold text-dark">${rRes.sst.toFixed(3)}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6 class="fw-bold mb-3 text-dark"><i class="ri-divide-line align-middle me-1"></i> Adım 2: Katsayıların ve Hataların Hesaplanması</h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table param-grid-table m-0">
+                            <thead><tr><th class="text-start">Parametre</th><th>Formül / Yaklaşım</th><th>Hesaplanan Değer</th></tr></thead>
+                            <tbody>
+                                <tr><td class="text-start fw-bold text-dark">Eğim ($b_1$)</td><td>$SP_{XY} / SS_{XX}$</td><td class="fw-bold text-dark">${rRes.b1.toFixed(4)}</td></tr>
+                                <tr><td class="text-start fw-bold text-dark">Sabit ($b_0$)</td><td>$\\bar{Y} - b_1 \\bar{X}$</td><td class="fw-bold text-dark">${rRes.b0.toFixed(4)}</td></tr>
+                                <tr><td class="text-start fw-bold text-danger">Ortalama Hata ($MSE$)</td><td>$SSE / (n-2)$</td><td class="fw-bold text-danger">${rRes.mse.toFixed(4)}</td></tr>
+                                <tr class="bg-light"><td class="text-start fw-bold text-primary">Açıklanan Varyans ($R^2$)</td><td>$SSR / SST$</td><td class="fw-bold text-primary">${rRes.r_sq.toFixed(4)}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                setHTML('hesaplamaDetayIcerik', calcDetHTML);
+
+                setStyle('loadingOverlay', 'display', 'none'); setStyle('aktifSonuc', 'display', 'block');
+                drawCharts(xData, yData, rRes.y_pred, rRes.resid, xName, yName);
+
+                setTimeout(() => {
+                    if (window.MathJax && window.MathJax.typesetPromise) {
+                        MathJax.typesetClear();
+                        MathJax.typesetPromise().catch(err => console.log(err));
+                    }
+                    document.getElementById('aktifSonuc').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+
+            } catch (error) { setStyle('loadingOverlay', 'display', 'none'); setStyle('bosDurum', 'display', 'block'); alert("Analiz Hatası: " + error); }
+        }
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>
