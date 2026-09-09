@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!-- CSS Dependencies -->
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    
+    <!-- MathJax for Formulas -->
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <title>Canlı Wilcoxon İşaretli Sıralar Tablosu | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+
+        /* KONSEPT: Kraliyet Mavisi / Lacivert (Royal Blue / Navy) */
+        .wilc-input-wrapper { background: linear-gradient(135deg, #1e3a8a, #2563eb); border-radius: 12px; padding: 25px; color: white; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+        .wilc-input { font-size: 20px; font-weight: 700; text-align: center; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; border-radius: 10px; padding: 8px; width: 100%; transition: all 0.3s; }
+        .wilc-input:focus { outline: none; border-color: white; background: rgba(255,255,255,0.2); box-shadow: 0 0 0 4px rgba(255,255,255,0.1); }
+        .wilc-input::placeholder { color: rgba(255,255,255,0.5); }
+
+        .result-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; text-align: center; height: 100%; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .result-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-color: #cbd5e1; }
+        .result-card h6 { color: #64748b; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0; }
+        .result-val { font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.2; }
+        .result-pct { font-size: 13px; font-weight: 600; color: #2563eb; background: #eff6ff; padding: 4px 8px; border-radius: 8px; display: block; width: 100%; }
+
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; }
+
+        .wilc-table-wrapper { overflow-x: auto; max-height: 520px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; }
+        .wilc-table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 13px; text-align: center; }
+        .wilc-table th { background: #f1f5f9; color: #334155; font-weight: 700; padding: 8px; position: sticky; top: 0; z-index: 2; border: 1px solid #e2e8f0; }
+        .wilc-table th.top-header { top: 0; border-bottom: 0; }
+        .wilc-table th.sub-header { top: 35px; }
+        .wilc-table th:first-child { left: 0; z-index: 3; background: #e2e8f0; }
+        .wilc-table td { padding: 6px; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.1s; }
+        .wilc-table td:first-child { font-weight: 700; background: #f8fafc; position: sticky; left: 0; z-index: 1; }
+        .wilc-table td:hover:not(:first-child) { background: #eff6ff; color: #1d4ed8; font-weight: 700; }
+        .wilc-table tr.highlighted-row td { background: #fef08a !important; color: #854d0e !important; font-weight: 700; }
+        .wilc-table tr.highlighted-row td:first-child { background: #eab308 !important; color: white !important; }
+        .wilc-table td.highlighted-cell { background: #2563eb !important; color: white !important; font-weight: 700; transform: scale(1.1); box-shadow: 0 0 10px rgba(37,99,235,0.5); z-index: 5; position: relative; border-radius: 4px; }
+        
+        .formula-box { background-color: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 15px; overflow-x: auto; }
+
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        .theme-btn:hover { background-color: #e2e8f0; }
+
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; margin-bottom: 5px;}
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffffff; cursor: pointer; margin-top: -6px; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: rgba(255,255,255,0.3); border-radius: 2px; }
+
+        /* AKILLI RENK KUTULARI (AÇIK MOD) */
+        .wilc-result-box { padding: 15px; border-radius: 8px; border: 1px solid transparent; transition: all 0.3s; }
+        .wilc-success { background-color: #f0fdf4; border-color: #bbf7d0; }
+        .wilc-success .box-label { color: #16a34a; }
+        .wilc-success .box-val { color: #14532d; }
+        
+        .wilc-danger { background-color: #fef2f2; border-color: #fecaca; }
+        .wilc-danger .box-label { color: #dc2626; }
+        .wilc-danger .box-val { color: #7f1d1d; }
+        
+        .wilc-warning { background-color: #fffbeb; border-color: #fde68a; }
+        .wilc-warning .box-label { color: #d97706; }
+        .wilc-warning .box-val { color: #92400e; }
+        
+        .wilc-info { background-color: #eff6ff; border-color: #bfdbfe; }
+        .wilc-info .box-label { color: #2563eb; }
+        .wilc-info .box-val { color: #1e3a8a; }
+
+        /* ========================================= */
+        /* KUSURSUZ GECE MODU (DARK MODE) AYARLARI   */
+        /* ========================================= */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light { background-color: #0f172a !important; }
+        
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        html.dark-mode h6, html.dark-mode .result-card h6 { color: #e2e8f0 !important; }
+        
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+
+        /* MAT GECE MODU KARTLARI DÜZELTİLDİ (SİMETRİK) */
+        html.dark-mode .result-card { background: #1e293b; border-color: #334155; }
+        html.dark-mode .result-val { color: #f8fafc !important; }
+        html.dark-mode .result-pct { background: rgba(37, 99, 235, 0.2); color: #60a5fa; }
+        
+        /* P-Değeri özel kartının gece modunda mat kalması için */
+        html.dark-mode .border-primary { border-color: #3b82f6 !important; }
+        html.dark-mode .text-primary { color: #60a5fa !important; }
+        
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; }
+        html.dark-mode .wilc-table-wrapper { border-color: #334155; background: #1e293b; }
+        html.dark-mode .wilc-table th { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+        html.dark-mode .wilc-table th:first-child { background: #1e293b; }
+        html.dark-mode .wilc-table td { border-color: #334155; color: #cbd5e1; }
+        html.dark-mode .wilc-table td:first-child { background: #0f172a; color: #f8fafc; }
+        html.dark-mode .wilc-table td:hover:not(:first-child) { background: #1e3a8a; color: #60a5fa; }
+        html.dark-mode .wilc-table tr.highlighted-row td { background: #422006 !important; color: #fde047 !important; }
+        html.dark-mode .wilc-table tr.highlighted-row td:first-child { background: #854d0e !important; color: white !important; }
+        html.dark-mode .wilc-table td.highlighted-cell { background: #2563eb !important; color: white !important; box-shadow: 0 0 10px rgba(37,99,235,0.8); }
+        
+        html.dark-mode select.form-select, 
+        html.dark-mode input.form-control,
+        html.dark-mode input[type="number"] { background-color: #0f172a !important; color: #f8fafc !important; border-color: #334155 !important; }
+        html.dark-mode input.form-control:focus { background-color: #1e293b !important; border-color: #2563eb !important; color: #fff !important; }
+        
+        /* AKILLI RENK KUTULARI (GECE MODU) */
+        html.dark-mode .wilc-success { background-color: rgba(34, 197, 94, 0.1) !important; border-color: rgba(34, 197, 94, 0.2) !important; }
+        html.dark-mode .wilc-success .box-label { color: #86efac !important; }
+        html.dark-mode .wilc-success .box-val { color: #dcfce7 !important; }
+
+        html.dark-mode .wilc-danger { background-color: rgba(239, 68, 68, 0.1) !important; border-color: rgba(239, 68, 68, 0.2) !important; }
+        html.dark-mode .wilc-danger .box-label { color: #fca5a5 !important; }
+        html.dark-mode .wilc-danger .box-val { color: #fee2e2 !important; }
+
+        html.dark-mode .wilc-warning { background-color: rgba(245, 158, 11, 0.1) !important; border-color: rgba(245, 158, 11, 0.2) !important; }
+        html.dark-mode .wilc-warning .box-label { color: #fcd34d !important; }
+        html.dark-mode .wilc-warning .box-val { color: #fef3c7 !important; }
+        
+        html.dark-mode .wilc-info { background-color: rgba(37, 99, 235, 0.1) !important; border-color: rgba(37, 99, 235, 0.3) !important; }
+        html.dark-mode .wilc-info .box-label { color: #60a5fa !important; }
+        html.dark-mode .wilc-info .box-val { color: #dbeafe !important; }
+
+        /* AKORDEON VE FORMÜL DÜZELTMELERİ */
+        html.dark-mode .accordion-item { background-color: #1e293b !important; border: 1px solid #334155 !important; }
+        html.dark-mode .accordion-button { background-color: #1e293b !important; color: #f8fafc !important; box-shadow: none !important; }
+        html.dark-mode .accordion-button:not(.collapsed) { background-color: #0f172a !important; color: #f8fafc !important; }
+        html.dark-mode .accordion-button::after { filter: invert(1) brightness(2); }
+        html.dark-mode .accordion-body { background-color: #0f172a !important; color: #cbd5e1 !important; border-top: 1px solid #334155 !important; }
+        
+        html.dark-mode .formula-box { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .formula-box strong { color: #f8fafc !important; } /* Formül başlıkları bembeyaz */
+        
+        html.dark-mode .border { border-color: #334155 !important; }
+        html.dark-mode .border-bottom { border-color: #334155 !important; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-git-commit-line align-middle me-1"></i> İnteraktif Wilcoxon İşaretli Sıralar Tablosu
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="alert bg-primary-subtle text-primary border-0 rounded-10 mb-4 px-4 py-3 shadow-sm d-flex align-items-start">
+                <i class="ri-information-line fs-18 align-middle me-3 mt-1"></i> 
+                <div>
+                    <strong>Wilcoxon İşaretli Sıralar Testi</strong>, iki <strong>bağımlı / eşleştirilmiş</strong> grubun (Örn: Tedavi öncesi ve sonrası ölçümler) merkezleri arasında fark olup olmadığını sınar. Bağımlı T-Testinin non-parametrik alternatifidir. Farklılıkların hem yönü hem de büyüklüğü kullanılarak test istatistiği ($T$ veya $W$) bulunur. <i>*Bağımsız gruplarınız varsa Mann-Whitney U'ya gitmelisiniz.</i>
+                </div>
+            </div>
+
+            <!-- HESAPLAMA PANELİ -->
+            <div class="row g-4 mb-4">
+                <!-- WILC Girişi -->
+                <div class="col-lg-4">
+                    <div class="wilc-input-wrapper h-100 d-flex flex-column justify-content-center">
+                        
+                        <!-- Gösterim Anahtarı -->
+                        <div class="d-flex justify-content-center mb-3">
+                            <div class="btn-group w-100 bg-white bg-opacity-10 p-1 rounded-pill" role="group">
+                                <input type="radio" class="btn-check" name="statSym" id="symT" value="T" autocomplete="off" checked onchange="handleInputs()">
+                                <label class="btn btn-outline-light border-0 rounded-pill fs-12 fw-bold" for="symT">T Gösterimi</label>
+                              
+                                <input type="radio" class="btn-check" name="statSym" id="symW" value="W" autocomplete="off" onchange="handleInputs()">
+                                <label class="btn btn-outline-light border-0 rounded-pill fs-12 fw-bold" for="symW">W Gösterimi</label>
+
+                                <input type="radio" class="btn-check" name="statSym" id="symV" value="V" autocomplete="off" onchange="handleInputs()">
+                                <label class="btn btn-outline-light border-0 rounded-pill fs-12 fw-bold" for="symV">V Gösterimi</label>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-12 mb-2">
+                                <label class="text-white opacity-75 fs-12 fw-bold mb-1 text-uppercase tracking-wider">İstatistik Değeri <span id="symLabel">(T)</span></label>
+                                <input type="text" id="wInput" class="wilc-input" placeholder="Örn: 8" value="8" autocomplete="off" oninput="handleInputs()">
+                            </div>
+                            <div class="col-12">
+                                <label class="text-white opacity-75 fs-12 fw-bold mb-1 text-uppercase tracking-wider">Etkin Örneklem (n) <small class="text-white-50">(Sıfır Farklar Hariç)</small></label>
+                                <input type="number" id="nInput" class="wilc-input" placeholder="10" value="10" min="5" max="50" step="1" autocomplete="off" oninput="handleInputs()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sonuç Kartları (TAM SİMETRİK VE MAT) -->
+                <div class="col-lg-8">
+                    <div class="row g-3 h-100">
+                        <!-- Kart 1: Z İstatistiği -->
+                        <div class="col-md-3 col-6">
+                            <div class="result-card d-flex flex-column justify-content-between align-items-center shadow-sm h-100 p-3">
+                                <h6 class="mb-1 text-center" style="min-height: 38px;">Z İstatistiği <br><small class="text-muted text-lowercase">Normal Yaklaşım</small></h6>
+                                <div class="result-val text-dark my-2" id="resZ">-2.039</div>
+                                <div class="result-pct w-100 m-0 bg-light text-dark text-center">Asimptotik</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Kart 2: p-Değeri (Özel Vurgulu ama MAT) -->
+                        <div class="col-md-3 col-6">
+                            <div class="result-card d-flex flex-column justify-content-between align-items-center shadow-sm h-100 p-3 border-primary" id="pvalCard">
+                                <h6 class="text-primary mb-1 text-center" style="min-height: 38px;"><i class="ri-alert-fill"></i> p-Değeri <br><small class="text-muted text-lowercase" id="tailTitle">Çift Kuyruk</small></h6>
+                                <div class="result-val text-primary my-2" id="resPval">0.0414</div>
+                                <div class="result-pct w-100 m-0 bg-light text-dark text-center" id="resMethod">Exact Yöntem</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Kart 3: Diğer Toplam -->
+                        <div class="col-md-3 col-6">
+                            <div class="result-card d-flex flex-column justify-content-between align-items-center shadow-sm h-100 p-3">
+                                <h6 class="mb-1 text-center" style="min-height: 38px;">Ters Yön Rank (<span id="revSymLabel">W⁺</span>) <br><small class="text-muted text-lowercase">Diğer Toplam</small></h6>
+                                <div class="result-val text-secondary my-2" id="resWRev">47</div>
+                                <div class="result-pct w-100 m-0 bg-light text-dark text-center" id="resWminTxt">Test İst: 8</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Kart 4: Etki Büyüklüğü -->
+                        <div class="col-md-3 col-6">
+                            <div class="result-card d-flex flex-column justify-content-between align-items-center shadow-sm h-100 p-3">
+                                <h6 class="mb-1 text-center" style="min-height: 38px;">Etki Büyüklüğü <br><small class="text-muted text-lowercase">Rank-Biserial ($r$)</small></h6>
+                                <div class="result-val text-secondary my-2" id="resEff">0.709</div>
+                                <div class="result-pct w-100 m-0 bg-light text-dark text-center" id="resEffTxt">Büyük Etki</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KARAR GRAFİĞİ VE YORUM BÖLÜMÜ -->
+            <div class="row g-4 mb-4">
+                
+                <!-- Karar Mekanizması -->
+                <div class="col-lg-4">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                            <h5 class="fs-15 fw-bold text-dark mb-0"><i class="ri-scales-3-fill text-primary me-1"></i> Wilcoxon Kararı</h5>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fs-12 text-muted fw-bold">Yön:</span>
+                                <!-- W-AUTO İLE DÜZELTİLDİ: Metin artık net okunur -->
+                                <select id="tailSelect" class="form-select form-select-sm bg-light border-0 text-dark fw-bold w-auto" onchange="handleInputs()">
+                                    <option value="2" selected>Çift Kuyruk</option>
+                                    <option value="1">Tek Kuyruk</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div id="decisionCard" class="wilc-result-box wilc-danger w-100 flex-grow-1 d-flex flex-column justify-content-center text-center mb-3">
+                            <div class="fs-15 fw-bold box-label mb-2" id="decTitle">Fark Anlamlı (H0 Red)</div>
+                            <div class="fs-14 box-val lh-base" id="decText">
+                                İstatistik (8), Kritik Sınır (8) değerinden küçük veya eşit ($\le$) OLDUĞU İÇİN $H_0$ reddedilir. Ölçümler arasında anlamlı bir fark vardır.
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center p-3 rounded border bg-light">
+                            <span class="fs-13 fw-bold text-secondary">Test $\alpha$ (Anlamlılık):</span>
+                            <select id="alphaSelect" class="form-select form-select-sm bg-white border text-dark fw-bold w-auto" onchange="updateAll()">
+                                <option value="0.10">0.10</option>
+                                <option value="0.05" selected>0.05</option>
+                                <option value="0.01">0.01</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grafik Simülasyonu -->
+                <div class="col-lg-8">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                            <h5 class="fs-15 fw-bold text-dark mb-0" id="chartTitle"><i class="ri-bar-chart-horizontal-fill text-primary me-1"></i> Asimptotik Wilcoxon Dağılımı ve Kritik Bölgeler</h5>
+                            <!-- FORMÜL ROZETİ BÜYÜTÜLDÜ -->
+                            <span class="badge bg-light text-secondary border fs-13 py-2 px-3">$\mu_W = \frac{n(n+1)}{4}$</span>
+                        </div>
+                        <p class="fs-12 text-muted mb-2 text-center" style="line-height: 1.4;">
+                            Kırmızı alanlar <strong>Red Bölgesini (Anlamlılık)</strong> gösterir. Siyah kesik çizgi, sizin gözlediğiniz $T$ (veya W/V) değeridir. <i>Not: Wilcoxon'da $T \le Kritik$ ise red verilir.</i>
+                        </p>
+                        
+                        <div style="position: relative; height: 180px; width: 100%; display: flex; align-items: center; justify-content: center; margin-top: 10px;">
+                            <canvas id="distChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CANLI WILCOXON TABLOSU -->
+            <div class="row g-4 mb-4">
+                <div class="col-12">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2 border-bottom pb-2">
+                            <h5 class="fs-15 fw-bold text-dark mb-0"><i class="ri-grid-fill text-primary me-1"></i> Kritik Değerler Tablosu <span class="fw-normal fs-12 text-muted" id="tableTitleExt">($\alpha = 0.05$ - Çift Kuyruk)</span></h5>
+                            <button class="btn btn-sm btn-outline-primary fw-bold" onclick="scrollToActiveCell()"><i class="ri-focus-3-line"></i> Seçili Satıra Git</button>
+                        </div>
+                        
+                        <div class="wilc-table-wrapper" id="tableWrapper">
+                            <table class="wilc-table" id="wilcTable">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2" class="align-middle border-end bg-light" style="min-width:100px;">Örneklem (n)</th>
+                                        <th colspan="3" class="border-bottom bg-light">Anlamlılık Düzeyi ($\alpha$) - Çift Kuyruk</th>
+                                    </tr>
+                                    <tr>
+                                        <th class="bg-light">0.10</th>
+                                        <th class="bg-light">0.05</th>
+                                        <th class="bg-light">0.01</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="wilcTableBody"></tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted fs-11 mt-2 d-block text-center" id="tableWarningText"><i class="ri-lightbulb-flash-fill text-warning"></i> Tabloda Kritik $T$ (veya $W$) değeri verilmiştir. Test istatistiğiniz tablodaki değerden <strong>KÜÇÜK VEYA EŞİT ($T \le T_{kritik}$)</strong> ise H0 reddedilir. Bu tablo $T = min(W^+, W^-)$ istatistiğini kullanır.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RANK DÖNÜŞÜM HESAPLAYICISI -->
+            <div class="row g-4 mb-4">
+                <!-- Rank'ten T Hesapla -->
+                <div class="col-md-6">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <h5 class="fs-14 fw-bold text-dark mb-3 border-bottom pb-2"><i class="ri-calculator-line text-primary me-1"></i> Rank (Sıra) Toplamlarından İstatistik Bul</h5>
+                        <p class="fs-12 text-muted mb-3">Elinizde sadece Pozitif ($W^+$) veya Negatif ($W^-$) rank toplamı varsa girin.</p>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fs-12 fw-bold text-secondary">Pozitif Farklar Rankı ($W^+$)</label>
+                                <input type="number" id="calcWp" class="form-control bg-light border-0 text-dark" value="47" oninput="calcTFromRanks()">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fs-12 fw-bold text-secondary">Etkin Hacim ($n$)</label>
+                                <input type="number" id="calcN" class="form-control bg-light border-0 text-dark" value="10" oninput="calcTFromRanks()">
+                            </div>
+                        </div>
+                        
+                        <div class="wilc-result-box wilc-info mt-auto mb-0 d-flex justify-content-between align-items-center">
+                            <div class="text-start">
+                                <span class="fs-11 box-label fw-bold d-block mb-1">Negatif Farklar Rankı ($W^-$)</span>
+                                <span class="fs-16 box-val fw-bold" id="resCalcWm">8</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="fs-11 box-label fw-bold text-uppercase d-block mb-1">Bulunan İstatistik ($T$)</span>
+                                <span class="fs-20 box-val fw-bold" id="resCalcT">8</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary mt-2 w-100 fw-bold" onclick="transferCalc()"><i class="ri-arrow-up-circle-line me-1"></i> Ana Analize Aktar</button>
+                    </div>
+                </div>
+
+                <!-- Varsayımlar ve Açıklamalar -->
+                <div class="col-md-6">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100 border-start border-4 border-warning d-flex flex-column justify-content-center">
+                        <h5 class="fs-15 fw-bold text-dark mb-3"><i class="ri-error-warning-fill text-warning me-1"></i> Wilcoxon Varsayımları ve Dikkat Edilecekler</h5>
+                        <p class="fs-13 text-muted mb-2 lh-base">
+                            Bu test, <strong>Bağımlı (Eşleştirilmiş) Örneklem T-Testinin non-parametrik alternatifidir.</strong> 
+                        </p>
+                        <ul class="fs-13 text-muted ps-3 mb-0">
+                            <li class="mb-2"><strong>Bağımsız Gruplarda Kullanılmaz:</strong> Kız-Erkek gibi ilişkisiz iki grubu kıyaslıyorsanız, <strong>Mann-Whitney U Testi</strong> yapmalısınız. Wilcoxon aynı kişinin "Öncesi ve Sonrası" (veya çok yakın eşleşmiş çiftler) içindir.</li>
+                            <li><strong>Sıfır Farklar (Zero Differences):</strong> Öncesi ve sonrası aynı olan (fark=0) gözlemler, etkin $n$ hacminden çıkarılır. Bu yüzden $n$ değeriniz orijinal veri sayınızdan daha düşük olabilir.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- İSTATİSTİKSEL FORMÜLLER -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-12">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100 d-flex flex-column justify-content-center">
+                        <h5 class="fs-15 fw-bold text-dark mb-3 border-bottom pb-2"><i class="ri-function-line text-primary me-1"></i> Matematiksel Formüller</h5>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="formula-box bg-light border mb-0 h-100">
+                                    <strong class="d-block mb-2 text-dark fs-13">1. Rank Toplamları Kontrolü</strong>
+                                    <div class="text-center mb-2" style="font-size: 14px;">$$ W^+ + W^- = \frac{n(n+1)}{2} $$</div>
+                                    <small class="text-muted d-block text-center mt-2">$n$ sıfır farklar atıldıktan sonra kalan gözlem sayısıdır.</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="formula-box bg-light border mb-0 h-100">
+                                    <strong class="d-block mb-2 text-dark fs-13">2. Asimptotik Dağılım Parametreleri</strong>
+                                    <div class="text-center mb-2" style="font-size: 14px;">$$ \mu_W = \frac{n(n+1)}{4} $$</div>
+                                    <div class="text-center" style="font-size: 14px;">$$ \sigma_W = \sqrt{ \frac{n(n+1)(2n+1)}{24} } $$</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="formula-box bg-light border mb-0 h-100">
+                                    <strong class="d-block mb-2 text-dark fs-13">3. Z Skoru Yaklaşımı</strong>
+                                    <div class="text-center mb-2" style="font-size: 14px;">$$ Z = \frac{T - \mu_W}{\sigma_W} $$</div>
+                                    <small class="text-muted d-block text-center mt-2">Test istatistiği $T = min(W^+, W^-)$ üzerinden.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <!-- CORE MATH AND LOGIC SCRIPT -->
+    <script>
+        function safeParse(val) {
+            if(typeof val !== 'string') return parseFloat(val);
+            let cleaned = val.replace(',', '.').replace(/[^0-9.-]/g, '');
+            let parsed = parseFloat(cleaned);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        let currentW = 8;
+        let currentN = 10;
+        let distChart = null;
+
+        // Wilcoxon Signed-Rank Critical Values Table (Exact Alpha boundaries for Two-Tailed)
+        const wilcCritTable = {
+            5: { 0.10: 0, 0.05: null, 0.01: null },
+            6: { 0.10: 2, 0.05: 0, 0.01: null },
+            7: { 0.10: 3, 0.05: 2, 0.01: null },
+            8: { 0.10: 5, 0.05: 3, 0.01: 0 },
+            9: { 0.10: 8, 0.05: 5, 0.01: 1 },
+            10: { 0.10: 10, 0.05: 8, 0.01: 3 },
+            11: { 0.10: 13, 0.05: 10, 0.01: 5 },
+            12: { 0.10: 17, 0.05: 13, 0.01: 7 },
+            13: { 0.10: 21, 0.05: 17, 0.01: 9 },
+            14: { 0.10: 25, 0.05: 21, 0.01: 12 },
+            15: { 0.10: 30, 0.05: 25, 0.01: 15 },
+            16: { 0.10: 35, 0.05: 29, 0.01: 19 },
+            17: { 0.10: 41, 0.05: 34, 0.01: 23 },
+            18: { 0.10: 47, 0.05: 40, 0.01: 27 },
+            19: { 0.10: 53, 0.05: 46, 0.01: 32 },
+            20: { 0.10: 60, 0.05: 52, 0.01: 37 },
+            21: { 0.10: 67, 0.05: 58, 0.01: 42 },
+            22: { 0.10: 75, 0.05: 65, 0.01: 48 },
+            23: { 0.10: 83, 0.05: 73, 0.01: 54 },
+            24: { 0.10: 91, 0.05: 81, 0.01: 61 },
+            25: { 0.10: 100, 0.05: 89, 0.01: 68 },
+            26: { 0.10: 110, 0.05: 98, 0.01: 75 },
+            27: { 0.10: 119, 0.05: 107, 0.01: 83 },
+            28: { 0.10: 130, 0.05: 116, 0.01: 91 },
+            29: { 0.10: 140, 0.05: 126, 0.01: 100 },
+            30: { 0.10: 151, 0.05: 137, 0.01: 109 }
+        };
+
+        const tableNs = Object.keys(wilcCritTable).map(Number).sort((a,b)=>a-b);
+
+        // Normal CDF and Inverse CDF for P-value Calculation (Asymptotic)
+        function normCDF(z) {
+            let b1 =  0.319381530; let b2 = -0.356563782; let b3 =  1.781477937;
+            let b4 = -1.821255978; let b5 =  1.330274429; let p  =  0.2316419; let c =  0.39894228; 
+            if(z >= 0.0) {
+                let t = 1.0 / ( 1.0 + p * z ); return (1.0 - c * Math.exp( -z * z / 2.0 ) * t * ( t *( t * ( t * ( t * b5 + b4 ) + b3 ) + b2 ) + b1 ));
+            } else {
+                let t = 1.0 / ( 1.0 - p * z ); return ( c * Math.exp( -z * z / 2.0 ) * t * ( t *( t * ( t * ( t * b5 + b4 ) + b3 ) + b2 ) + b1 ));
+            }
+        }
+        function normInv(p) {
+            if (p <= 0.0 || p >= 1.0) return NaN;
+            let half = p < 0.5; let q = half ? p : 1.0 - p; let t = Math.sqrt(-2.0 * Math.log(q));
+            let num = 2.515517 + t * (0.802853 + t * 0.010328); let den = 1.0 + t * (1.432788 + t * (0.189269 + t * 0.001308));
+            let z = t - num / den; return half ? -z : z;
+        }
+        function normPDF(x, mean, std) {
+            let z = (x - mean) / std;
+            return Math.exp(-0.5 * z * z) / (std * Math.sqrt(2 * Math.PI));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            
+            if (localStorage.getItem('statlab_theme') === 'dark') { 
+                themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); 
+                themeIcon.classList.add('text-warning'); 
+                themeIcon.classList.remove('text-secondary');
+            }
+            
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); 
+                    themeIcon.classList.add('text-warning'); 
+                    themeIcon.classList.remove('text-secondary'); 
+                    localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); 
+                    themeIcon.classList.remove('text-warning'); 
+                    themeIcon.classList.add('text-secondary'); 
+                    localStorage.setItem('statlab_theme', 'light');
+                }
+                drawChart(); 
+            });
+
+            generateTable();
+            handleInputs();
+        });
+
+        function handleInputs() {
+            let wStr = document.getElementById('wInput').value;
+            let nStr = document.getElementById('nInput').value;
+            
+            if(wStr === '' || wStr === '-') return; 
+            
+            currentW = safeParse(wStr);
+            currentN = parseInt(nStr);
+            
+            if(currentN < 5) { currentN = 5; document.getElementById('nInput').value = 5; }
+            
+            let maxTotal = (currentN * (currentN + 1)) / 2;
+            if(currentW < 0) currentW = 0;
+            if(currentW > maxTotal) { currentW = maxTotal; document.getElementById('wInput').value = maxTotal; }
+
+            updateSymbol();
+            updateAll();
+        }
+
+        function updateSymbol() {
+            let sym = "T";
+            if(document.getElementById('symW').checked) sym = "W";
+            if(document.getElementById('symV').checked) sym = "V";
+
+            document.getElementById('symLabel').innerText = `(${sym})`;
+            document.getElementById('revSymLabel').innerText = `${sym} (Ters)`;
+        }
+
+        function getCriticalW(alpha, n, tails) {
+            let lookupAlpha = (tails === 1) ? alpha * 2 : alpha;
+            let exactAvailable = (n >= 5 && n <= 30 && (lookupAlpha === 0.10 || lookupAlpha === 0.05 || lookupAlpha === 0.01));
+            
+            if(exactAvailable) {
+                return wilcCritTable[n][lookupAlpha];
+            } else {
+                // Asymptotic Approximation
+                let mu = (n * (n + 1)) / 4;
+                let sig = Math.sqrt((n * (n + 1) * (2*n + 1)) / 24);
+                let a = tails === 2 ? alpha / 2 : alpha;
+                let zCrit = normInv(a); // Negative Z
+                let wC = mu + (zCrit * sig);
+                return wC < 0 ? 0 : Math.round(wC);
+            }
+        }
+
+        function updateAll() {
+            let alpha = parseFloat(document.getElementById('alphaSelect').value);
+            let tails = parseInt(document.getElementById('tailSelect').value);
+            
+            let w1 = currentW;
+            let maxTotal = (currentN * (currentN + 1)) / 2;
+            let w2 = maxTotal - w1;
+            let wMin = Math.min(w1, w2);
+
+            let mu = maxTotal / 2;
+            let sig = Math.sqrt((currentN * (currentN + 1) * (2 * currentN + 1)) / 24);
+
+            // Z Calculation
+            let z = (wMin - mu) / sig;
+            if(wMin === mu) z = 0; 
+            
+            // P-value
+            let pVal = normCDF(z); 
+            if(tails === 2) pVal *= 2;
+            if(pVal > 1) pVal = 1.000;
+
+            // Effect Size (Rank-Biserial Correlation)
+            let eff = 1 - ((4 * wMin) / (currentN * (currentN + 1)));
+
+            // Get Critical
+            let wCrit = getCriticalW(alpha, currentN, tails);
+
+            // UI Updates
+            document.getElementById('tailTitle').innerText = tails === 2 ? "Çift Kuyruk" : "Tek Kuyruk";
+            document.getElementById('resZ').innerText = z.toFixed(3);
+            document.getElementById('resPval').innerText = pVal.toFixed(4);
+            document.getElementById('resWRev').innerText = w2;
+            document.getElementById('resWminTxt').innerText = `Test İst: ${wMin}`;
+            document.getElementById('resEff').innerText = eff.toFixed(3);
+            
+            let effTxt = "Küçük Etki";
+            if(Math.abs(eff) >= 0.3) effTxt = "Orta Etki";
+            if(Math.abs(eff) >= 0.5) effTxt = "Büyük Etki";
+            document.getElementById('resEffTxt').innerText = effTxt;
+
+            // Decision Update
+            let box = document.getElementById('decisionCard');
+            let dTitle = document.getElementById('decTitle');
+            let dTxt = document.getElementById('decText');
+            let sym = document.getElementById('symW').checked ? "W" : (document.getElementById('symV').checked ? "V" : "T");
+
+            if(wCrit !== null && wMin <= wCrit) { // Significant
+                box.className = "wilc-result-box wilc-danger w-100 flex-grow-1 d-flex flex-column justify-content-center text-center mb-3";
+                dTitle.innerText = "Fark Anlamlı (H0 Reddedilir!)";
+                dTxt.innerHTML = `İstatistik (${wMin}), hesaplanan Kritik Sınır (${wCrit}) değerinden küçük veya eşit ($${sym} \\le ${sym}_{kritik}$) OLDUĞU İÇİN $H_0$ reddedilir. Ölçümler arasında istatistiksel olarak anlamlı bir konum farkı vardır.`;
+                document.getElementById('resMethod').innerText = currentN <= 30 ? "Exact Yöntem" : "Asimptotik Norm.";
+            } else {
+                box.className = "wilc-result-box wilc-success w-100 flex-grow-1 d-flex flex-column justify-content-center text-center mb-3";
+                dTitle.innerText = "Fark Yok (H0 Reddedilemez)";
+                dTxt.innerHTML = `İstatistik (${wMin}), hesaplanan Kritik Sınır (${wCrit !== null ? wCrit : 'N/A'}) değerinden büyük ($${sym} > ${sym}_{kritik}$) OLDUĞU İÇİN $H_0$ reddedilemez. Ölçümler arasında anlamlı bir konum farkı bulunamamıştır.`;
+                document.getElementById('resMethod').innerText = currentN <= 30 ? "Exact Yöntem" : "Asimptotik Norm.";
+            }
+
+            MathJax.typesetPromise([dTxt]).catch(err => console.log(err));
+
+            document.getElementById('tableTitleExt').innerText = `(Çift Kuyruk Tablosu)`;
+            highlightTable(currentN, alpha, tails);
+            drawChart(wMin, wCrit, mu, sig);
+        }
+
+        function generateTable() {
+            let tbody = document.getElementById('wilcTableBody');
+            
+            let tbodyHtml = '';
+            for(let i=0; i<tableNs.length; i++) {
+                let n = tableNs[i];
+                tbodyHtml += `<tr id="row_n_${n}">`;
+                tbodyHtml += `<td>${n}</td>`;
+                
+                let alphas = [0.10, 0.05, 0.01];
+                for(let j=0; j<alphas.length; j++) {
+                    let a = alphas[j];
+                    let val = wilcCritTable[n][a];
+                    let valStr = val === null ? "-" : val;
+                    let oc = val === null ? "" : `onclick="setWInput(${val}, ${n}, ${a})"`;
+                    tbodyHtml += `<td id="cell_${n}_${Math.round(a*100)}" ${oc}>${valStr}</td>`;
+                }
+                tbodyHtml += `</tr>`;
+            }
+            tbody.innerHTML = tbodyHtml;
+        }
+
+        function setWInput(val, n, alpha) {
+            if(val === null || val === "-") return;
+            document.getElementById('wInput').value = val;
+            document.getElementById('nInput').value = n;
+            
+            // Force table compatible state (Two Tail)
+            document.getElementById('alphaSelect').value = alpha;
+            document.getElementById('tailSelect').value = "2";
+
+            handleInputs();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function highlightTable(n, alpha, tails) {
+            document.querySelectorAll('#wilcTable tr.highlighted-row').forEach(el => el.classList.remove('highlighted-row'));
+            document.querySelectorAll('#wilcTable td.highlighted-cell').forEach(el => el.classList.remove('highlighted-cell'));
+            
+            let lookupAlpha = (tails === 1) ? alpha * 2 : alpha;
+            let exactAvailable = (n >= 5 && n <= 30 && (lookupAlpha === 0.10 || lookupAlpha === 0.05 || lookupAlpha === 0.01));
+            
+            if(exactAvailable) {
+                document.getElementById('tableWarningText').innerHTML = "<i class='ri-lightbulb-flash-fill text-warning'></i> Tabloda Kritik değerler verilmiştir. Test istatistiğiniz tablodaki değerden <strong>KÜÇÜK VEYA EŞİT ($\\le$)</strong> ise H0 reddedilir.";
+                document.getElementById('tableWrapper').style.opacity = '1';
+                document.getElementById('tableWrapper').style.pointerEvents = 'auto';
+
+                let row = document.getElementById(`row_n_${n}`);
+                if(row) row.classList.add('highlighted-row');
+                
+                let cell = document.getElementById(`cell_${n}_${Math.round(lookupAlpha*100)}`);
+                if(cell) cell.classList.add('highlighted-cell');
+            } else {
+                document.getElementById('tableWarningText').innerHTML = "<span class='text-danger fw-bold'>Girdiğiniz örneklem hacmi veya kuyruk ayarı aşağıdaki klasik statik tablonun sınırları dışındadır. Ancak üstteki hesaplayıcı normal yaklaşımla doğru kararı vermeye devam eder.</span>";
+                document.getElementById('tableWrapper').style.opacity = '0.4';
+                document.getElementById('tableWrapper').style.pointerEvents = 'auto'; // FIX: Ensures table is always clickable to restore state!
+            }
+        }
+
+        function scrollToActiveCell() {
+            let row = document.querySelector('#wilcTable tr.highlighted-row');
+            if(row) {
+                let wrapper = document.getElementById('tableWrapper');
+                let scrollPosY = row.offsetTop - wrapper.offsetHeight / 2 + row.offsetHeight / 2;
+                wrapper.scrollTo({ top: scrollPosY, behavior: 'smooth' });
+            }
+        }
+
+        function drawChart(wMin, wCrit, mu, sig) {
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; 
+            const gColor = isDark ? '#334155' : '#e2e8f0';
+            
+            let minX = mu - 3.5 * sig;
+            let maxX = mu + 3.5 * sig;
+            if(minX < 0) minX = 0; 
+
+            let xVals = []; let yVals = [];
+            let step = (maxX - minX) / 100;
+            
+            for(let x = minX; x <= maxX; x += step) {
+                xVals.push(x.toFixed(1));
+                yVals.push(normPDF(x, mu, sig));
+            }
+
+            let bgColors = [];
+            for(let i=0; i<xVals.length; i++) {
+                let x = parseFloat(xVals[i]);
+                let shade = false;
+                if(wCrit !== null && x <= wCrit) shade = true;
+                
+                let maxTotal = (currentN * (currentN + 1)) / 2;
+                let uMaxCrit = maxTotal - wCrit;
+                if(parseInt(document.getElementById('tailSelect').value) === 2 && wCrit !== null && x >= uMaxCrit) shade = true;
+
+                bgColors.push(shade ? 'rgba(239, 68, 68, 0.3)' : 'rgba(0,0,0,0)');
+            }
+
+            if(distChart) distChart.destroy();
+
+            distChart = new Chart(document.getElementById('distChart'), {
+                type: 'line',
+                data: {
+                    labels: xVals,
+                    datasets: [{
+                        label: `Wilcoxon Asimptotik Dağılımı`,
+                        data: yVals,
+                        borderColor: isDark ? '#2563eb' : '#1e3a8a', // Lacivert (Navy) Tonlarına çekildi
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.4,
+                        fill: true,
+                        backgroundColor: bgColors, 
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: {
+                        x: { grid: { color: gColor }, ticks: { color: fColor, maxTicksLimit: 10 } },
+                        y: { display: false }
+                    },
+                    animation: { duration: 400 }
+                },
+                plugins: [{
+                    id: 'customSegmentFill',
+                    beforeDatasetDraw: function(chart) {
+                        const ctx = chart.ctx;
+                        const meta = chart.getDatasetMeta(0);
+                        const xAxis = chart.scales.x;
+                        const yAxis = chart.scales.y;
+                        
+                        ctx.save();
+                        ctx.beginPath();
+                        
+                        for(let i=0; i<meta.data.length; i++) {
+                            let xVal = parseFloat(chart.data.labels[i]);
+                            let point = meta.data[i];
+                            let shade = false;
+                            
+                            if(wCrit !== null && xVal <= wCrit) shade = true;
+                            
+                            let maxTotal = (currentN * (currentN + 1)) / 2;
+                            let uMaxCrit = maxTotal - wCrit;
+                            if(parseInt(document.getElementById('tailSelect').value) === 2 && wCrit !== null && xVal >= uMaxCrit) shade = true;
+
+                            if(shade) {
+                                let xStart = point.x;
+                                let yStart = point.y;
+                                let xNext = (i < meta.data.length-1) ? meta.data[i+1].x : point.x;
+                                ctx.fillStyle = 'rgba(239, 68, 68, 0.2)'; 
+                                ctx.fillRect(xStart, yStart, xNext-xStart, yAxis.bottom - yStart); 
+                            }
+                        }
+                        
+                        // Draw Observed W Line (Blue)
+                        if(wMin >= minX && wMin <= maxX) {
+                            let uPixel = xAxis.getPixelForValue(xVals.reduce((prev, curr) => Math.abs(curr - wMin) < Math.abs(prev - wMin) ? curr : prev));
+                            ctx.beginPath();
+                            ctx.moveTo(uPixel, yAxis.top);
+                            ctx.lineTo(uPixel, yAxis.bottom);
+                            ctx.lineWidth = 2;
+                            ctx.strokeStyle = isDark ? '#93c5fd' : '#1d4ed8'; 
+                            ctx.setLineDash([5, 5]);
+                            ctx.stroke();
+                        }
+                        
+                        // Draw Critical Limit Line (Red)
+                        if(wCrit !== null && wCrit >= minX && wCrit <= maxX) {
+                            let cPixel = xAxis.getPixelForValue(xVals.reduce((prev, curr) => Math.abs(curr - wCrit) < Math.abs(prev - wCrit) ? curr : prev));
+                            ctx.beginPath();
+                            ctx.moveTo(cPixel, yAxis.top);
+                            ctx.lineTo(cPixel, yAxis.bottom);
+                            ctx.lineWidth = 2;
+                            ctx.strokeStyle = '#ef4444'; 
+                            ctx.setLineDash([]);
+                            ctx.stroke();
+                        }
+                        
+                        ctx.restore();
+                    }
+                }]
+            });
+        }
+
+        // Rank to T Calculator
+        function calcTFromRanks() {
+            let wp = safeParse(document.getElementById('calcWp').value);
+            let n = safeParse(document.getElementById('calcN').value);
+
+            if(n < 1 || wp < 0) return;
+
+            let maxTotal = (n * (n + 1)) / 2;
+            let wm = maxTotal - wp;
+            let wMin = Math.min(wp, wm);
+
+            document.getElementById('resCalcWm').innerText = wm;
+            document.getElementById('resCalcT').innerText = wMin;
+        }
+
+        function transferCalc() {
+            let cMin = document.getElementById('resCalcT').innerText;
+            let n = document.getElementById('calcN').value;
+            
+            document.getElementById('wInput').value = cMin;
+            document.getElementById('nInput').value = n;
+            
+            handleInputs();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>

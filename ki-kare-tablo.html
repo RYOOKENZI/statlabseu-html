@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!-- CSS Dependencies -->
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <!-- Chart.js & jStat (For complex Chi-Square Math) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
+    
+    <!-- MathJax for Formulas -->
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <title>Canlı Ki-Kare (χ²) Tablosu ve Hesaplayıcı | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+
+        /* Chi-Square Specific Gradient (Amethyst/Purple to distinguish) */
+        .chi-input-wrapper { background: linear-gradient(135deg, #581c87, #9333ea); border-radius: 12px; padding: 25px; color: white; box-shadow: 0 4px 15px rgba(147, 51, 234, 0.3); }
+        .chi-input { font-size: 24px; font-weight: 700; text-align: center; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; border-radius: 10px; padding: 8px; width: 100%; transition: all 0.3s; }
+        .chi-input:focus { outline: none; border-color: white; background: rgba(255,255,255,0.2); box-shadow: 0 0 0 4px rgba(255,255,255,0.1); }
+        .chi-input::placeholder { color: rgba(255,255,255,0.5); }
+
+        .result-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; text-align: center; height: 100%; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .result-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-color: #cbd5e1; }
+        .result-card h6 { color: #64748b; font-size: 13px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .result-val { font-size: 24px; font-weight: 800; color: #0f172a; line-height: 1.2; }
+        .result-pct { font-size: 13px; font-weight: 600; color: #9333ea; background: #faf5ff; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 5px; }
+
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; }
+
+        .chi-table-wrapper { overflow-x: auto; max-height: 520px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; }
+        .chi-table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 13px; text-align: center; }
+        .chi-table th { background: #f1f5f9; color: #334155; font-weight: 700; padding: 8px; position: sticky; top: 0; z-index: 2; border: 1px solid #e2e8f0; }
+        .chi-table th.top-header { top: 0; border-bottom: 0; }
+        .chi-table th.sub-header { top: 35px; }
+        .chi-table th:first-child { left: 0; z-index: 3; background: #e2e8f0; }
+        .chi-table td { padding: 6px; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.1s; }
+        .chi-table td:first-child { font-weight: 700; background: #f8fafc; position: sticky; left: 0; z-index: 1; }
+        .chi-table td:hover:not(:first-child) { background: #faf5ff; color: #7e22ce; font-weight: 700; }
+        .chi-table tr.highlighted-row td { background: #fef08a !important; color: #854d0e !important; font-weight: 700; }
+        .chi-table tr.highlighted-row td:first-child { background: #eab308 !important; color: white !important; }
+        .chi-table td.highlighted-cell { background: #9333ea !important; color: white !important; font-weight: 700; transform: scale(1.1); box-shadow: 0 0 10px rgba(147,51,234,0.5); z-index: 5; position: relative; border-radius: 4px; }
+        
+        .formula-box { background-color: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 15px; overflow-x: auto; }
+
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        .theme-btn:hover { background-color: #e2e8f0; }
+
+        /* Custom Range Slider */
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; margin-bottom: 5px;}
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffffff; cursor: pointer; margin-top: -6px; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: rgba(255,255,255,0.3); border-radius: 2px; }
+
+        /* ========================================= */
+        /* AKILLI RENK KUTULARI (AÇIK MOD)           */
+        /* ========================================= */
+        .chi-result-box { padding: 15px; border-radius: 8px; border: 1px solid transparent; transition: all 0.3s; }
+        .chi-success { background-color: #ecfdf5; border-color: #a7f3d0; }
+        .chi-success .box-label { color: #059669; }
+        .chi-success .box-val { color: #064e3b; }
+        .chi-danger { background-color: #fef2f2; border-color: #fecaca; }
+        .chi-danger .box-label { color: #dc2626; }
+        .chi-danger .box-val { color: #7f1d1d; }
+        .chi-info { background-color: #faf5ff; border-color: #e9d5ff; }
+        .chi-info .box-label { color: #9333ea; }
+        .chi-info .box-val { color: #581c87; }
+        .chi-warning { background-color: #fffbeb; border-color: #fde68a; }
+        .chi-warning .box-label { color: #d97706; }
+        .chi-warning .box-val { color: #92400e; }
+        .box-raw-chi { background-color: #ffffff; }
+
+        /* ========================================= */
+        /* KUSURSUZ GECE MODU (DARK MODE) AYARLARI   */
+        /* ========================================= */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light { background-color: #0f172a !important; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #94a3b8 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+
+        html.dark-mode .result-card { background: #1e293b; border-color: #334155; }
+        html.dark-mode .result-val { color: #f8fafc; }
+        html.dark-mode .result-pct { background: rgba(147, 51, 234, 0.2); color: #c084fc; }
+        
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; }
+        html.dark-mode .chi-table-wrapper { border-color: #334155; background: #1e293b; }
+        html.dark-mode .chi-table th { background: #0f172a; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .chi-table th:first-child { background: #1e293b; }
+        html.dark-mode .chi-table td { border-color: #334155; color: #94a3b8; }
+        html.dark-mode .chi-table td:first-child { background: #0f172a; color: #f8fafc; }
+        html.dark-mode .chi-table td:hover:not(:first-child) { background: #4c1d95; color: #c084fc; }
+        html.dark-mode .chi-table tr.highlighted-row td { background: #422006 !important; color: #fde047 !important; }
+        html.dark-mode .chi-table tr.highlighted-row td:first-child { background: #854d0e !important; color: white !important; }
+        html.dark-mode .chi-table td.highlighted-cell { background: #9333ea !important; color: white !important; box-shadow: 0 0 10px rgba(147,51,234,0.8); }
+        
+        html.dark-mode select.form-select, 
+        html.dark-mode input.form-control,
+        html.dark-mode input[type="number"] { background-color: #0f172a !important; color: #f8fafc !important; border-color: #334155 !important; }
+        html.dark-mode input.form-control:focus { background-color: #1e293b !important; border-color: #9333ea !important; color: #fff !important; }
+        
+        /* AKILLI RENK KUTULARI (GECE MODU) */
+        html.dark-mode .chi-success { background-color: rgba(16, 185, 129, 0.1) !important; border-color: rgba(16, 185, 129, 0.3) !important; }
+        html.dark-mode .chi-success .box-label { color: #34d399 !important; }
+        html.dark-mode .chi-success .box-val { color: #a7f3d0 !important; }
+
+        html.dark-mode .chi-danger { background-color: rgba(239, 68, 68, 0.1) !important; border-color: rgba(239, 68, 68, 0.3) !important; }
+        html.dark-mode .chi-danger .box-label { color: #f87171 !important; }
+        html.dark-mode .chi-danger .box-val { color: #fecaca !important; }
+
+        html.dark-mode .chi-info { background-color: rgba(147, 51, 234, 0.1) !important; border-color: rgba(147, 51, 234, 0.3) !important; }
+        html.dark-mode .chi-info .box-label { color: #c084fc !important; }
+        html.dark-mode .chi-info .box-val { color: #e9d5ff !important; }
+
+        html.dark-mode .chi-warning { background-color: rgba(245, 158, 11, 0.1) !important; border-color: rgba(245, 158, 11, 0.3) !important; }
+        html.dark-mode .chi-warning .box-label { color: #fbbf24 !important; }
+        html.dark-mode .chi-warning .box-val { color: #fde68a !important; }
+
+        html.dark-mode .box-raw-chi { background-color: #1e293b !important; border-color: #334155 !important; }
+
+        /* AKORDEON DÜZELTMELERİ */
+        html.dark-mode .accordion-item { background-color: #1e293b !important; border: 1px solid #334155 !important; }
+        html.dark-mode .accordion-button { background-color: #1e293b !important; color: #f8fafc !important; box-shadow: none !important; }
+        html.dark-mode .accordion-button:not(.collapsed) { background-color: #0f172a !important; color: #f8fafc !important; }
+        html.dark-mode .accordion-button::after { filter: invert(1) brightness(2); }
+        html.dark-mode .accordion-body { background-color: #0f172a !important; color: #cbd5e1 !important; border-top: 1px solid #334155 !important; }
+        
+        html.dark-mode .formula-box { background-color: #1e293b !important; border-color: #334155 !important; }
+        
+        /* ÖNEMLİ: Gece Modunda Formül Başlıkları BEYAZ Kalsın */
+        html.dark-mode .formula-box strong { color: #f8fafc !important; } 
+        
+        html.dark-mode .border { border-color: #334155 !important; }
+        html.dark-mode .border-bottom { border-color: #334155 !important; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-table-2 align-middle me-1"></i> İnteraktif Ki-Kare Tablosu
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="alert bg-primary-subtle text-primary border-0 rounded-10 mb-4 px-4 py-3 shadow-sm">
+                <i class="ri-information-line fs-18 align-middle me-2"></i> Ki-Kare ($\chi^2$) dağılımı her zaman <strong>pozitiftir</strong> ($\chi^2 \ge 0$) ve serbestlik derecesi ($df$) arttıkça sağa çarpık (asimetrik) yapısından kurtularak normal dağılıma yaklaşır. Genellikle Uygunluk, Bağımsızlık ve Varyans testlerinin <strong>Sağ Kuyruk</strong> alanlarında kullanılır.
+            </div>
+
+            <!-- HESAPLAMA PANELİ -->
+            <div class="row g-4 mb-4">
+                <!-- Chi Girişi -->
+                <div class="col-lg-4">
+                    <div class="chi-input-wrapper h-100 d-flex flex-column justify-content-center">
+                        <div class="row g-2 mb-2">
+                            <div class="col-7 mb-2">
+                                <label class="text-white opacity-75 fs-12 fw-bold mb-1 text-uppercase tracking-wider">Gözlenen $\chi^2$ Değeri</label>
+                                <input type="text" id="chiInput" class="chi-input" placeholder="Örn: 9.49" value="9.49" autocomplete="off" oninput="handleInputs()">
+                            </div>
+                            <div class="col-5">
+                                <label class="text-white opacity-75 fs-12 fw-bold mb-1 text-uppercase tracking-wider">S. Derecesi ($df$)</label>
+                                <input type="number" id="dfInput" class="chi-input" placeholder="Örn: 4" value="4" min="1" step="1" autocomplete="off" oninput="handleInputs()">
+                            </div>
+                            <div class="col-12 mt-1">
+                                <input type="range" id="dfSlider" min="1" max="100" value="4" oninput="syncSliders()">
+                                <div class="d-flex justify-content-between text-white-50 fs-11">
+                                    <span>$df=1$ (Sağa Çarpık)</span>
+                                    <span>$df=100$ (Normale Yakın)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sonuç Kartları -->
+                <div class="col-lg-8">
+                    <div class="row g-3 h-100">
+                        <!-- Kritik P Değeri (Sağ Kuyruk) Öne Çıkarıldı -->
+                        <div class="col-md-4 col-12">
+                            <div class="result-card d-flex flex-column justify-content-center border-primary shadow-sm" style="background: rgba(147, 51, 234, 0.05);">
+                                <h6 class="text-primary fs-14 mb-2"><i class="ri-alert-fill"></i> Sağ Kuyruk (p-Değeri) <br><small class="text-muted text-lowercase">P(X ≥ $\chi^2$)</small></h6>
+                                <div class="result-val" id="resRight">0.0500</div>
+                                <div class="result-pct mt-2" id="resRightPct">%5.00</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-6">
+                            <div class="result-card d-flex flex-column justify-content-center">
+                                <h6>Sol Kuyruk <br><small class="text-muted text-lowercase">P(X ≤ $\chi^2$)</small></h6>
+                                <div class="result-val" id="resLeft">0.9500</div>
+                                <div class="result-pct" id="resLeftPct">%95.00</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-6">
+                            <div class="result-card d-flex flex-column justify-content-center">
+                                <h6>Beklenen Değer <br><small class="text-muted text-lowercase">Ortalama: E(X) = df</small></h6>
+                                <div class="result-val mt-2" id="txtExpected">4</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRAFİK VE TABLO BÖLÜMÜ -->
+            <div class="row g-4 mb-4">
+                <!-- Grafik -->
+                <div class="col-lg-5">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                            <h5 class="fs-15 fw-bold text-dark mb-0"><i class="ri-line-chart-fill text-primary me-1"></i> Ki-Kare Dağılımı ve Kritik Bölge</h5>
+                            <span class="badge bg-light text-secondary border">$\chi^2 \ge 0$</span>
+                        </div>
+                        <div style="position: relative; height: 260px; width: 100%;">
+                            <canvas id="distChart"></canvas>
+                        </div>
+                        <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
+                            <div id="chartDecisionBox" class="chi-result-box chi-info p-2 px-3 w-100 d-flex justify-content-between align-items-center">
+                                <span class="fs-13 fw-bold box-label">Karar ($p \le \alpha$):</span>
+                                <span class="fs-14 fw-bold box-val" id="chartDecisionText">Sınırda Değer</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Canlı Ki-Kare Tablosu -->
+                <div class="col-lg-7">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2 border-bottom pb-2">
+                            <h5 class="fs-15 fw-bold text-dark mb-0"><i class="ri-grid-fill text-primary me-1"></i> Kritik $\chi^2$ Tablosu</h5>
+                            <div class="d-flex gap-2 align-items-center">
+                                <span class="fs-12 fw-bold text-muted">Test $\alpha$:</span>
+                                <select id="alphaSelect" class="form-select form-select-sm bg-light border-0 text-dark fw-bold" style="width: 80px;" onchange="updateDecision()">
+                                    <option value="0.10">0.10</option>
+                                    <option value="0.05" selected>0.05</option>
+                                    <option value="0.025">0.025</option>
+                                    <option value="0.01">0.01</option>
+                                    <option value="0.005">0.005</option>
+                                    <option value="0.001">0.001</option>
+                                </select>
+                                <button class="btn btn-sm btn-outline-primary fw-bold" onclick="scrollToActiveCell()"><i class="ri-focus-3-line"></i> Seçili Yere Git</button>
+                            </div>
+                        </div>
+                        
+                        <div class="chi-table-wrapper" id="tableWrapper">
+                            <table class="chi-table" id="chiTable">
+                                <thead>
+                                    <tr id="chiTableHeadTop"></tr>
+                                    <tr id="chiTableHeadSub"></tr>
+                                </thead>
+                                <tbody id="chiTableBody"></tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted fs-11 mt-2 d-block text-center"><i class="ri-lightbulb-flash-fill text-warning"></i> Sütunlar $P(X \ge \chi^2_{kritik}) = \alpha$ olan sağ kuyruk olasılıklarını gösterir.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TERS HESAPLAYICILAR VE MİNİ TESTLER -->
+            <div class="row g-4 mb-4">
+                
+                <!-- Kritik Değer (Güven Aralığı / Alpha) -->
+                <div class="col-md-4">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <h5 class="fs-14 fw-bold text-dark mb-3 border-bottom pb-2"><i class="ri-scales-3-fill text-primary me-1"></i> Kritik $\chi^2$ Sınırı Bul</h5 >
+                        <p class="fs-12 text-muted mb-3">Anlamlılık düzeyine ($\alpha$) ve serbestlik derecesine ($df$) göre sağ kuyruk sınırını hesaplar.</p>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fs-12 fw-bold text-secondary">$\alpha$ Değeri</label>
+                                <input type="text" id="critAlpha" class="form-control bg-light border-0 text-dark" value="0.05" oninput="calcCritical()">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fs-12 fw-bold text-secondary">$df$ (Serb. Derecesi)</label>
+                                <input type="number" id="critDf" class="form-control bg-light border-0 text-dark" value="4" min="1" oninput="calcCritical()">
+                            </div>
+                        </div>
+                        
+                        <div class="chi-result-box chi-warning mt-auto mb-0 d-flex justify-content-between align-items-center">
+                            <div class="text-start">
+                                <span class="fs-11 box-label fw-bold d-block mb-1">Güven Düzeyi</span>
+                                <span class="fs-16 box-val fw-bold" id="txtCritConf">%95.0</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="fs-11 box-label fw-bold text-uppercase d-block mb-1">Kritik Sınır</span>
+                                <span class="fs-20 box-val fw-bold" id="critResult">9.4877</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- p'den Ki-Kare Bul (Ters CDF) -->
+                <div class="col-md-4">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <h5 class="fs-14 fw-bold text-dark mb-3 border-bottom pb-2"><i class="ri-find-replace-line text-primary me-1"></i> Olasılıktan $\chi^2$ Bul</h5>
+                        <p class="fs-12 text-muted mb-3">Bilinen bir $p$-değeri için gereken $\chi^2$ skorunu hesaplar.</p>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-7">
+                                <label class="form-label fs-12 fw-bold text-secondary">p-değeri (Sağ Kuyruk)</label>
+                                <input type="text" id="invP" class="form-control bg-light border-0 text-dark" value="0.05" oninput="calcInverse()">
+                            </div>
+                            <div class="col-5">
+                                <label class="form-label fs-12 fw-bold text-secondary">df</label>
+                                <input type="number" id="invDf" class="form-control bg-light border-0 text-dark" value="4" min="1" oninput="calcInverse()">
+                            </div>
+                        </div>
+                        
+                        <div class="chi-result-box chi-success mt-auto mb-0 text-center">
+                            <span class="fs-12 box-label fw-bold d-block mb-1">Hesaplanan $\chi^2$ Değeri</span>
+                            <span class="fs-22 box-val fw-bold" id="invResult">9.4877</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alan Hesaplayıcı -->
+                <div class="col-md-4">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <h5 class="fs-14 fw-bold text-dark mb-3 border-bottom pb-2"><i class="ri-split-cells-horizontal text-primary me-1"></i> İki $\chi^2$ Arasındaki Alan</h5>
+                        <p class="fs-12 text-muted mb-3">$\chi^2_1$ ve $\chi^2_2$ arasında kalan bölgenin olasılığını hesaplar: $P(\chi^2_1 \le X \le \chi^2_2)$</p>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-4">
+                                <label class="form-label fs-12 fw-bold text-secondary">Alt $\chi^2_1$</label>
+                                <input type="text" id="areaX1" class="form-control bg-light border-0 text-dark" value="2.50" oninput="calcArea()">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label fs-12 fw-bold text-secondary">Üst $\chi^2_2$</label>
+                                <input type="text" id="areaX2" class="form-control bg-light border-0 text-dark" value="9.49" oninput="calcArea()">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label fs-12 fw-bold text-secondary">df</label>
+                                <input type="number" id="areaDf" class="form-control bg-light border-0 text-dark" value="4" min="1" oninput="calcArea()">
+                            </div>
+                        </div>
+                        
+                        <div class="chi-result-box chi-info mt-auto mb-0 text-center p-2 py-3">
+                            <span class="fs-12 box-label fw-bold d-block mb-1" id="areaEq">P(2.50 ≤ X ≤ 9.49)</span>
+                            <span class="fs-20 box-val fw-bold" id="areaResult">0.3015</span>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+
+            <!-- VARYANS TESTİ VE FORMÜLLER (AKORDEONLAR) -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="accordion" id="accCalc">
+                        <div class="accordion-item border-0 rounded-10 shadow-sm overflow-hidden mb-3">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                                    <i class="ri-exchange-box-line me-2 text-primary"></i> Varyans İçin Ki-Kare Testi ($\chi^2$)
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accCalc">
+                                <div class="accordion-body bg-light">
+                                    <p class="fs-12 text-muted mb-3">Tek bir örneğin varyansının ($s^2$), iddia edilen bir kitle varyansına ($\sigma_0^2$) eşit olup olmadığını test eder.</p>
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-4">
+                                            <label class="fs-12 fw-bold text-secondary">Örneklem $n$</label>
+                                            <input type="number" id="varN" class="form-control bg-white border-0 text-dark" value="25" oninput="calcVarTest()">
+                                        </div>
+                                        <div class="col-4">
+                                            <label class="fs-12 fw-bold text-secondary">Örnek Var. $s^2$</label>
+                                            <input type="number" id="varS" class="form-control bg-white border-0 text-dark" value="12" oninput="calcVarTest()">
+                                        </div>
+                                        <div class="col-4">
+                                            <label class="fs-12 fw-bold text-secondary">İddia Edilen $\sigma_0^2$</label>
+                                            <input type="number" id="varSig" class="form-control bg-white border-0 text-dark" value="8" oninput="calcVarTest()">
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center p-3 rounded border box-raw-chi">
+                                        <span class="fs-14 fw-bold text-dark">Hesaplanan $\chi^2$: <span class="text-primary fs-18" id="varRes">36.00</span></span>
+                                        <button class="btn btn-sm btn-primary" onclick="transferVarTest()"><i class="ri-arrow-up-circle-line me-1"></i> Analize Aktar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="accordion" id="accFormula">
+                        <div class="accordion-item border-0 rounded-10 shadow-sm overflow-hidden">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                    <i class="ri-function-line me-2 text-primary"></i> İstatistiksel Formüller ve Akademik Altyapı
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accFormula">
+                                <div class="accordion-body bg-light">
+                                    <div class="formula-box bg-white mb-3">
+                                        <strong class="d-block mb-2 text-dark fs-14">Ki-Kare Yoğunluk Fonksiyonu (PDF)</strong>
+                                        <div class="text-center" style="font-size: 14px;">$$ f(x; k) = \frac{1}{2^{k/2}\Gamma(k/2)} x^{k/2-1}e^{-x/2} $$</div>
+                                        <small class="text-muted d-block text-center mt-2">Burada $k = df$ (Serbestlik Derecesi) ve $x \ge 0$ olmalıdır.</small>
+                                    </div>
+                                    <div class="formula-box bg-white mb-0">
+                                        <strong class="d-block mb-2 text-dark fs-14">Temel Ki-Kare Test Formülleri</strong>
+                                        <p class="fs-13 text-muted mb-2 text-center">Uygunluk / Bağımsızlık Testleri:</p>
+                                        <div class="text-center mb-2" style="font-size: 14px;">$$ \chi^2 = \sum \frac{(O - E)^2}{E} $$</div>
+                                        <p class="fs-13 text-muted mb-2 text-center">Tek Varyans Testi:</p>
+                                        <div class="text-center" style="font-size: 14px;">$$ \chi^2 = \frac{(n-1)s^2}{\sigma_0^2} $$</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <!-- CORE MATH AND LOGIC SCRIPT -->
+    <script>
+        function safeParse(val) {
+            if(typeof val !== 'string') return parseFloat(val);
+            let cleaned = val.replace(',', '.').replace(/[^0-9.-]/g, '');
+            let parsed = parseFloat(cleaned);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        let currentChi = 9.49;
+        let currentDf = 4;
+        let distChart = null;
+
+        // Klasik Tablo Sutunlari (Sag Kuyruk Alfa)
+        const tableAlphas = [0.99, 0.95, 0.90, 0.10, 0.05, 0.025, 0.01, 0.005, 0.001];
+        // Klasik Tablo Satirlari (Df)
+        const tableDfs = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30, 40, 50, 60, 80, 100];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            
+            if (localStorage.getItem('statlab_theme') === 'dark') { 
+                themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); 
+                themeIcon.classList.add('text-warning'); 
+                themeIcon.classList.remove('text-secondary');
+            }
+            
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); 
+                    themeIcon.classList.add('text-warning'); 
+                    themeIcon.classList.remove('text-secondary'); 
+                    localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); 
+                    themeIcon.classList.remove('text-warning'); 
+                    themeIcon.classList.add('text-secondary'); 
+                    localStorage.setItem('statlab_theme', 'light');
+                }
+                drawChart(); 
+            });
+
+            generateTable();
+            handleInputs();
+            calcCritical();
+            calcInverse();
+            calcArea();
+            calcVarTest();
+        });
+
+        function syncSliders() {
+            document.getElementById('dfInput').value = document.getElementById('dfSlider').value;
+            handleInputs();
+        }
+
+        function handleInputs() {
+            let cStr = document.getElementById('chiInput').value;
+            let dStr = document.getElementById('dfInput').value;
+            
+            if(cStr === '' || cStr === '-') return; 
+            
+            currentChi = safeParse(cStr);
+            currentDf = safeParse(dStr);
+            
+            if(currentChi < 0) { currentChi = 0; document.getElementById('chiInput').value = 0; }
+            if(currentDf < 1) { currentDf = 1; document.getElementById('dfInput').value = 1; }
+            
+            document.getElementById('dfSlider').value = currentDf <= 100 ? currentDf : 100;
+            document.getElementById('txtExpected').innerText = currentDf;
+
+            updateAll();
+        }
+
+        function updateAll() {
+            let chi = currentChi;
+            let df = currentDf;
+
+            // JSTAT HESAPLAMALARI
+            let pLeft = jStat.chisquare.cdf(chi, df);
+            let pRight = 1.0 - pLeft; 
+            let pdf = jStat.chisquare.pdf(chi, df);
+            
+            // df=1 icin x=0 da infinity olur. UI'i korumak icin:
+            if(!isFinite(pdf)) pdf = 0;
+
+            document.getElementById('resLeft').innerText = pLeft.toFixed(4);
+            document.getElementById('resLeftPct').innerText = '%' + (pLeft * 100).toFixed(2);
+            
+            document.getElementById('resRight').innerText = pRight.toFixed(4);
+            document.getElementById('resRightPct').innerText = '%' + (pRight * 100).toFixed(2);
+            
+            highlightTable(df);
+            drawChart();
+            updateDecision(chi, pRight);
+        }
+
+        function updateDecision(chi, pRight) {
+            let alpha = parseFloat(document.getElementById('alphaSelect').value);
+            let critChi = jStat.chisquare.inv(1 - alpha, currentDf);
+            
+            let box = document.getElementById('chartDecisionBox');
+            let txt = document.getElementById('chartDecisionText');
+            
+            if(pRight < alpha) { // Chi > critChi
+                box.className = "chi-result-box chi-danger p-2 px-3 w-100 d-flex justify-content-between align-items-center mt-2";
+                txt.innerHTML = `Gözlenen $\\chi^2$ (${chi.toFixed(2)}) > Kritik $\\chi^2$ (${critChi.toFixed(2)}) <br>H0 Reddedilir! (Anlamlı)`;
+            } else {
+                box.className = "chi-result-box chi-success p-2 px-3 w-100 d-flex justify-content-between align-items-center mt-2";
+                txt.innerHTML = `Gözlenen $\\chi^2$ (${chi.toFixed(2)}) $\\le$ Kritik $\\chi^2$ (${critChi.toFixed(2)}) <br>H0 Reddedilemez (Anlamsız)`;
+            }
+            MathJax.typesetPromise([box]).catch(err => console.log(err));
+        }
+
+        function generateTable() {
+            let theadTop = document.getElementById('chiTableHeadTop');
+            let theadSub = document.getElementById('chiTableHeadSub');
+            let tbody = document.getElementById('chiTableBody');
+            
+            let htmlTop = '<th rowspan="2" class="align-middle top-header border-end" style="min-width:70px;">$df$<br><small>(S. Der)</small></th>';
+            htmlTop += `<th colspan="${tableAlphas.length}" class="top-header border-bottom">Sağ Kuyruk Alanı ($\\alpha$)</th>`;
+            
+            let htmlSub = '';
+            for(let i=0; i<tableAlphas.length; i++) {
+                htmlSub += `<th class="sub-header bg-light">0.${tableAlphas[i].toFixed(3).split('.')[1]}</th>`;
+            }
+
+            theadTop.innerHTML = htmlTop;
+            theadSub.innerHTML = htmlSub;
+
+            let tbodyHtml = '';
+            for(let i=0; i<tableDfs.length; i++) {
+                let rDf = tableDfs[i];
+                tbodyHtml += `<tr id="row_df_${rDf}">`;
+                tbodyHtml += `<td>${rDf}</td>`;
+                
+                for(let j=0; j<tableAlphas.length; j++) {
+                    let a = tableAlphas[j];
+                    let crit = jStat.chisquare.inv(1 - a, rDf);
+                    tbodyHtml += `<td id="cell_${rDf}_${Math.round(a*1000)}" onclick="setChiInput(${crit.toFixed(3)}, ${rDf})">${crit.toFixed(3)}</td>`;
+                }
+                tbodyHtml += `</tr>`;
+            }
+            tbody.innerHTML = tbodyHtml;
+            MathJax.typesetPromise();
+            
+            highlightTable(currentDf);
+        }
+
+        function setChiInput(cVal, df) {
+            document.getElementById('chiInput').value = cVal;
+            document.getElementById('dfInput').value = df;
+            handleInputs();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function highlightTable(df) {
+            document.querySelectorAll('#chiTable tr.highlighted-row').forEach(el => el.classList.remove('highlighted-row'));
+            document.querySelectorAll('#chiTable td.highlighted-cell').forEach(el => el.classList.remove('highlighted-cell'));
+            
+            let alpha = parseFloat(document.getElementById('alphaSelect').value);
+            
+            // Find closest Df Row
+            let closestDf = tableDfs.reduce((prev, curr) => Math.abs(curr - df) < Math.abs(prev - df) ? curr : prev);
+            let row = document.getElementById(`row_df_${closestDf}`);
+            if(row) row.classList.add('highlighted-row');
+
+            // Cell highlight if alpha is standard
+            let aInt = Math.round(alpha * 1000);
+            let cell = document.getElementById(`cell_${closestDf}_${aInt}`);
+            if(cell) cell.classList.add('highlighted-cell');
+        }
+
+        function scrollToActiveCell() {
+            let cell = document.querySelector('#chiTable td.highlighted-cell');
+            if(cell) {
+                let wrapper = document.getElementById('tableWrapper');
+                let scrollPosY = cell.offsetTop - wrapper.offsetHeight / 2 + cell.offsetHeight / 2;
+                let scrollPosX = cell.offsetLeft - wrapper.offsetWidth / 2 + cell.offsetWidth / 2;
+                wrapper.scrollTo({ top: scrollPosY, left: scrollPosX, behavior: 'smooth' });
+            }
+        }
+
+        function drawChart() {
+            let chi = currentChi;
+            let df = currentDf;
+
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; 
+            const gColor = isDark ? '#334155' : '#e2e8f0';
+
+            let alpha = parseFloat(document.getElementById('alphaSelect').value);
+            let critChi = jStat.chisquare.inv(1 - alpha, df);
+
+            let xVals = []; let yVals = [];
+            // Dynamically set X axis bounds. Expect E(X)=df, Var=2df. Max visible ~ df + 4*sqrt(2df).
+            let maxExpected = df + 4 * Math.sqrt(2 * df);
+            let xLimit = Math.max(critChi * 1.5, chi * 1.2, maxExpected); 
+            
+            let step = xLimit > 50 ? 0.5 : (xLimit > 20 ? 0.2 : 0.1);
+
+            for(let x = 0; x <= xLimit; x += step) {
+                xVals.push(x.toFixed(1));
+                if(x === 0 && df < 2) yVals.push(0); // Protect against infinity drawing
+                else yVals.push(jStat.chisquare.pdf(x, df));
+            }
+
+            let bgColors = [];
+            for(let i=0; i<xVals.length; i++) {
+                let x = parseFloat(xVals[i]);
+                let shade = (x >= critChi);
+                bgColors.push(shade ? 'rgba(239, 68, 68, 0.3)' : 'rgba(0,0,0,0)'); // Kırmızı Kritik Alan
+            }
+
+            if(distChart) distChart.destroy();
+
+            let datasets = [{
+                label: `Ki-Kare (df=${df})`,
+                data: yVals,
+                borderColor: isDark ? '#c084fc' : '#581c87',
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.4,
+                fill: true,
+                backgroundColor: bgColors, 
+            }];
+
+            distChart = new Chart(document.getElementById('distChart'), {
+                type: 'line',
+                data: { labels: xVals, datasets: datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                let vx = parseFloat(ctx.label);
+                                return `χ²: ${vx.toFixed(2)} | Yoğunluk: ${ctx.raw.toFixed(4)}`;
+                            }
+                        }
+                    }},
+                    scales: {
+                        x: { grid: { color: gColor }, ticks: { color: fColor, maxTicksLimit: 10 } },
+                        y: { display: false }
+                    },
+                    animation: { duration: 400 }
+                },
+                plugins: [{
+                    id: 'customSegmentFill',
+                    beforeDatasetDraw: function(chart, args, options) {
+                        const ctx = chart.ctx;
+                        const meta = chart.getDatasetMeta(0);
+                        const xAxis = chart.scales.x;
+                        const yAxis = chart.scales.y;
+                        
+                        ctx.save();
+                        ctx.beginPath();
+                        
+                        // Fill Critical Region
+                        for(let i=0; i<meta.data.length; i++) {
+                            let xVal = parseFloat(chart.data.labels[i]);
+                            let point = meta.data[i];
+                            if(xVal >= critChi) {
+                                let xStart = point.x;
+                                let yStart = point.y;
+                                let xNext = (i < meta.data.length-1) ? meta.data[i+1].x : point.x;
+                                ctx.fillStyle = 'rgba(239, 68, 68, 0.2)'; 
+                                ctx.fillRect(xStart, yStart, xNext-xStart, yAxis.bottom - yStart); 
+                            }
+                        }
+                        
+                        // Draw Observed Line (Purple/Indigo)
+                        if(chi <= xLimit) {
+                            let fPixel = xAxis.getPixelForValue(xVals.reduce((prev, curr) => Math.abs(curr - chi) < Math.abs(prev - chi) ? curr : prev));
+                            ctx.beginPath();
+                            ctx.moveTo(fPixel, yAxis.top);
+                            ctx.lineTo(fPixel, yAxis.bottom);
+                            ctx.lineWidth = 2;
+                            ctx.strokeStyle = isDark ? '#d8b4fe' : '#9333ea'; 
+                            ctx.setLineDash([5, 5]);
+                            ctx.stroke();
+                        }
+                        
+                        // Draw Critical Line (Red)
+                        if(critChi <= xLimit) {
+                            let cPixel = xAxis.getPixelForValue(xVals.reduce((prev, curr) => Math.abs(curr - critChi) < Math.abs(prev - critChi) ? curr : prev));
+                            ctx.beginPath();
+                            ctx.moveTo(cPixel, yAxis.top);
+                            ctx.lineTo(cPixel, yAxis.bottom);
+                            ctx.lineWidth = 2;
+                            ctx.strokeStyle = '#ef4444'; 
+                            ctx.setLineDash([]);
+                            ctx.stroke();
+                        }
+                        
+                        ctx.restore();
+                    }
+                }]
+            });
+        }
+
+        // --- CALCULATORS ---
+        function calcCritical() {
+            let alpha = safeParse(document.getElementById('critAlpha').value);
+            let df = safeParse(document.getElementById('critDf').value);
+            
+            if(df < 1) df = 1;
+            if(alpha <= 0 || alpha >= 1) { document.getElementById('critResult').innerText = "Hata!"; return; }
+            
+            let res = jStat.chisquare.inv(1 - alpha, df);
+
+            document.getElementById('txtCritConf').innerText = '%' + ((1 - alpha)*100).toFixed(1);
+            document.getElementById('critResult').innerText = res.toFixed(4);
+        }
+        
+        function calcInverse() {
+            let strP = document.getElementById('invP').value;
+            let p = safeParse(strP);
+            let df = safeParse(document.getElementById('invDf').value);
+            
+            if(df < 1) df = 1;
+            if(strP.includes('%') || p > 1) p = p / 100;
+            if(p <= 0 || p >= 1) { document.getElementById('invResult').innerText = "Hata!"; return; }
+
+            // P is right tail
+            let res = jStat.chisquare.inv(1 - p, df);
+            document.getElementById('invResult').innerText = res.toFixed(4);
+        }
+
+        function calcArea() {
+            let x1 = safeParse(document.getElementById('areaX1').value);
+            let x2 = safeParse(document.getElementById('areaX2').value);
+            let df = safeParse(document.getElementById('areaDf').value);
+            if(df < 1) df = 1;
+
+            if(x1 < 0) x1 = 0;
+            if(x1 > x2) { let temp = x1; x1 = x2; x2 = temp; }
+
+            let area = jStat.chisquare.cdf(x2, df) - jStat.chisquare.cdf(x1, df);
+            
+            document.getElementById('areaEq').innerText = `P(${x1.toFixed(2)} ≤ X ≤ ${x2.toFixed(2)})`;
+            document.getElementById('areaResult').innerText = area.toFixed(4);
+        }
+
+        function calcVarTest() {
+            let n = safeParse(document.getElementById('varN').value);
+            let s = safeParse(document.getElementById('varS').value);
+            let sig = safeParse(document.getElementById('varSig').value);
+
+            if(n < 2 || sig <= 0) { document.getElementById('varRes').innerText = "Hata!"; return; }
+
+            let chi = ((n - 1) * s) / sig;
+            document.getElementById('varRes').innerText = chi.toFixed(2);
+        }
+
+        function transferVarTest() {
+            let chiStr = document.getElementById('varRes').innerText;
+            let nStr = document.getElementById('varN').value;
+            if(chiStr !== "Hata!") {
+                document.getElementById('chiInput').value = parseFloat(chiStr).toFixed(2);
+                document.getElementById('dfInput').value = parseInt(nStr) - 1;
+                handleInputs();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>

@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!-- CSS Dependencies -->
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <!-- Chart.js & jStat (For complex F-Distribution Math) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
+    
+    <!-- MathJax for Formulas -->
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <title>Canlı F Tablosu ve Olasılık Hesaplayıcı | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+
+        /* F-Table Specific Gradient (Emerald/Teal to distinguish from Z and T) */
+        .f-input-wrapper { background: linear-gradient(135deg, #065f46, #10b981); border-radius: 12px; padding: 25px; color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        .f-input { font-size: 22px; font-weight: 700; text-align: center; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; border-radius: 10px; padding: 8px; width: 100%; transition: all 0.3s; }
+        .f-input:focus { outline: none; border-color: white; background: rgba(255,255,255,0.2); box-shadow: 0 0 0 4px rgba(255,255,255,0.1); }
+        .f-input::placeholder { color: rgba(255,255,255,0.5); }
+
+        .result-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; text-align: center; height: 100%; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .result-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-color: #cbd5e1; }
+        .result-card h6 { color: #64748b; font-size: 13px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .result-val { font-size: 24px; font-weight: 800; color: #0f172a; line-height: 1.2; }
+        .result-pct { font-size: 13px; font-weight: 600; color: #10b981; background: #ecfdf5; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 5px; }
+
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; }
+
+        .f-table-wrapper { overflow-x: auto; max-height: 520px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; }
+        .f-table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 13px; text-align: center; }
+        .f-table th { background: #f1f5f9; color: #334155; font-weight: 700; padding: 8px; position: sticky; top: 0; z-index: 2; border: 1px solid #e2e8f0; }
+        .f-table th.top-header { top: 0; border-bottom: 0; }
+        .f-table th.sub-header { top: 35px; }
+        .f-table th:first-child { left: 0; z-index: 3; background: #e2e8f0; }
+        .f-table td { padding: 6px; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.1s; }
+        .f-table td:first-child { font-weight: 700; background: #f8fafc; position: sticky; left: 0; z-index: 1; }
+        .f-table td:hover:not(:first-child) { background: #ecfdf5; color: #059669; font-weight: 700; }
+        .f-table tr.highlighted-row td { background: #fef08a !important; color: #854d0e !important; font-weight: 700; }
+        .f-table tr.highlighted-row td:first-child { background: #eab308 !important; color: white !important; }
+        .f-table td.highlighted-cell { background: #10b981 !important; color: white !important; font-weight: 700; transform: scale(1.1); box-shadow: 0 0 10px rgba(16,185,129,0.5); z-index: 5; position: relative; border-radius: 4px; }
+        
+        .formula-box { background-color: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 15px; overflow-x: auto; }
+
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        .theme-btn:hover { background-color: #e2e8f0; }
+
+        /* Custom Range Slider */
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; margin-bottom: 5px;}
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffffff; cursor: pointer; margin-top: -6px; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: rgba(255,255,255,0.3); border-radius: 2px; }
+
+        /* ========================================= */
+        /* AKILLI RENK KUTULARI (AÇIK MOD)           */
+        /* ========================================= */
+        .f-result-box { padding: 15px; border-radius: 8px; border: 1px solid transparent; transition: all 0.3s; }
+        .f-success { background-color: #ecfdf5; border-color: #a7f3d0; }
+        .f-success .box-label { color: #059669; }
+        .f-success .box-val { color: #064e3b; }
+        .f-danger { background-color: #fef2f2; border-color: #fecaca; }
+        .f-danger .box-label { color: #dc2626; }
+        .f-danger .box-val { color: #7f1d1d; }
+        .f-info { background-color: #f0fdfa; border-color: #a7f3d0; }
+        .f-info .box-label { color: #0d9488; }
+        .f-info .box-val { color: #134e4a; }
+        .f-warning { background-color: #fffbeb; border-color: #fde68a; }
+        .f-warning .box-label { color: #d97706; }
+        .f-warning .box-val { color: #92400e; }
+        .box-raw-f { background-color: #ffffff; }
+
+        /* ========================================= */
+        /* KUSURSUZ GECE MODU (DARK MODE) AYARLARI   */
+        /* ========================================= */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light { background-color: #0f172a !important; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #94a3b8 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+
+        html.dark-mode .result-card { background: #1e293b; border-color: #334155; }
+        html.dark-mode .result-val { color: #f8fafc; }
+        html.dark-mode .result-pct { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; }
+        html.dark-mode .f-table-wrapper { border-color: #334155; background: #1e293b; }
+        html.dark-mode .f-table th { background: #0f172a; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .f-table th:first-child { background: #1e293b; }
+        html.dark-mode .f-table td { border-color: #334155; color: #94a3b8; }
+        html.dark-mode .f-table td:first-child { background: #0f172a; color: #f8fafc; }
+        html.dark-mode .f-table td:hover:not(:first-child) { background: #064e3b; color: #34d399; }
+        html.dark-mode .f-table tr.highlighted-row td { background: #422006 !important; color: #fde047 !important; }
+        html.dark-mode .f-table tr.highlighted-row td:first-child { background: #854d0e !important; color: white !important; }
+        html.dark-mode .f-table td.highlighted-cell { background: #10b981 !important; color: white !important; box-shadow: 0 0 10px rgba(16,185,129,0.8); }
+        
+        html.dark-mode select.form-select, 
+        html.dark-mode input.form-control,
+        html.dark-mode input[type="number"] { background-color: #0f172a !important; color: #f8fafc !important; border-color: #334155 !important; }
+        html.dark-mode input.form-control:focus { background-color: #1e293b !important; border-color: #10b981 !important; color: #fff !important; }
+        
+        /* AKILLI RENK KUTULARI (GECE MODU) */
+        html.dark-mode .f-success { background-color: rgba(16, 185, 129, 0.1) !important; border-color: rgba(16, 185, 129, 0.3) !important; }
+        html.dark-mode .f-success .box-label { color: #34d399 !important; }
+        html.dark-mode .f-success .box-val { color: #a7f3d0 !important; }
+
+        html.dark-mode .f-danger { background-color: rgba(239, 68, 68, 0.1) !important; border-color: rgba(239, 68, 68, 0.3) !important; }
+        html.dark-mode .f-danger .box-label { color: #f87171 !important; }
+        html.dark-mode .f-danger .box-val { color: #fecaca !important; }
+
+        html.dark-mode .f-info { background-color: rgba(20, 184, 166, 0.1) !important; border-color: rgba(20, 184, 166, 0.3) !important; }
+        html.dark-mode .f-info .box-label { color: #2dd4bf !important; }
+        html.dark-mode .f-info .box-val { color: #ccfbf1 !important; }
+
+        html.dark-mode .f-warning { background-color: rgba(245, 158, 11, 0.1) !important; border-color: rgba(245, 158, 11, 0.3) !important; }
+        html.dark-mode .f-warning .box-label { color: #fbbf24 !important; }
+        html.dark-mode .f-warning .box-val { color: #fde68a !important; }
+
+        html.dark-mode .box-raw-f { background-color: #1e293b !important; border-color: #334155 !important; }
+
+        /* AKORDEON (Accordion) Gece Modu Düzeltmeleri */
+        html.dark-mode .accordion-item { background-color: #1e293b !important; border: 1px solid #334155 !important; }
+        html.dark-mode .accordion-button { background-color: #1e293b !important; color: #f8fafc !important; box-shadow: none !important; }
+        /* Tıklanınca sabit beyaz/açık gri kalsın */
+        html.dark-mode .accordion-button:not(.collapsed) { background-color: #0f172a !important; color: #f8fafc !important; }
+        html.dark-mode .accordion-button::after { filter: invert(1) brightness(2); }
+        html.dark-mode .accordion-body { background-color: #0f172a !important; color: #cbd5e1 !important; border-top: 1px solid #334155 !important; }
+        
+        html.dark-mode .formula-box { background-color: #1e293b !important; border-color: #334155 !important; }
+        
+        /* İŞTE BURASI DÜZELTİLDİ: Formül başlıkları artık beyaz (#f8fafc) */
+        html.dark-mode .formula-box strong { color: #f8fafc !important; } 
+        
+        html.dark-mode .border { border-color: #334155 !important; }
+        html.dark-mode .border-bottom { border-color: #334155 !important; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-table-2 align-middle me-1"></i> İnteraktif F Tablosu
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="alert bg-primary-subtle text-primary border-0 rounded-10 mb-4 px-4 py-3 shadow-sm">
+                <i class="ri-information-line fs-18 align-middle me-2"></i> Fisher-Snedecor F Dağılımı her zaman <strong>pozitiftir</strong> ($F \ge 0$) ve iki ayrı serbestlik derecesine ($df_1$: Pay, $df_2$: Payda) bağlı olarak sağa çarpık bir şekil alır. Genellikle varyansların oranlanmasında (ANOVA, Regresyon, F-Testi) kullanılır.
+            </div>
+
+            <!-- HESAPLAMA PANELİ -->
+            <div class="row g-4 mb-4">
+                <!-- F Girişi -->
+                <div class="col-lg-4">
+                    <div class="f-input-wrapper h-100 d-flex flex-column justify-content-center">
+                        <div class="row g-2 mb-2">
+                            <div class="col-12 mb-2">
+                                <label class="text-white opacity-75 fs-12 fw-bold mb-1 text-uppercase tracking-wider">Gözlenen F Değeri</label>
+                                <input type="text" id="fInput" class="f-input" placeholder="Örn: 3.25" value="3.25" autocomplete="off" oninput="handleInputs()">
+                            </div>
+                            <div class="col-6">
+                                <label class="text-white opacity-75 fs-12 fw-bold mb-1 text-uppercase tracking-wider">Pay ($df_1$)</label>
+                                <input type="number" id="df1Input" class="f-input" placeholder="Örn: 5" value="5" min="1" step="1" autocomplete="off" oninput="handleInputs()">
+                                <input type="range" id="df1Slider" min="1" max="100" value="5" oninput="syncSliders()">
+                            </div>
+                            <div class="col-6">
+                                <label class="text-white opacity-75 fs-12 fw-bold mb-1 text-uppercase tracking-wider">Payda ($df_2$)</label>
+                                <input type="number" id="df2Input" class="f-input" placeholder="Örn: 20" value="20" min="1" step="1" autocomplete="off" oninput="handleInputs()">
+                                <input type="range" id="df2Slider" min="1" max="150" value="20" oninput="syncSliders()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sonuç Kartları -->
+                <div class="col-lg-8">
+                    <div class="row g-3 h-100">
+                        <!-- Kritik P Değeri (Sağ Kuyruk) Öne Çıkarıldı -->
+                        <div class="col-md-4 col-12">
+                            <div class="result-card d-flex flex-column justify-content-center border-primary shadow-sm" style="background: rgba(16, 185, 129, 0.05);">
+                                <h6 class="text-primary fs-14 mb-2"><i class="ri-alert-fill"></i> Sağ Kuyruk (p-Değeri) <br><small class="text-muted text-lowercase">P(F ≥ f)</small></h6>
+                                <div class="result-val" id="resRight">0.0250</div>
+                                <div class="result-pct mt-2" id="resRightPct">%2.50</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-6">
+                            <div class="result-card d-flex flex-column justify-content-center">
+                                <h6>Sol Kuyruk <br><small class="text-muted text-lowercase">P(F ≤ f)</small></h6>
+                                <div class="result-val" id="resLeft">0.9750</div>
+                                <div class="result-pct" id="resLeftPct">%97.50</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-6">
+                            <div class="result-card d-flex flex-column justify-content-center">
+                                <h6>Yoğunluk <br><small class="text-muted text-lowercase">PDF f(F)</small></h6>
+                                <div class="result-val" id="txtPdf">0.0384</div>
+                                <div class="result-pct" style="opacity:0;">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRAFİK VE TABLO BÖLÜMÜ -->
+            <div class="row g-4 mb-4">
+                <!-- Grafik -->
+                <div class="col-lg-5">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                            <h5 class="fs-15 fw-bold text-dark mb-0"><i class="ri-line-chart-fill text-primary me-1"></i> F Dağılımı ve Kritik Bölge</h5>
+                            <span class="badge bg-light text-secondary border">F $\ge$ 0</span>
+                        </div>
+                        <div style="position: relative; height: 260px; width: 100%;">
+                            <canvas id="distChart"></canvas>
+                        </div>
+                        <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
+                            <div id="chartDecisionBox" class="f-result-box f-info p-2 px-3 w-100 d-flex justify-content-between align-items-center">
+                                <span class="fs-13 fw-bold box-label">Karar ($p < \alpha$):</span>
+                                <span class="fs-14 fw-bold box-val" id="chartDecisionText">H0 Reddedilir (Anlamlı)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Canlı F Tablosu -->
+                <div class="col-lg-7">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2 border-bottom pb-2">
+                            <h5 class="fs-15 fw-bold text-dark mb-0"><i class="ri-grid-fill text-primary me-1"></i> Kritik F Tablosu</h5>
+                            <div class="d-flex gap-2 align-items-center">
+                                <span class="fs-12 fw-bold text-muted">$\alpha$ (Sağ Kuyruk):</span>
+                                <select id="alphaSelect" class="form-select form-select-sm bg-light border-0 text-dark fw-bold" style="width: 80px;" onchange="generateTable()">
+                                    <option value="0.10">0.10</option>
+                                    <option value="0.05" selected>0.05</option>
+                                    <option value="0.025">0.025</option>
+                                    <option value="0.01">0.01</option>
+                                    <option value="0.005">0.005</option>
+                                    <option value="0.001">0.001</option>
+                                </select>
+                                <button class="btn btn-sm btn-outline-primary fw-bold" onclick="scrollToActiveCell()"><i class="ri-focus-3-line"></i> Seçili Yere Git</button>
+                            </div>
+                        </div>
+                        
+                        <div class="f-table-wrapper" id="tableWrapper">
+                            <table class="f-table" id="fTable">
+                                <thead>
+                                    <tr id="fTableHeadTop"></tr>
+                                    <tr id="fTableHeadSub"></tr>
+                                </thead>
+                                <tbody id="fTableBody"></tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted fs-11 mt-2 d-block text-center"><i class="ri-lightbulb-flash-fill text-warning"></i> Sütunlar $df_1$ (Pay), Satırlar $df_2$ (Payda) gösterir. Tıklayarak kritik değeri ana hesaba aktarabilirsiniz.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TERS HESAPLAYICILAR VE HIZLI TESTLER -->
+            <div class="row g-4 mb-4">
+                
+                <!-- ANOVA F HESAPLAYICI -->
+                <div class="col-md-4">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <h5 class="fs-14 fw-bold text-dark mb-3 border-bottom pb-2"><i class="ri-bar-chart-box-line text-primary me-1"></i> ANOVA (F Oranı) Hesapla</h5>
+                        <p class="fs-12 text-muted mb-3">Gruplar arası varyansın ($MS_{bet}$), gruplar içi varyansa ($MS_{wit}$) oranıdır.</p>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fs-12 fw-bold text-secondary">$MS_{between}$ (Pay)</label>
+                                <input type="number" id="msBet" class="form-control bg-light border-0 text-dark" value="45.5" oninput="calcAnova()">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fs-12 fw-bold text-secondary">$MS_{within}$ (Payda)</label>
+                                <input type="number" id="msWit" class="form-control bg-light border-0 text-dark" value="12.3" oninput="calcAnova()">
+                            </div>
+                        </div>
+                        
+                        <div class="f-result-box f-info mt-auto mb-0 d-flex justify-content-between align-items-center">
+                            <span class="fs-12 box-label fw-bold text-uppercase d-block mb-1">Gözlenen F Değeri</span>
+                            <span class="fs-22 box-val fw-bold" id="anovaFResult">3.699</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary mt-2 w-100 fw-bold" onclick="transferAnovaF()"><i class="ri-arrow-up-circle-line"></i> Ana Analize Aktar</button>
+                    </div>
+                </div>
+
+                <!-- Kritik Değer (Güven Aralığı / Alpha) -->
+                <div class="col-md-4">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <h5 class="fs-14 fw-bold text-dark mb-3 border-bottom pb-2"><i class="ri-scales-3-fill text-primary me-1"></i> Kritik F Sınırı Bul ($F_{1-\alpha}$)</h5 >
+                        <p class="fs-12 text-muted mb-3">Anlamlılık düzeyine ($\alpha$) ve serbestlik derecelerine göre sağ kuyruk kritik F sınırını hesaplar.</p>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-4">
+                                <label class="form-label fs-12 fw-bold text-secondary">$\alpha$</label>
+                                <input type="text" id="critAlpha" class="form-control bg-light border-0 text-dark" value="0.05" oninput="calcCritical()">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label fs-12 fw-bold text-secondary">$df_1$ (Pay)</label>
+                                <input type="number" id="critDf1" class="form-control bg-light border-0 text-dark" value="5" min="1" oninput="calcCritical()">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label fs-12 fw-bold text-secondary">$df_2$ (Payda)</label>
+                                <input type="number" id="critDf2" class="form-control bg-light border-0 text-dark" value="20" min="1" oninput="calcCritical()">
+                            </div>
+                        </div>
+                        
+                        <div class="f-result-box f-warning mt-auto mb-0 d-flex justify-content-between align-items-center">
+                            <div class="text-start">
+                                <span class="fs-11 box-label fw-bold d-block mb-1">Güven Düzeyi</span>
+                                <span class="fs-16 box-val fw-bold" id="txtCritConf">%95.0</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="fs-11 box-label fw-bold text-uppercase d-block mb-1">Kritik F Sınırı</span>
+                                <span class="fs-20 box-val fw-bold" id="critResult">2.7109</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alan Hesaplayıcı -->
+                <div class="col-md-4">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <h5 class="fs-14 fw-bold text-dark mb-3 border-bottom pb-2"><i class="ri-split-cells-horizontal text-primary me-1"></i> İki F Arasındaki Alan</h5>
+                        <p class="fs-12 text-muted mb-3">$F_1$ ve $F_2$ arasında kalan bölgenin olasılığını hesaplar: $P(F_1 \le F \le F_2)$</p>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fs-12 fw-bold text-secondary">$F_1$ (Alt Sınır)</label>
+                                <input type="text" id="areaF1" class="form-control bg-light border-0 text-dark" value="1.50" oninput="calcArea()">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fs-12 fw-bold text-secondary">$F_2$ (Üst Sınır)</label>
+                                <input type="text" id="areaF2" class="form-control bg-light border-0 text-dark" value="3.25" oninput="calcArea()">
+                            </div>
+                        </div>
+                        
+                        <div class="f-result-box f-success mt-auto mb-0 text-center">
+                            <span class="fs-12 box-label fw-bold d-block mb-1" id="areaEq">P(1.50 ≤ F ≤ 3.25)</span>
+                            <span class="fs-22 box-val fw-bold" id="areaResult">0.2078</span>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+
+            <!-- MATEMATİK FORMÜLLERİ (AKORDEONLAR) -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-12">
+                    <div class="accordion" id="accFormula">
+                        <div class="accordion-item border-0 rounded-10 shadow-sm overflow-hidden mb-3">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                    <i class="ri-function-line me-2 text-primary"></i> İstatistiksel Formüller ve Akademik Altyapı
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accFormula">
+                                <div class="accordion-body bg-light">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="formula-box bg-white h-100">
+                                                <strong class="d-block mb-2 text-dark fs-14">F-Dağılımı Yoğunluk Fonksiyonu (PDF)</strong>
+                                                <div class="text-center" style="font-size: 14px;">$$ f(x) = \frac{ \left(\frac{d_1}{d_2}\right)^{d_1/2} x^{d_1/2-1} }{ B\left(\frac{d_1}{2},\frac{d_2}{2}\right) \left(1+\frac{d_1x}{d_2}\right)^{(d_1+d_2)/2} } $$</div>
+                                                <small class="text-muted d-block text-center mt-2">Burada $B$ beta fonksiyonu, $d_1$ ve $d_2$ serbestlik dereceleridir.</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="formula-box bg-white h-100">
+                                                <strong class="d-block mb-2 text-dark fs-14">Temel F Oranları Testleri</strong>
+                                                <p class="fs-13 text-muted mb-2">Varyansların Homojenliği Testi (Levene/F-test):</p>
+                                                <div class="text-center mb-2">$$ F = \frac{s_1^2}{s_2^2} \quad (s_1^2 > s_2^2) $$</div>
+                                                <p class="fs-13 text-muted mb-2">ANOVA (Analysis of Variance):</p>
+                                                <div class="text-center">$$ F = \frac{MS_{between}}{MS_{within}} $$</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <!-- CORE MATH AND LOGIC SCRIPT -->
+    <script>
+        function safeParse(val) {
+            if(typeof val !== 'string') return parseFloat(val);
+            let cleaned = val.replace(',', '.').replace(/[^0-9.-]/g, '');
+            let parsed = parseFloat(cleaned);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        let currentF = 3.25;
+        let currentDf1 = 5;
+        let currentDf2 = 20;
+        let distChart = null;
+
+        // F Tablosu Icin Gosterilecek Klasik Df Degerleri (Akademik Standart)
+        const tableDf1 = [1,2,3,4,5,6,7,8,9,10,12,15,20,24,30,40,60,120, 1000];
+        const tableDf2 = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,22,24,26,28,30,40,60,120, 1000];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            
+            if (localStorage.getItem('statlab_theme') === 'dark') { 
+                themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); 
+                themeIcon.classList.add('text-warning'); 
+                themeIcon.classList.remove('text-secondary');
+            }
+            
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); 
+                    themeIcon.classList.add('text-warning'); 
+                    themeIcon.classList.remove('text-secondary'); 
+                    localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); 
+                    themeIcon.classList.remove('text-warning'); 
+                    themeIcon.classList.add('text-secondary'); 
+                    localStorage.setItem('statlab_theme', 'light');
+                }
+                drawChart(); 
+            });
+
+            generateTable();
+            handleInputs();
+            calcCritical();
+            calcArea();
+            calcAnova();
+        });
+
+        function syncSliders() {
+            document.getElementById('df1Input').value = document.getElementById('df1Slider').value;
+            document.getElementById('df2Input').value = document.getElementById('df2Slider').value;
+            handleInputs();
+        }
+
+        function handleInputs() {
+            let fStr = document.getElementById('fInput').value;
+            let df1Str = document.getElementById('df1Input').value;
+            let df2Str = document.getElementById('df2Input').value;
+            
+            if(fStr === '' || fStr === '-') return; 
+            
+            currentF = safeParse(fStr);
+            currentDf1 = safeParse(df1Str);
+            currentDf2 = safeParse(df2Str);
+            
+            // F must be >= 0, dfs must be >= 1
+            if(currentF < 0) { currentF = 0; document.getElementById('fInput').value = 0; }
+            if(currentDf1 < 1) { currentDf1 = 1; document.getElementById('df1Input').value = 1; }
+            if(currentDf2 < 1) { currentDf2 = 1; document.getElementById('df2Input').value = 1; }
+            
+            document.getElementById('df1Slider').value = currentDf1 <= 100 ? currentDf1 : 100;
+            document.getElementById('df2Slider').value = currentDf2 <= 150 ? currentDf2 : 150;
+
+            updateAll();
+        }
+
+        function updateAll() {
+            let f = currentF;
+            let df1 = currentDf1;
+            let df2 = currentDf2;
+
+            // JSTAT KUTUPHANESI ILE F HESAPLAMALARI
+            let pLeft = jStat.centralF.cdf(f, df1, df2);
+            let pRight = 1.0 - pLeft; // Sağ Kuyruk P Değeri
+            let pdf = jStat.centralF.pdf(f, df1, df2);
+
+            document.getElementById('resLeft').innerText = pLeft.toFixed(4);
+            document.getElementById('resLeftPct').innerText = '%' + (pLeft * 100).toFixed(2);
+            
+            document.getElementById('resRight').innerText = pRight.toFixed(4);
+            document.getElementById('resRightPct').innerText = '%' + (pRight * 100).toFixed(2);
+            
+            document.getElementById('txtPdf').innerText = pdf.toFixed(4);
+
+            // Tabloyu ve Grafiği Güncelle
+            highlightTable(df1, df2);
+            drawChart();
+            updateDecision(f, pRight);
+        }
+
+        function updateDecision(f, pRight) {
+            let alpha = parseFloat(document.getElementById('alphaSelect').value);
+            let critF = jStat.centralF.inv(1 - alpha, currentDf1, currentDf2);
+            
+            let box = document.getElementById('chartDecisionBox');
+            let txt = document.getElementById('chartDecisionText');
+            
+            if(pRight < alpha) { // F > critF
+                box.className = "f-result-box f-danger p-2 px-3 w-100 d-flex justify-content-between align-items-center mt-2";
+                txt.innerHTML = `Gözlenen F (${f.toFixed(2)}) > Kritik F (${critF.toFixed(2)}) <br>H0 Reddedilir! (Anlamlı)`;
+            } else {
+                box.className = "f-result-box f-success p-2 px-3 w-100 d-flex justify-content-between align-items-center mt-2";
+                txt.innerHTML = `Gözlenen F (${f.toFixed(2)}) $\\le$ Kritik F (${critF.toFixed(2)}) <br>H0 Reddedilemez (Anlamsız)`;
+            }
+            // Trigger MathJax re-render for this box
+            MathJax.typesetPromise([box]).catch(err => console.log(err));
+        }
+
+        function generateTable() {
+            let theadTop = document.getElementById('fTableHeadTop');
+            let theadSub = document.getElementById('fTableHeadSub');
+            let tbody = document.getElementById('fTableBody');
+            let alpha = parseFloat(document.getElementById('alphaSelect').value);
+            
+            let htmlTop = '<th rowspan="2" class="align-middle top-header border-end" style="min-width:70px;">$df_2$<br><small>(Payda)</small></th>';
+            htmlTop += `<th colspan="${tableDf1.length}" class="top-header border-bottom">$df_1$ (Pay Serbestlik Derecesi)</th>`;
+            
+            let htmlSub = '';
+            for(let i=0; i<tableDf1.length; i++) {
+                htmlSub += `<th class="sub-header bg-light">${tableDf1[i] === 1000 ? '∞' : tableDf1[i]}</th>`;
+            }
+
+            theadTop.innerHTML = htmlTop;
+            theadSub.innerHTML = htmlSub;
+
+            let tbodyHtml = '';
+            for(let i=0; i<tableDf2.length; i++) {
+                let rDf2 = tableDf2[i];
+                tbodyHtml += `<tr id="row_df2_${rDf2}">`;
+                tbodyHtml += `<td>${rDf2 === 1000 ? '∞' : rDf2}</td>`;
+                
+                for(let j=0; j<tableDf1.length; j++) {
+                    let cDf1 = tableDf1[j];
+                    let critF = jStat.centralF.inv(1 - alpha, cDf1, rDf2);
+                    tbodyHtml += `<td id="cell_${cDf1}_${rDf2}" onclick="setFInput(${critF.toFixed(3)}, ${cDf1}, ${rDf2})">${critF.toFixed(2)}</td>`;
+                }
+                tbodyHtml += `</tr>`;
+            }
+            tbody.innerHTML = tbodyHtml;
+            MathJax.typesetPromise();
+            
+            highlightTable(currentDf1, currentDf2);
+            updateAll(); // Tablo alfa degistiyse chart kararini da guncelle
+        }
+
+        function setFInput(fVal, df1, df2) {
+            document.getElementById('fInput').value = fVal;
+            document.getElementById('df1Input').value = df1 === 1000 ? 1000 : df1;
+            document.getElementById('df2Input').value = df2 === 1000 ? 1000 : df2;
+            handleInputs();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function highlightTable(df1, df2) {
+            // Remove old highlights
+            document.querySelectorAll('#fTable tr.highlighted-row').forEach(el => el.classList.remove('highlighted-row'));
+            document.querySelectorAll('#fTable td.highlighted-cell').forEach(el => el.classList.remove('highlighted-cell'));
+            
+            // Find closest Df2 Row
+            let closestDf2 = tableDf2.reduce((prev, curr) => Math.abs(curr - df2) < Math.abs(prev - df2) ? curr : prev);
+            let row = document.getElementById(`row_df2_${closestDf2}`);
+            if(row) row.classList.add('highlighted-row');
+
+            // Find closest Df1 Col and highlight cell
+            let closestDf1 = tableDf1.reduce((prev, curr) => Math.abs(curr - df1) < Math.abs(prev - df1) ? curr : prev);
+            let cell = document.getElementById(`cell_${closestDf1}_${closestDf2}`);
+            if(cell) cell.classList.add('highlighted-cell');
+        }
+
+        function scrollToActiveCell() {
+            let cell = document.querySelector('#fTable td.highlighted-cell');
+            if(cell) {
+                let wrapper = document.getElementById('tableWrapper');
+                
+                // Calculate both vertical and horizontal scroll
+                let scrollPosY = cell.offsetTop - wrapper.offsetHeight / 2 + cell.offsetHeight / 2;
+                let scrollPosX = cell.offsetLeft - wrapper.offsetWidth / 2 + cell.offsetWidth / 2;
+                
+                wrapper.scrollTo({ top: scrollPosY, left: scrollPosX, behavior: 'smooth' });
+            }
+        }
+
+        function drawChart() {
+            let f = currentF;
+            let df1 = currentDf1;
+            let df2 = currentDf2;
+
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; 
+            const gColor = isDark ? '#334155' : '#e2e8f0';
+
+            let alpha = parseFloat(document.getElementById('alphaSelect').value);
+            let critF = jStat.centralF.inv(1 - alpha, df1, df2);
+
+            let xVals = []; let yValsF = [];
+            // Dynamically set X axis bounds. F distributions can have very long tails.
+            let xLimit = Math.max(critF * 2, f * 1.5, 5); 
+            if(xLimit > 20) xLimit = 20; // Cap to avoid infinite loops/lag
+            
+            for(let x = 0; x <= xLimit; x += 0.05) {
+                xVals.push(x.toFixed(2));
+                // Handle division by zero edge case at x=0 for df1 < 2
+                if(x === 0 && df1 < 2) yValsF.push(0); 
+                else yValsF.push(jStat.centralF.pdf(x, df1, df2));
+            }
+
+            // Fill arrays
+            let bgColors = [];
+            for(let i=0; i<xVals.length; i++) {
+                let x = parseFloat(xVals[i]);
+                let shade = false;
+                
+                // Sağ kuyruğu (Kritik Bölge) boyayacağız
+                if(x >= critF) shade = true;
+                bgColors.push(shade ? 'rgba(239, 68, 68, 0.3)' : 'rgba(0,0,0,0)'); // Kritik bölge KIRMIZI
+            }
+
+            if(distChart) distChart.destroy();
+
+            let datasets = [{
+                label: `F-Dağılımı (${df1}, ${df2})`,
+                data: yValsF,
+                borderColor: isDark ? '#34d399' : '#065f46',
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.4,
+                fill: true,
+                backgroundColor: bgColors, 
+            }];
+
+            distChart = new Chart(document.getElementById('distChart'), {
+                type: 'line',
+                data: { labels: xVals, datasets: datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                let vx = parseFloat(ctx.label);
+                                return `F: ${vx.toFixed(2)} | Yoğunluk: ${ctx.raw.toFixed(4)}`;
+                            }
+                        }
+                    }},
+                    scales: {
+                        x: { grid: { color: gColor }, ticks: { color: fColor, maxTicksLimit: 9, callback: function(val) { return this.getLabelForValue(val); } } },
+                        y: { display: false }
+                    },
+                    animation: { duration: 400 }
+                },
+                plugins: [{
+                    id: 'customSegmentFill',
+                    beforeDatasetDraw: function(chart, args, options) {
+                        const ctx = chart.ctx;
+                        const meta = chart.getDatasetMeta(0);
+                        const xAxis = chart.scales.x;
+                        const yAxis = chart.scales.y;
+                        
+                        ctx.save();
+                        ctx.beginPath();
+                        
+                        // Paint Critical Region (Red)
+                        for(let i=0; i<meta.data.length; i++) {
+                            let xVal = parseFloat(chart.data.labels[i]);
+                            let point = meta.data[i];
+                            if(xVal >= critF) {
+                                let xStart = point.x;
+                                let yStart = point.y;
+                                let xNext = (i < meta.data.length-1) ? meta.data[i+1].x : point.x;
+                                ctx.fillStyle = 'rgba(239, 68, 68, 0.2)'; 
+                                ctx.fillRect(xStart, yStart, xNext-xStart, yAxis.bottom - yStart); 
+                            }
+                        }
+                        
+                        // Paint Observed F Region (Green) if requested, or just draw vertical line
+                        if(f <= xLimit) {
+                            let fPixel = xAxis.getPixelForValue(xVals.reduce((prev, curr) => Math.abs(curr - f) < Math.abs(prev - f) ? curr : prev));
+                            ctx.beginPath();
+                            ctx.moveTo(fPixel, yAxis.top);
+                            ctx.lineTo(fPixel, yAxis.bottom);
+                            ctx.lineWidth = 2;
+                            ctx.strokeStyle = '#10b981'; // Green Line for observed F
+                            ctx.setLineDash([5, 5]);
+                            ctx.stroke();
+                        }
+                        
+                        // Draw Critical Line
+                        if(critF <= xLimit) {
+                            let cPixel = xAxis.getPixelForValue(xVals.reduce((prev, curr) => Math.abs(curr - critF) < Math.abs(prev - critF) ? curr : prev));
+                            ctx.beginPath();
+                            ctx.moveTo(cPixel, yAxis.top);
+                            ctx.lineTo(cPixel, yAxis.bottom);
+                            ctx.lineWidth = 2;
+                            ctx.strokeStyle = '#ef4444'; // Red Line for Crit
+                            ctx.setLineDash([]);
+                            ctx.stroke();
+                        }
+                        
+                        ctx.restore();
+                    }
+                }]
+            });
+        }
+
+        // --- CALCULATORS ---
+        function calcCritical() {
+            let alpha = safeParse(document.getElementById('critAlpha').value);
+            let df1 = safeParse(document.getElementById('critDf1').value);
+            let df2 = safeParse(document.getElementById('critDf2').value);
+            
+            if(df1 < 1) df1 = 1;
+            if(df2 < 1) df2 = 1;
+            if(alpha <= 0 || alpha >= 1) { document.getElementById('critResult').innerText = "Hata!"; return; }
+            
+            let fRes = jStat.centralF.inv(1 - alpha, df1, df2);
+
+            document.getElementById('txtCritConf').innerText = '%' + ((1 - alpha)*100).toFixed(1);
+            document.getElementById('critResult').innerText = fRes.toFixed(4);
+        }
+
+        function calcArea() {
+            let f1 = safeParse(document.getElementById('areaF1').value);
+            let f2 = safeParse(document.getElementById('areaF2').value);
+            // Alan hesabi icin ana panele girilen df1 ve df2'yi kullaniyoruz (karmasa olmamasi icin)
+            let df1 = currentDf1;
+            let df2 = currentDf2;
+
+            if(f1 < 0) f1 = 0;
+            if(f1 > f2) { let temp = f1; f1 = f2; f2 = temp; }
+
+            let area = jStat.centralF.cdf(f2, df1, df2) - jStat.centralF.cdf(f1, df1, df2);
+            
+            document.getElementById('areaEq').innerText = `P(${f1.toFixed(2)} ≤ F ≤ ${f2.toFixed(2)})`;
+            document.getElementById('areaResult').innerText = area.toFixed(4);
+        }
+
+        function calcAnova() {
+            let mBet = safeParse(document.getElementById('msBet').value);
+            let mWit = safeParse(document.getElementById('msWit').value);
+
+            if(mWit <= 0) { document.getElementById('anovaFResult').innerText = "Hata!"; return; }
+
+            let f = mBet / mWit;
+            document.getElementById('anovaFResult').innerText = f.toFixed(3);
+        }
+
+        function transferAnovaF() {
+            let fStr = document.getElementById('anovaFResult').innerText;
+            if(fStr !== "Hata!") {
+                document.getElementById('fInput').value = parseFloat(fStr).toFixed(3);
+                handleInputs();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>

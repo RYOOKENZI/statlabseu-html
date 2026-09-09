@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!-- CSS Dependencies -->
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    
+    <!-- MathJax for Formulas -->
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <title>Canlı Z Tablosu ve Olasılık Hesaplayıcı | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+
+        .z-input-wrapper { background: linear-gradient(135deg, #1e3a8a, #3b82f6); border-radius: 12px; padding: 25px; color: white; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
+        .z-input { font-size: 28px; font-weight: 700; text-align: center; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; border-radius: 10px; padding: 10px; width: 100%; transition: all 0.3s; }
+        .z-input:focus { outline: none; border-color: white; background: rgba(255,255,255,0.2); box-shadow: 0 0 0 4px rgba(255,255,255,0.1); }
+        .z-input::placeholder { color: rgba(255,255,255,0.5); }
+
+        .result-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; text-align: center; height: 100%; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .result-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-color: #cbd5e1; }
+        .result-card h6 { color: #64748b; font-size: 13px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .result-val { font-size: 24px; font-weight: 800; color: #0f172a; line-height: 1.2; }
+        .result-pct { font-size: 13px; font-weight: 600; color: #3b82f6; background: #eff6ff; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 5px; }
+
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; }
+
+        .z-table-wrapper { overflow-x: auto; max-height: 500px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; }
+        .z-table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 13px; text-align: center; }
+        .z-table th { background: #f1f5f9; color: #334155; font-weight: 700; padding: 8px; position: sticky; top: 0; z-index: 2; border: 1px solid #e2e8f0; }
+        .z-table th:first-child { left: 0; z-index: 3; background: #e2e8f0; }
+        .z-table td { padding: 6px; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.1s; }
+        .z-table td:first-child { font-weight: 700; background: #f8fafc; position: sticky; left: 0; z-index: 1; }
+        .z-table td:hover:not(:first-child) { background: #e0f2fe; color: #0284c7; font-weight: 700; }
+        .z-table td.highlighted { background: #3b82f6 !important; color: white !important; font-weight: 700; transform: scale(1.05); box-shadow: 0 0 10px rgba(59,130,246,0.5); z-index: 5; position: relative; border-radius: 4px; }
+        
+        .info-box { background: linear-gradient(135deg, rgba(47, 143, 232, 0.1), rgba(14, 165, 233, 0.05)); border-left: 4px solid #2f8fe8; padding: 15px 20px; border-radius: 8px; display: flex; align-items: flex-start; gap: 15px; }
+        .info-box i { font-size: 24px; color: #2f8fe8; }
+        .info-box p { margin: 0; font-size: 14px; color: #475569; line-height: 1.6; }
+
+        .formula-box { background-color: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 15px; overflow-x: auto; }
+
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        .theme-btn:hover { background-color: #e2e8f0; }
+
+        /* ========================================= */
+        /* AKILLI RENK KUTULARI (AÇIK MOD)           */
+        /* ========================================= */
+        .z-result-box { padding: 15px; border-radius: 8px; border: 1px solid transparent; transition: all 0.3s; }
+        
+        /* Yeşil Kutu (Hesaplanan Z) */
+        .z-success { background-color: #ecfdf5; border-color: #a7f3d0; }
+        .z-success .box-label { color: #059669; }
+        .z-success .box-val { color: #064e3b; }
+
+        /* Mavi Kutu (İki Z Arasındaki Alan) */
+        .z-info { background-color: #eff6ff; border-color: #bfdbfe; }
+        .z-info .box-label { color: #2563eb; }
+        .z-info .box-val { color: #1e3a8a; }
+
+        /* Turuncu Kutu (Kritik Z Sınırı) */
+        .z-warning { background-color: #fffbeb; border-color: #fde68a; }
+        .z-warning .box-label { color: #d97706; }
+        .z-warning .box-val { color: #92400e; }
+
+        .box-raw-z { background-color: #ffffff; }
+
+        /* ========================================= */
+        /* KUSURSUZ GECE MODU (DARK MODE) AYARLARI   */
+        /* ========================================= */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light { background-color: #0f172a !important; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #94a3b8 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+
+        /* Sonuç Kartları */
+        html.dark-mode .result-card { background: #1e293b; border-color: #334155; }
+        html.dark-mode .result-val { color: #f8fafc; }
+        html.dark-mode .result-pct { background: rgba(59, 130, 246, 0.2); }
+        
+        /* Grafik ve Tablo */
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; }
+        html.dark-mode .z-table-wrapper { border-color: #334155; background: #1e293b; }
+        html.dark-mode .z-table th { background: #0f172a; color: #cbd5e1; border-color: #334155; }
+        html.dark-mode .z-table th:first-child { background: #1e293b; }
+        html.dark-mode .z-table td { border-color: #334155; color: #94a3b8; }
+        html.dark-mode .z-table td:first-child { background: #0f172a; color: #f8fafc; }
+        html.dark-mode .z-table td:hover:not(:first-child) { background: #1e3a8a; color: #60a5fa; }
+        
+        /* Form Elemanları */
+        html.dark-mode select.form-select, 
+        html.dark-mode input.form-control,
+        html.dark-mode input[type="number"] { background-color: #0f172a !important; color: #f8fafc !important; border-color: #334155 !important; }
+        html.dark-mode input.form-control:focus { background-color: #1e293b !important; border-color: #3b82f6 !important; color: #fff !important; }
+        
+        /* AKILLI RENK KUTULARI (GECE MODU) */
+        html.dark-mode .z-success { background-color: rgba(16, 185, 129, 0.1) !important; border-color: rgba(16, 185, 129, 0.3) !important; }
+        html.dark-mode .z-success .box-label { color: #34d399 !important; }
+        html.dark-mode .z-success .box-val { color: #a7f3d0 !important; }
+
+        html.dark-mode .z-info { background-color: rgba(59, 130, 246, 0.1) !important; border-color: rgba(59, 130, 246, 0.3) !important; }
+        html.dark-mode .z-info .box-label { color: #60a5fa !important; }
+        html.dark-mode .z-info .box-val { color: #bfdbfe !important; }
+
+        html.dark-mode .z-warning { background-color: rgba(245, 158, 11, 0.1) !important; border-color: rgba(245, 158, 11, 0.3) !important; }
+        html.dark-mode .z-warning .box-label { color: #fbbf24 !important; }
+        html.dark-mode .z-warning .box-val { color: #fde68a !important; }
+
+        html.dark-mode .box-raw-z { background-color: #1e293b !important; border-color: #334155 !important; }
+
+        /* AKORDEON (Accordion) Gece Modu Düzeltmeleri */
+        html.dark-mode .accordion-item { background-color: #1e293b !important; border: 1px solid #334155 !important; }
+        html.dark-mode .accordion-button { background-color: #1e293b !important; color: #f8fafc !important; box-shadow: none !important; }
+        html.dark-mode .accordion-button:not(.collapsed) { background-color: #0f172a !important; color: #60a5fa !important; }
+        html.dark-mode .accordion-button::after { filter: invert(1) brightness(2); }
+        html.dark-mode .accordion-body { background-color: #0f172a !important; color: #cbd5e1 !important; border-top: 1px solid #334155 !important; }
+        
+        html.dark-mode .formula-box { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .formula-box strong { color: #60a5fa !important; }
+        html.dark-mode .border { border-color: #334155 !important; }
+        html.dark-mode .border-bottom { border-color: #334155 !important; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <!-- BG-LIGHT KALDIRILDI Kİ THEME-BTN CLASS'I GECE MODUNU YÖNETSİN -->
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-table-2 align-middle me-1"></i> İnteraktif Z Tablosu
+                        </span>
+                        <!-- BG-LIGHT KALDIRILDI -->
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- HESAPLAMA PANELİ -->
+            <div class="row g-4 mb-4">
+                <!-- Z Girişi -->
+                <div class="col-lg-3">
+                    <div class="z-input-wrapper h-100 d-flex flex-column justify-content-center">
+                        <label class="text-white opacity-75 fs-13 fw-bold mb-2 text-uppercase tracking-wider">Z Değeri Girin</label>
+                        <input type="text" id="zInput" class="z-input mb-3" placeholder="Örn: 1.96" value="1.96" autocomplete="off" oninput="handleZInput()">
+                        <div class="text-center text-white-50 fs-12">
+                            <i class="ri-information-line align-middle"></i> Negatif değerler desteklenir.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sonuç Kartları -->
+                <div class="col-lg-9">
+                    <div class="row g-3 h-100">
+                        <div class="col-md-3 col-6">
+                            <div class="result-card">
+                                <h6>Sol Kuyruk <br><small class="text-muted text-lowercase">P(Z ≤ z)</small></h6>
+                                <div class="result-val" id="resLeft">0.9750</div>
+                                <div class="result-pct" id="resLeftPct">%97.50</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="result-card">
+                                <h6>Sağ Kuyruk <br><small class="text-muted text-lowercase">P(Z ≥ z)</small></h6>
+                                <div class="result-val" id="resRight">0.0250</div>
+                                <div class="result-pct" id="resRightPct">%2.50</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="result-card">
+                                <h6>İki Kuyruk <br><small class="text-muted text-lowercase">P(|Z| ≥ |z|)</small></h6>
+                                <div class="result-val" id="resTwoTail">0.0500</div>
+                                <div class="result-pct" id="resTwoTailPct">%5.00</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="result-card">
+                                <h6>Merkezi Alan <br><small class="text-muted text-lowercase">P(-|z| ≤ Z ≤ |z|)</small></h6>
+                                <div class="result-val" id="resCenter">0.9500</div>
+                                <div class="result-pct" id="resCenterPct">%95.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRAFİK VE TABLO BÖLÜMÜ -->
+            <div class="row g-4 mb-4">
+                <!-- Grafik -->
+                <div class="col-lg-5">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                            <h5 class="fs-15 fw-bold text-dark mb-0"><i class="ri-line-chart-fill text-primary me-1"></i> Standart Normal Dağılım</h5>
+                            <select id="plotAreaSelect" class="form-select form-select-sm w-auto bg-light border-0 text-dark" onchange="updateAll()">
+                                <option value="left" selected>Sol Kuyruğu Boya</option>
+                                <option value="right">Sağ Kuyruğu Boya</option>
+                                <option value="center">Merkezi Alanı Boya</option>
+                                <option value="two">İki Kuyruğu Boya</option>
+                            </select>
+                        </div>
+                        <div style="position: relative; height: 250px; width: 100%;">
+                            <canvas id="distChart"></canvas>
+                        </div>
+                        
+                        <div class="mt-4 pt-3 border-top">
+                            <h6 class="fs-13 fw-bold text-secondary mb-2 text-uppercase tracking-wider">İstatistiksel Çıktı</h6>
+                            <div class="d-flex justify-content-between mb-1 fs-14">
+                                <span class="text-muted">Yoğunluk Değeri $\phi(z)$:</span>
+                                <strong class="text-dark" id="txtPdf">0.0584</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1 fs-14">
+                                <span class="text-muted">Kümülatif Olasılık $\Phi(z)$:</span>
+                                <strong class="text-primary" id="txtCdf">0.9750</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Canlı Z Tablosu -->
+                <div class="col-lg-7">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2 border-bottom pb-2">
+                            <h5 class="fs-15 fw-bold text-dark mb-0"><i class="ri-grid-fill text-primary me-1"></i> Canlı Z Tablosu</h5>
+                            <div class="d-flex gap-2">
+                                <select id="tableType" class="form-select form-select-sm bg-light border-0 text-dark" onchange="generateTable()">
+                                    <option value="left" selected>Kümülatif Sol Alan P(Z≤z)</option>
+                                    <option value="right">Sağ Kuyruk P(Z≥z)</option>
+                                    <option value="center">Ortalama ile Z Arası P(0≤Z≤z)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="z-table-wrapper" id="tableWrapper">
+                            <table class="z-table" id="zTable">
+                                <thead>
+                                    <tr id="zTableHead"></tr>
+                                </thead>
+                                <tbody id="zTableBody"></tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted fs-11 mt-2 d-block text-center"><i class="ri-lightbulb-flash-fill text-warning"></i> Tablodaki herhangi bir hücreye tıklayarak o Z değerini otomatik seçebilirsiniz.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TERS HESAPLAYICILAR (OLASILIKTAN Z BULMA VS) -->
+            <div class="row g-4 mb-4">
+                
+                <!-- Olasılıktan Z Bul -->
+                <div class="col-md-4">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <h5 class="fs-14 fw-bold text-dark mb-3 border-bottom pb-2"><i class="ri-find-replace-line text-primary me-1"></i> Olasılıktan Z Bul (Ters Normal)</h5>
+                        <p class="fs-12 text-muted mb-3">Bilinen bir olasılık ($p$) değeri için gereken Z skorunu ($z = \Phi^{-1}(p)$) hesaplar.</p>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fs-12 fw-bold text-secondary">Olasılık Yönü</label>
+                            <select id="invType" class="form-select bg-light border-0 fs-13 text-dark" onchange="calcInverse()">
+                                <option value="left" selected>Sol Kuyruk (P(Z ≤ z) = p)</option>
+                                <option value="right">Sağ Kuyruk (P(Z ≥ z) = p)</option>
+                                <option value="two">İki Kuyruk Toplamı (α = p)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fs-12 fw-bold text-secondary">Olasılık Değeri ($p$)</label>
+                            <input type="text" id="invP" class="form-control bg-light border-0 text-dark" placeholder="0.975 veya %97.5" value="0.975" oninput="calcInverse()">
+                        </div>
+                        
+                        <!-- YENİ Z-SUCCESS SINIFI İLE AKILLI RENK KUTUSU -->
+                        <div class="z-result-box z-success mt-auto mb-0 text-center">
+                            <span class="fs-12 box-label fw-bold text-uppercase d-block mb-1">Hesaplanan Z Değeri</span>
+                            <span class="fs-22 box-val fw-bold" id="invResult">1.9600</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kritik Değer (Güven Aralığı) -->
+                <div class="col-md-4">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <h5 class="fs-14 fw-bold text-dark mb-3 border-bottom pb-2"><i class="ri-scales-3-fill text-primary me-1"></i> Kritik Z Değeri ($Z_{\alpha/2}$)</h5>
+                        <p class="fs-12 text-muted mb-3">Güven aralıkları ve hipotez testleri için gereken kritik sınır değerlerini hesaplar.</p>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fs-12 fw-bold text-secondary">Test Türü</label>
+                            <select id="critTail" class="form-select bg-light border-0 fs-13 text-dark" onchange="calcCritical()">
+                                <option value="two" selected>Çift Kuyruk (Güven Aralığı)</option>
+                                <option value="right">Sağ Kuyruk Testi</option>
+                                <option value="left">Sol Kuyruk Testi</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fs-12 fw-bold text-secondary">Güven Düzeyi ($1-\alpha$)</label>
+                            <select id="critConf" class="form-select bg-light border-0 fs-13 text-dark" onchange="calcCritical()">
+                                <option value="0.80">%80</option>
+                                <option value="0.90">%90</option>
+                                <option value="0.95" selected>%95</option>
+                                <option value="0.99">%99</option>
+                                <option value="0.999">%99.9</option>
+                            </select>
+                        </div>
+                        
+                        <!-- YENİ Z-WARNING SINIFI İLE AKILLI RENK KUTUSU -->
+                        <div class="z-result-box z-warning mt-auto mb-0 d-flex justify-content-between align-items-center">
+                            <div class="text-start">
+                                <span class="fs-11 box-label fw-bold d-block mb-1">Alfa ($\alpha$)</span>
+                                <span class="fs-16 box-val fw-bold" id="txtAlpha">0.05</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="fs-11 box-label fw-bold text-uppercase d-block mb-1">Kritik Sınır</span>
+                                <span class="fs-20 box-val fw-bold" id="critResult">±1.9600</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alan Hesaplayıcı -->
+                <div class="col-md-4">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <h5 class="fs-14 fw-bold text-dark mb-3 border-bottom pb-2"><i class="ri-split-cells-horizontal text-primary me-1"></i> İki Z Arasındaki Alan</h5>
+                        <p class="fs-12 text-muted mb-3">$Z_1$ ve $Z_2$ arasında kalan bölgenin olasılığını hesaplar: $P(Z_1 \le Z \le Z_2)$</p>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fs-12 fw-bold text-secondary">$Z_1$ (Alt Sınır)</label>
+                                <input type="text" id="areaZ1" class="form-control bg-light border-0 text-dark" value="-1.00" oninput="calcArea()">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fs-12 fw-bold text-secondary">$Z_2$ (Üst Sınır)</label>
+                                <input type="text" id="areaZ2" class="form-control bg-light border-0 text-dark" value="1.00" oninput="calcArea()">
+                            </div>
+                        </div>
+                        
+                        <!-- YENİ Z-INFO SINIFI İLE AKILLI RENK KUTUSU -->
+                        <div class="z-result-box z-info mt-auto mb-0 text-center">
+                            <span class="fs-12 box-label fw-bold d-block mb-1" id="areaEq">P(-1.00 ≤ Z ≤ 1.00)</span>
+                            <span class="fs-22 box-val fw-bold" id="areaResult">0.6827</span>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+
+            <!-- Z SKORU HESAPLA VE MATEMATİK FORÜLLERİ (AKORDEONLAR) -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="accordion" id="accFormula">
+                        <div class="accordion-item border-0 rounded-10 shadow-sm overflow-hidden mb-3">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                    <i class="ri-function-line me-2 text-primary"></i> İstatistiksel Formüller
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accFormula">
+                                <div class="accordion-body bg-light">
+                                    <div class="formula-box bg-white mb-3">
+                                        <strong class="d-block mb-2 text-dark fs-14">Standartlaştırma (Z Skoru)</strong>
+                                        <p class="fs-13 text-muted">Normal dağılan bir $X$ değişkenini ortalaması 0, varyansı 1 olan standart normal formata çevirir.</p>
+                                        <div class="text-center">$$ z = \frac{X - \mu}{\sigma} $$</div>
+                                    </div>
+                                    <div class="formula-box bg-white mb-3">
+                                        <strong class="d-block mb-2 text-dark fs-14">Olasılık Yoğunluk Fonksiyonu (PDF)</strong>
+                                        <div class="text-center">$$ \phi(z) = \frac{1}{\sqrt{2\pi}} e^{-\frac{z^2}{2}} $$</div>
+                                    </div>
+                                    <div class="formula-box bg-white mb-0">
+                                        <strong class="d-block mb-2 text-dark fs-14">Kümülatif Dağılım Fonksiyonu (CDF)</strong>
+                                        <div class="text-center">$$ \Phi(z) = P(Z \le z) = \int_{-\infty}^{z} \phi(t) dt $$</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="accordion" id="accCalc">
+                        <div class="accordion-item border-0 rounded-10 shadow-sm overflow-hidden">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                                    <i class="ri-calculator-line me-2 text-primary"></i> Ham Veriden Z Skoru Hesapla
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accCalc">
+                                <div class="accordion-body bg-light">
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-4">
+                                            <label class="fs-12 fw-bold text-secondary">Veri (X)</label>
+                                            <input type="number" id="rawX" class="form-control bg-white border-0 text-dark" value="85" oninput="calcRawZ()">
+                                        </div>
+                                        <div class="col-4">
+                                            <label class="fs-12 fw-bold text-secondary">Ortalama ($\mu$)</label>
+                                            <input type="number" id="rawMu" class="form-control bg-white border-0 text-dark" value="70" oninput="calcRawZ()">
+                                        </div>
+                                        <div class="col-4">
+                                            <label class="fs-12 fw-bold text-secondary">Std. Sapma ($\sigma$)</label>
+                                            <input type="number" id="rawSig" class="form-control bg-white border-0 text-dark" value="10" oninput="calcRawZ()">
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center p-3 rounded border box-raw-z">
+                                        <span class="fs-14 fw-bold text-dark">Bulunan Z Skoru: <span class="text-primary fs-18" id="rawResZ">1.50</span></span>
+                                        <button class="btn btn-sm btn-primary" onclick="transferRawZ()"><i class="ri-arrow-up-circle-line me-1"></i> Tabloda Göster</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <!-- CORE MATH AND LOGIC SCRIPT -->
+    <script>
+        function normPDF(z) {
+            return Math.exp(-0.5 * z * z) / Math.sqrt(2 * Math.PI);
+        }
+        
+        function normCDF(z) {
+            let b1 =  0.319381530; let b2 = -0.356563782; let b3 =  1.781477937;
+            let b4 = -1.821255978; let b5 =  1.330274429; let p  =  0.2316419;
+            let c =  0.39894228; 
+
+            if(z >= 0.0) {
+                let t = 1.0 / ( 1.0 + p * z );
+                return (1.0 - c * Math.exp( -z * z / 2.0 ) * t * ( t *( t * ( t * ( t * b5 + b4 ) + b3 ) + b2 ) + b1 ));
+            } else {
+                let t = 1.0 / ( 1.0 - p * z );
+                return ( c * Math.exp( -z * z / 2.0 ) * t * ( t *( t * ( t * ( t * b5 + b4 ) + b3 ) + b2 ) + b1 ));
+            }
+        }
+
+        function normInv(p) {
+            if (p <= 0.0 || p >= 1.0) return NaN;
+            let half = p < 0.5;
+            let q = half ? p : 1.0 - p;
+            let t = Math.sqrt(-2.0 * Math.log(q));
+            let num = 2.515517 + t * (0.802853 + t * 0.010328);
+            let den = 1.0 + t * (1.432788 + t * (0.189269 + t * 0.001308));
+            let z = t - num / den;
+            return half ? -z : z;
+        }
+
+        function safeParse(val) {
+            if(typeof val !== 'string') return parseFloat(val);
+            let cleaned = val.replace(',', '.').replace(/[^0-9.-]/g, '');
+            let parsed = parseFloat(cleaned);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        let currentZ = 1.96;
+        let distChart = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            
+            if (localStorage.getItem('statlab_theme') === 'dark') { 
+                themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); 
+                themeIcon.classList.add('text-warning'); 
+                themeIcon.classList.remove('text-secondary');
+            }
+            
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); 
+                    themeIcon.classList.add('text-warning'); 
+                    themeIcon.classList.remove('text-secondary'); 
+                    localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); 
+                    themeIcon.classList.remove('text-warning'); 
+                    themeIcon.classList.add('text-secondary'); 
+                    localStorage.setItem('statlab_theme', 'light');
+                }
+                drawChart(currentZ); // Grafiği yeni renklere göre tekrar çiz!
+            });
+
+            generateTable();
+            handleZInput();
+            calcInverse();
+            calcCritical();
+            calcArea();
+            calcRawZ();
+        });
+
+        function handleZInput() {
+            let rawStr = document.getElementById('zInput').value;
+            if(rawStr === '' || rawStr === '-') return; 
+            
+            currentZ = safeParse(rawStr);
+            if(currentZ > 4) currentZ = 4;
+            if(currentZ < -4) currentZ = -4;
+
+            updateAll();
+        }
+
+        function updateAll() {
+            let z = currentZ;
+            let absZ = Math.abs(z);
+
+            let pLeft = normCDF(z);
+            let pRight = 1.0 - pLeft;
+            let pCenter = normCDF(absZ) - normCDF(-absZ);
+            let pTwoTail = 2 * (1.0 - normCDF(absZ));
+            let pdf = normPDF(z);
+
+            document.getElementById('resLeft').innerText = pLeft.toFixed(4);
+            document.getElementById('resLeftPct').innerText = '%' + (pLeft * 100).toFixed(2);
+            document.getElementById('resRight').innerText = pRight.toFixed(4);
+            document.getElementById('resRightPct').innerText = '%' + (pRight * 100).toFixed(2);
+            document.getElementById('resCenter').innerText = pCenter.toFixed(4);
+            document.getElementById('resCenterPct').innerText = '%' + (pCenter * 100).toFixed(2);
+            document.getElementById('resTwoTail').innerText = pTwoTail.toFixed(4);
+            document.getElementById('resTwoTailPct').innerText = '%' + (pTwoTail * 100).toFixed(2);
+            document.getElementById('txtCdf').innerText = pLeft.toFixed(4);
+            document.getElementById('txtPdf').innerText = pdf.toFixed(4);
+
+            highlightTable(z);
+            drawChart(z);
+        }
+
+        function generateTable() {
+            let type = document.getElementById('tableType').value;
+            let thead = document.getElementById('zTableHead');
+            let tbody = document.getElementById('zTableBody');
+            
+            thead.innerHTML = '<th>Z</th>';
+            for(let i=0; i<=9; i++) thead.innerHTML += `<th>0.0${i}</th>`;
+
+            tbody.innerHTML = '';
+            for(let r = -39; r <= 39; r++) {
+                let rowZ = r / 10;
+                let tr = document.createElement('tr');
+                let thZ = document.createElement('td');
+                thZ.innerText = (rowZ > 0 ? '+' : '') + rowZ.toFixed(1);
+                tr.appendChild(thZ);
+
+                for(let c = 0; c <= 9; c++) {
+                    let sign = rowZ < 0 || (rowZ === 0 && 1/rowZ === -Infinity) ? -1 : 1; 
+                    let actualZ = rowZ + (sign * c / 100);
+
+                    let val = 0;
+                    if(type === 'left') val = normCDF(actualZ);
+                    else if(type === 'right') val = 1.0 - normCDF(actualZ);
+                    else if(type === 'center') val = Math.abs(normCDF(actualZ) - 0.5);
+
+                    let td = document.createElement('td');
+                    td.innerText = val.toFixed(4);
+                    td.id = `cell_${Math.round(actualZ*100)}`;
+                    
+                    td.onclick = () => {
+                        document.getElementById('zInput').value = actualZ.toFixed(2);
+                        handleZInput();
+                    };
+
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            }
+            highlightTable(currentZ);
+        }
+
+        function highlightTable(z) {
+            document.querySelectorAll('#zTable td.highlighted').forEach(el => el.classList.remove('highlighted'));
+            
+            let zInt = Math.round(z * 100);
+            if(zInt > 399) zInt = 399;
+            if(zInt < -399) zInt = -399;
+            
+            let cell = document.getElementById(`cell_${zInt}`);
+            if(cell) {
+                cell.classList.add('highlighted');
+                let wrapper = document.getElementById('tableWrapper');
+                let scrollPos = cell.offsetTop - wrapper.offsetHeight / 2 + cell.offsetHeight / 2;
+                wrapper.scrollTo({ top: scrollPos, behavior: 'smooth' });
+            }
+        }
+
+        function drawChart(z) {
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; 
+            const gColor = isDark ? '#334155' : '#e2e8f0';
+
+            let mode = document.getElementById('plotAreaSelect').value;
+
+            let xVals = []; let yVals = [];
+            for(let x = -4; x <= 4; x += 0.05) {
+                xVals.push(x.toFixed(2));
+                yVals.push(normPDF(x));
+            }
+
+            let bgColors = [];
+            for(let i=0; i<xVals.length; i++) {
+                let x = parseFloat(xVals[i]);
+                let shade = false;
+                
+                if(mode === 'left' && x <= z) shade = true;
+                else if(mode === 'right' && x >= z) shade = true;
+                else if(mode === 'center' && x >= -Math.abs(z) && x <= Math.abs(z)) shade = true;
+                else if(mode === 'two' && (x <= -Math.abs(z) || x >= Math.abs(z))) shade = true;
+
+                bgColors.push(shade ? 'rgba(59, 130, 246, 0.4)' : 'rgba(0,0,0,0)');
+            }
+
+            if(distChart) distChart.destroy();
+
+            distChart = new Chart(document.getElementById('distChart'), {
+                type: 'line',
+                data: {
+                    labels: xVals,
+                    datasets: [{
+                        label: 'PDF',
+                        data: yVals,
+                        borderColor: isDark ? '#60a5fa' : '#0f172a',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.4,
+                        fill: true,
+                        backgroundColor: bgColors, 
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                let vx = parseFloat(ctx.label);
+                                return `Z: ${vx.toFixed(2)} | CDF: ${normCDF(vx).toFixed(4)}`;
+                            }
+                        }
+                    }},
+                    scales: {
+                        x: { grid: { color: gColor }, ticks: { color: fColor, maxTicksLimit: 9, callback: function(val, index) { return this.getLabelForValue(val); } } },
+                        y: { display: false }
+                    },
+                    animation: { duration: 400 }
+                },
+                plugins: [{
+                    id: 'customSegmentFill',
+                    beforeDatasetDraw: function(chart, args, options) {
+                        const ctx = chart.ctx;
+                        const meta = chart.getDatasetMeta(0);
+                        const xAxis = chart.scales.x;
+                        const yAxis = chart.scales.y;
+                        
+                        ctx.save();
+                        ctx.beginPath();
+                        
+                        for(let i=0; i<meta.data.length; i++) {
+                            let xVal = parseFloat(chart.data.labels[i]);
+                            let point = meta.data[i];
+                            
+                            let shade = false;
+                            if(mode === 'left' && xVal <= z) shade = true;
+                            else if(mode === 'right' && xVal >= z) shade = true;
+                            else if(mode === 'center' && xVal >= -Math.abs(z) && xVal <= Math.abs(z)) shade = true;
+                            else if(mode === 'two' && (xVal <= -Math.abs(z) || xVal >= Math.abs(z))) shade = true;
+
+                            if(shade) {
+                                let xStart = point.x;
+                                let yStart = point.y;
+                                let xNext = (i < meta.data.length-1) ? meta.data[i+1].x : point.x;
+                                
+                                ctx.fillStyle = 'rgba(59, 130, 246, 0.3)'; 
+                                ctx.fillRect(xStart, yStart, xNext-xStart, yAxis.bottom - yStart); 
+                            }
+                        }
+                        ctx.restore();
+                        
+                        let zPixel = xAxis.getPixelForValue(xVals.reduce((prev, curr) => Math.abs(curr - z) < Math.abs(prev - z) ? curr : prev));
+                        ctx.beginPath();
+                        ctx.moveTo(zPixel, yAxis.top);
+                        ctx.lineTo(zPixel, yAxis.bottom);
+                        ctx.lineWidth = 2;
+                        ctx.strokeStyle = '#ef4444'; 
+                        ctx.setLineDash([5, 5]);
+                        ctx.stroke();
+                        ctx.restore();
+                        
+                        if(mode === 'center' || mode === 'two') {
+                            let nzPixel = xAxis.getPixelForValue(xVals.reduce((prev, curr) => Math.abs(curr - (-Math.abs(z))) < Math.abs(prev - (-Math.abs(z))) ? curr : prev));
+                            ctx.beginPath();
+                            ctx.moveTo(nzPixel, yAxis.top);
+                            ctx.lineTo(nzPixel, yAxis.bottom);
+                            ctx.lineWidth = 2;
+                            ctx.strokeStyle = '#ef4444';
+                            ctx.stroke();
+                            ctx.restore();
+                        }
+                    }
+                }]
+            });
+        }
+
+        function calcInverse() {
+            let strP = document.getElementById('invP').value;
+            let p = safeParse(strP);
+            if(strP.includes('%') || p > 1) p = p / 100;
+
+            if(p <= 0 || p >= 1) { document.getElementById('invResult').innerText = "Hata!"; return; }
+
+            let type = document.getElementById('invType').value;
+            let z = 0;
+
+            if(type === 'left') z = normInv(p);
+            else if(type === 'right') z = normInv(1 - p);
+            else if(type === 'two') z = normInv(1 - (p / 2));
+
+            document.getElementById('invResult').innerText = z.toFixed(4);
+        }
+
+        function calcCritical() {
+            let conf = parseFloat(document.getElementById('critConf').value);
+            let tail = document.getElementById('critTail').value;
+            let alpha = 1.0 - conf;
+            
+            let z = 0;
+            if(tail === 'two') z = normInv(1 - (alpha / 2));
+            else if(tail === 'right') z = normInv(1 - alpha);
+            else if(tail === 'left') z = normInv(alpha);
+
+            document.getElementById('txtAlpha').innerText = alpha.toFixed(3);
+            document.getElementById('critResult').innerText = (tail === 'two' ? '±' : '') + z.toFixed(4);
+        }
+
+        function calcArea() {
+            let z1 = safeParse(document.getElementById('areaZ1').value);
+            let z2 = safeParse(document.getElementById('areaZ2').value);
+
+            if(z1 > z2) { let temp = z1; z1 = z2; z2 = temp; }
+
+            let area = normCDF(z2) - normCDF(z1);
+            
+            document.getElementById('areaEq').innerText = `P(${z1.toFixed(2)} ≤ Z ≤ ${z2.toFixed(2)})`;
+            document.getElementById('areaResult').innerText = area.toFixed(4);
+        }
+
+        function calcRawZ() {
+            let x = safeParse(document.getElementById('rawX').value);
+            let mu = safeParse(document.getElementById('rawMu').value);
+            let sig = safeParse(document.getElementById('rawSig').value);
+
+            if(sig <= 0) { document.getElementById('rawResZ').innerText = "Hata!"; return; }
+
+            let z = (x - mu) / sig;
+            document.getElementById('rawResZ').innerText = z.toFixed(4);
+        }
+
+        function transferRawZ() {
+            let zStr = document.getElementById('rawResZ').innerText;
+            if(zStr !== "Hata!") {
+                document.getElementById('zInput').value = parseFloat(zStr).toFixed(2);
+                handleZInput();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>

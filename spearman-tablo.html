@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!-- CSS Dependencies -->
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <!-- Chart.js & jStat -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
+    
+    <!-- MathJax for Formulas -->
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <title>Canlı Spearman Korelasyon Tablosu | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+
+        /* KONSEPT: Okyanus Mavisi / Safir (Ocean Blue / Sapphire) */
+        .spear-input-wrapper { background: linear-gradient(135deg, #0369a1, #0284c7); border-radius: 12px; padding: 25px; color: white; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.3); }
+        .spear-input { font-size: 20px; font-weight: 700; text-align: center; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; border-radius: 10px; padding: 8px; width: 100%; transition: all 0.3s; }
+        .spear-input:focus { outline: none; border-color: white; background: rgba(255,255,255,0.2); box-shadow: 0 0 0 4px rgba(255,255,255,0.1); }
+        .spear-input::placeholder { color: rgba(255,255,255,0.5); }
+
+        .result-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; text-align: center; height: 100%; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .result-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-color: #cbd5e1; }
+        .result-card h6 { color: #64748b; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0; }
+        .result-val { font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.2; }
+        .result-pct { font-size: 13px; font-weight: 600; color: #0284c7; background: #f0f9ff; padding: 4px 8px; border-radius: 8px; display: block; width: 100%; }
+
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; }
+
+        .spear-table-wrapper { overflow-x: auto; max-height: 520px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; }
+        .spear-table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 13px; text-align: center; }
+        .spear-table th { background: #f1f5f9; color: #334155; font-weight: 700; padding: 8px; position: sticky; top: 0; z-index: 2; border: 1px solid #e2e8f0; }
+        .spear-table th.top-header { top: 0; border-bottom: 0; }
+        .spear-table th.sub-header { top: 35px; }
+        .spear-table th:first-child { left: 0; z-index: 3; background: #e2e8f0; }
+        .spear-table td { padding: 6px; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.1s; }
+        .spear-table td:first-child { font-weight: 700; background: #f8fafc; position: sticky; left: 0; z-index: 1; }
+        .spear-table td:hover:not(:first-child) { background: #f0f9ff; color: #0369a1; font-weight: 700; }
+        .spear-table tr.highlighted-row td { background: #fef08a !important; color: #854d0e !important; font-weight: 700; }
+        .spear-table tr.highlighted-row td:first-child { background: #eab308 !important; color: white !important; }
+        .spear-table td.highlighted-cell { background: #0284c7 !important; color: white !important; font-weight: 700; transform: scale(1.1); box-shadow: 0 0 10px rgba(2,132,199,0.5); z-index: 5; position: relative; border-radius: 4px; }
+        
+        .formula-box { background-color: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 15px; overflow-x: auto; }
+
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        .theme-btn:hover { background-color: #e2e8f0; }
+
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; margin-bottom: 5px;}
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #ffffff; cursor: pointer; margin-top: -6px; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: rgba(255,255,255,0.3); border-radius: 2px; }
+
+        /* AKILLI RENK KUTULARI (AÇIK MOD) */
+        .spear-result-box { padding: 15px; border-radius: 8px; border: 1px solid transparent; transition: all 0.3s; }
+        .spear-success { background-color: #f0fdf4; border-color: #bbf7d0; }
+        .spear-success .box-label { color: #16a34a; }
+        .spear-success .box-val { color: #14532d; }
+        
+        .spear-danger { background-color: #fef2f2; border-color: #fecaca; }
+        .spear-danger .box-label { color: #dc2626; }
+        .spear-danger .box-val { color: #7f1d1d; }
+        
+        .spear-warning { background-color: #fffbeb; border-color: #fde68a; }
+        .spear-warning .box-label { color: #d97706; }
+        .spear-warning .box-val { color: #92400e; }
+        
+        .spear-info { background-color: #f0f9ff; border-color: #bae6fd; }
+        .spear-info .box-label { color: #0284c7; }
+        .spear-info .box-val { color: #075985; }
+
+        /* ========================================= */
+        /* KUSURSUZ GECE MODU (DARK MODE) AYARLARI   */
+        /* ========================================= */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light { background-color: #0f172a !important; }
+        
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        html.dark-mode h6, html.dark-mode .result-card h6 { color: #e2e8f0 !important; }
+        
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+
+        /* MAT GECE MODU KARTLARI DÜZELTİLDİ (SİMETRİK) */
+        html.dark-mode .result-card { background: #1e293b; border-color: #334155; }
+        html.dark-mode .result-val { color: #f8fafc !important; }
+        html.dark-mode .result-pct { background: rgba(2, 132, 199, 0.2); color: #38bdf8; }
+        
+        html.dark-mode .border-primary { border-color: #0ea5e9 !important; }
+        html.dark-mode .text-primary { color: #38bdf8 !important; }
+        
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; }
+        html.dark-mode .spear-table-wrapper { border-color: #334155; background: #1e293b; }
+        html.dark-mode .spear-table th { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+        html.dark-mode .spear-table th:first-child { background: #1e293b; }
+        html.dark-mode .spear-table td { border-color: #334155; color: #cbd5e1; }
+        html.dark-mode .spear-table td:first-child { background: #0f172a; color: #f8fafc; }
+        html.dark-mode .spear-table td:hover:not(:first-child) { background: #0c4a6e; color: #38bdf8; }
+        html.dark-mode .spear-table tr.highlighted-row td { background: #422006 !important; color: #fde047 !important; }
+        html.dark-mode .spear-table tr.highlighted-row td:first-child { background: #854d0e !important; color: white !important; }
+        html.dark-mode .spear-table td.highlighted-cell { background: #0284c7 !important; color: white !important; box-shadow: 0 0 10px rgba(2,132,199,0.8); }
+        
+        html.dark-mode select.form-select, 
+        html.dark-mode input.form-control,
+        html.dark-mode input[type="number"] { background-color: #0f172a !important; color: #f8fafc !important; border-color: #334155 !important; }
+        html.dark-mode input.form-control:focus { background-color: #1e293b !important; border-color: #0284c7 !important; color: #fff !important; }
+        
+        /* AKILLI RENK KUTULARI (GECE MODU) */
+        html.dark-mode .spear-success { background-color: rgba(34, 197, 94, 0.1) !important; border-color: rgba(34, 197, 94, 0.2) !important; }
+        html.dark-mode .spear-success .box-label { color: #86efac !important; }
+        html.dark-mode .spear-success .box-val { color: #dcfce7 !important; }
+
+        html.dark-mode .spear-danger { background-color: rgba(239, 68, 68, 0.1) !important; border-color: rgba(239, 68, 68, 0.2) !important; }
+        html.dark-mode .spear-danger .box-label { color: #fca5a5 !important; }
+        html.dark-mode .spear-danger .box-val { color: #fee2e2 !important; }
+
+        html.dark-mode .spear-warning { background-color: rgba(245, 158, 11, 0.1) !important; border-color: rgba(245, 158, 11, 0.2) !important; }
+        html.dark-mode .spear-warning .box-label { color: #fcd34d !important; }
+        html.dark-mode .spear-warning .box-val { color: #fef3c7 !important; }
+        
+        html.dark-mode .spear-info { background-color: rgba(2, 132, 199, 0.1) !important; border-color: rgba(2, 132, 199, 0.3) !important; }
+        html.dark-mode .spear-info .box-label { color: #38bdf8 !important; }
+        html.dark-mode .spear-info .box-val { color: #e0f2fe !important; }
+
+        /* AKORDEON VE FORMÜL DÜZELTMELERİ */
+        html.dark-mode .accordion-item { background-color: #1e293b !important; border: 1px solid #334155 !important; }
+        html.dark-mode .accordion-button { background-color: #1e293b !important; color: #f8fafc !important; box-shadow: none !important; }
+        html.dark-mode .accordion-button:not(.collapsed) { background-color: #0f172a !important; color: #f8fafc !important; }
+        html.dark-mode .accordion-button::after { filter: invert(1) brightness(2); }
+        html.dark-mode .accordion-body { background-color: #0f172a !important; color: #cbd5e1 !important; border-top: 1px solid #334155 !important; }
+        
+        html.dark-mode .formula-box { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .formula-box strong { color: #f8fafc !important; } /* Formül başlıkları bembeyaz */
+        
+        html.dark-mode .border { border-color: #334155 !important; }
+        html.dark-mode .border-bottom { border-color: #334155 !important; }
+
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-line-chart-line align-middle me-1"></i> İnteraktif Spearman Tablosu
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="alert bg-primary-subtle text-primary border-0 rounded-10 mb-4 px-4 py-3 shadow-sm d-flex align-items-start">
+                <i class="ri-information-line fs-18 align-middle me-3 mt-1"></i> 
+                <div>
+                    <strong>Spearman Sıra Korelasyon Katsayısı ($\rho_s$ veya $r_s$)</strong>, iki değişken arasındaki ilişkinin <strong>monotonik</strong> (sürekli artan veya azalan) yapısını ölçen parametrik olmayan bir testtir. Verilerin gerçek değerlerini değil, <strong>sıralarını (rank)</strong> kullanır. Bu sayede aykırı değerlere ve doğrusal olmayan (fakat monoton) ilişkilere karşı Pearson katsayısından çok daha dirençlidir. Değerler -1 ile +1 arasında değişir.
+                </div>
+            </div>
+
+            <!-- HESAPLAMA PANELİ -->
+            <div class="row g-4 mb-4">
+                <!-- Spearman Girişi -->
+                <div class="col-lg-4">
+                    <div class="spear-input-wrapper h-100 d-flex flex-column justify-content-center">
+                        <div class="row g-2 mb-2">
+                            <div class="col-12 mb-3">
+                                <label class="text-white opacity-75 fs-12 fw-bold mb-1 text-uppercase tracking-wider">Spearman Katsayısı ($r_s$)</label>
+                                <input type="text" id="rInput" class="spear-input" placeholder="Örn: 0.72" value="0.72" autocomplete="off" oninput="handleInputs()">
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="text-white opacity-75 fs-12 fw-bold mb-1 text-uppercase tracking-wider">Örneklem Hacmi (n)</label>
+                                <input type="number" id="nInput" class="spear-input" placeholder="20" value="20" min="5" max="1000" step="1" autocomplete="off" oninput="handleInputs()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sonuç Kartları (TAM SİMETRİK VE MAT) -->
+                <div class="col-lg-8">
+                    <div class="row g-3 h-100">
+                        <!-- Kart 1: Test İstatistiği -->
+                        <div class="col-md-3 col-6">
+                            <div class="result-card d-flex flex-column justify-content-between align-items-center shadow-sm h-100 p-3">
+                                <h6 class="mb-1 text-center" style="min-height: 38px;">T İstatistiği <br><small class="text-muted text-lowercase">Student's t Yaklaşımı</small></h6>
+                                <div class="result-val text-dark my-2" id="resT">4.436</div>
+                                <div class="result-pct w-100 m-0 bg-light text-dark text-center" id="resDf">df = 18</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Kart 2: p-Değeri (Özel Vurgulu ama MAT) -->
+                        <div class="col-md-3 col-6">
+                            <div class="result-card d-flex flex-column justify-content-between align-items-center shadow-sm h-100 p-3 border-primary" id="pvalCard">
+                                <h6 class="text-primary mb-1 text-center" style="min-height: 38px;"><i class="ri-alert-fill"></i> p-Değeri <br><small class="text-muted text-lowercase" id="tailTitle">Çift Kuyruk</small></h6>
+                                <div class="result-val text-primary my-2" id="resPval">0.0003</div>
+                                <div class="result-pct w-100 m-0 bg-light text-dark text-center" id="resMethod">Asimptotik (t)</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Kart 3: Kritik Değer -->
+                        <div class="col-md-3 col-6">
+                            <div class="result-card d-flex flex-column justify-content-between align-items-center shadow-sm h-100 p-3">
+                                <h6 class="mb-1 text-center" style="min-height: 38px;">Kritik Sınır ($r_s$) <br><small class="text-muted text-lowercase">$\alpha = 0.05$ için</small></h6>
+                                <div class="result-val text-danger my-2" id="resCrit">0.447</div>
+                                <div class="result-pct w-100 m-0 bg-danger-subtle text-danger text-center" id="critBadge">Tablo Sınırı</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Kart 4: Etki Yönü ve Gücü -->
+                        <div class="col-md-3 col-6">
+                            <div class="result-card d-flex flex-column justify-content-between align-items-center shadow-sm h-100 p-3">
+                                <h6 class="mb-1 text-center" style="min-height: 38px;">İlişkinin Gücü <br><small class="text-muted text-lowercase">Monotonik Yönelim</small></h6>
+                                <div class="result-val text-secondary my-2" id="resStrength">Güçlü</div>
+                                <div class="result-pct w-100 m-0 bg-light text-dark text-center" id="resDirection">Pozitif Yönlü</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KARAR GRAFİĞİ VE YORUM BÖLÜMÜ -->
+            <div class="row g-4 mb-4">
+                
+                <!-- Karar Mekanizması -->
+                <div class="col-lg-4">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                            <h5 class="fs-15 fw-bold text-dark mb-0"><i class="ri-scales-3-fill text-primary me-1"></i> Korelasyon Kararı</h5>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fs-12 text-muted fw-bold">Test Yönü:</span>
+                                <select id="tailSelect" class="form-select form-select-sm bg-light border-0 text-dark fw-bold w-auto" onchange="handleInputs()">
+                                    <option value="2" selected>Çift Kuyruk</option>
+                                    <option value="1">Tek Kuyruk</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div id="decisionCard" class="spear-result-box spear-danger w-100 flex-grow-1 d-flex flex-column justify-content-center text-center mb-3">
+                            <div class="fs-15 fw-bold box-label mb-2" id="decTitle">Korelasyon Anlamlı (H0 Red)</div>
+                            <div class="fs-14 box-val lh-base" id="decText">
+                                Mutlak $r_s$ değeri ($0.72$), hesaplanan Kritik Sınır ($0.447$) değerinden büyüktür. $H_0$ reddedilir. Değişkenler arasında istatistiksel olarak anlamlı bir monotonik ilişki vardır.
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center p-3 rounded border bg-light">
+                            <span class="fs-13 fw-bold text-secondary">Test $\alpha$ (Anlamlılık):</span>
+                            <select id="alphaSelect" class="form-select form-select-sm bg-white border text-dark fw-bold w-auto" onchange="updateAll()">
+                                <option value="0.10">0.10</option>
+                                <option value="0.05" selected>0.05</option>
+                                <option value="0.01">0.01</option>
+                                <option value="0.001">0.001</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grafik Simülasyonu -->
+                <div class="col-lg-8">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                            <h5 class="fs-15 fw-bold text-dark mb-0"><i class="ri-scatter-chart-fill text-primary me-1"></i> Rank (Sıra) Dağılım Simülatörü</h5>
+                            <span class="badge bg-light text-secondary border fs-13 py-2 px-3">$\rho_s = $ <span id="badgeChartRs">0.72</span></span>
+                        </div>
+                        <p class="fs-12 text-muted mb-2 text-center" style="line-height: 1.4;">
+                            Girdiğiniz Spearman korelasyonuna denk gelen varsayımsal (simüle) bir <strong>Sıra vs Sıra</strong> grafiği aşağıdadır.<br>Katsayı $\pm 1$'e yaklaştıkça noktalar kusursuz bir doğru oluşturur. $0$'a yaklaştıkça tamamen dağılırlar.
+                        </p>
+                        
+                        <div style="position: relative; height: 180px; width: 100%; display: flex; align-items: center; justify-content: center; margin-top: 10px;">
+                            <canvas id="scatterChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CANLI SPEARMAN TABLOSU -->
+            <div class="row g-4 mb-4">
+                <div class="col-12">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2 border-bottom pb-2">
+                            <h5 class="fs-15 fw-bold text-dark mb-0"><i class="ri-grid-fill text-primary me-1"></i> Kritik Değerler Tablosu <span class="fw-normal fs-12 text-muted" id="tableTitleExt">($\alpha = 0.05$ - Çift Kuyruk)</span></h5>
+                            <button class="btn btn-sm btn-outline-primary fw-bold" onclick="scrollToActiveCell()"><i class="ri-focus-3-line"></i> Seçili Satıra Git</button>
+                        </div>
+                        
+                        <div class="spear-table-wrapper" id="tableWrapper">
+                            <table class="spear-table" id="spearTable">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2" class="align-middle border-end bg-light" style="min-width:100px;">Örneklem (n)</th>
+                                        <th colspan="4" class="border-bottom bg-light">Anlamlılık Düzeyi ($\alpha$) - Çift Kuyruk</th>
+                                    </tr>
+                                    <tr>
+                                        <th class="bg-light">0.10</th>
+                                        <th class="bg-light">0.05</th>
+                                        <th class="bg-light">0.01</th>
+                                        <th class="bg-light">0.001</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="spearTableBody"></tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted fs-11 mt-2 d-block text-center" id="tableWarningText"><i class="ri-lightbulb-flash-fill text-warning"></i> Sütunlar anlamlılık düzeyini ($\alpha$), Satırlar örneklem hacmini ($n$) gösterir. Mutlak gözlenen $|r_s|$ değeri, tablodaki Kritik değerden <strong>BÜYÜK veya EŞİT ($\ge$)</strong> ise korelasyon anlamlıdır (H0 reddedilir).</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RANK FARK HESAPLAYICISI -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <h5 class="fs-14 fw-bold text-dark mb-3 border-bottom pb-2"><i class="ri-calculator-line text-primary me-1"></i> Sıra Farklarından (d²) Katsayı Hesapla</h5>
+                        <p class="fs-12 text-muted mb-3">Elinizde sadece sıra farklarının kareleri toplamı ($\sum d^2$) ve $n$ varsa doğrudan hesaplayın.</p>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fs-12 fw-bold text-secondary">Farkların Kareleri Toplamı ($\sum d^2$)</label>
+                                <input type="number" id="calcD2" class="form-control bg-light border-0 text-dark" value="372" oninput="calcRsFromD2()">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fs-12 fw-bold text-secondary">Gözlem Sayısı ($n$)</label>
+                                <input type="number" id="calcN" class="form-control bg-light border-0 text-dark" value="20" oninput="calcRsFromD2()">
+                            </div>
+                        </div>
+                        
+                        <div class="spear-result-box spear-info mt-auto mb-0 d-flex justify-content-between align-items-center">
+                            <div class="text-start">
+                                <span class="fs-11 box-label fw-bold d-block mb-1">Maksimum Olası Fark</span>
+                                <span class="fs-16 box-val fw-bold" id="resCalcMax">1330</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="fs-11 box-label fw-bold text-uppercase d-block mb-1">Hesaplanan Katsayı ($r_s$)</span>
+                                <span class="fs-20 box-val fw-bold" id="resCalcRs">0.720</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary mt-2 w-100 fw-bold" onclick="transferCalc()"><i class="ri-arrow-up-circle-line me-1"></i> Ana Analize Aktar</button>
+                        <small class="d-block text-center text-muted fs-11 mt-1">*Bu formül verilerde eşit sıra (Tie) olmadığında geçerlidir.</small>
+                    </div>
+                </div>
+
+                <!-- Varsayımlar ve Açıklamalar -->
+                <div class="col-md-6">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100 border-start border-4 border-warning d-flex flex-column justify-content-center">
+                        <h5 class="fs-15 fw-bold text-dark mb-3"><i class="ri-error-warning-fill text-warning me-1"></i> Spearman Doğrusal Değil, Monotoniktir!</h5>
+                        <p class="fs-13 text-muted mb-2 lh-base">
+                            Spearman korelasyonu, Pearson gibi verilerin <strong>doğrusal (çizgisel)</strong> bir hat üzerinde olmasını beklemez. İki değişkenin birbirini sürekli takip edip etmediğine bakar (biri artarken diğeri sürekli artıyor mu?).
+                        </p>
+                        <ul class="fs-13 text-muted ps-3 mb-0">
+                            <li class="mb-2"><strong>Bağlı Sıralar (Ties):</strong> Eğer değişkenlerinizde aynı değeri alan çok sayıda gözlem varsa, basit $1 - \frac{6\sum d^2}{n(n^2-1)}$ formülü hatalı sonuç verir. İleri yazılımlar ortalama sıra mantığı ve düzeltilmiş formül kullanır.</li>
+                            <li><strong>$p$-Değeri ve Asimptotik Yaklaşım:</strong> Gözlem sayınız ($n > 30$) olduğunda, $r_s$ katsayısı Student's t-dağılımına yaklaşır. Tabloların yetmediği yerde T-Testi mantığı ile p-değeri hesaplanır.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- İSTATİSTİKSEL FORMÜLLER -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-12">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100 d-flex flex-column justify-content-center">
+                        <h5 class="fs-15 fw-bold text-dark mb-3 border-bottom pb-2"><i class="ri-function-line text-primary me-1"></i> Matematiksel Formüller ve Hipotezler</h5>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="formula-box bg-light border mb-0 h-100">
+                                    <strong class="d-block mb-2 text-dark fs-13">1. Spearman (Tiesiz) Formülü</strong>
+                                    <div class="text-center mb-2" style="font-size: 15px;">$$ r_s = 1 - \frac{6 \sum d_i^2}{n(n^2 - 1)} $$</div>
+                                    <small class="text-muted d-block text-center mt-2">$d_i$: İki değişkenin sıraları (rank) arasındaki fark.</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="formula-box bg-light border mb-0 h-100">
+                                    <strong class="d-block mb-2 text-dark fs-13">2. Asimptotik T İstatistiği (p-Değeri İçin)</strong>
+                                    <div class="text-center mb-2" style="font-size: 15px;">$$ t = r_s \sqrt{\frac{n-2}{1 - r_s^2}} $$</div>
+                                    <small class="text-muted d-block text-center mt-2">Serbestlik derecesi: $df = n - 2$ olan t-dağılımını izler.</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="formula-box bg-light border mb-0 h-100">
+                                    <strong class="d-block mb-2 text-dark fs-13">3. Korelasyon Hipotezleri</strong>
+                                    <div class="text-center mb-2" style="font-size: 14px;">$$ H_0: \rho_s = 0 $$</div>
+                                    <div class="text-center" style="font-size: 14px;">$$ H_1: \rho_s \neq 0 $$</div>
+                                    <small class="text-muted d-block text-center mt-2">Sıfır hipotezi değişkenler arası monotonik ilişkinin olmadığını varsayar.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <!-- CORE MATH AND LOGIC SCRIPT -->
+    <script>
+        function safeParse(val) {
+            if(typeof val !== 'string') return parseFloat(val);
+            let cleaned = val.replace(',', '.').replace(/[^0-9.-]/g, '');
+            let parsed = parseFloat(cleaned);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        let currentRs = 0.72;
+        let currentN = 20;
+        let scatterChart = null;
+
+        // Klasik Spearman Kritik Tablo Verisi (Zar's Biostatistical Analysis, Two-Tailed)
+        // Structure: n : { alpha_0.10, alpha_0.05, alpha_0.01, alpha_0.001 }
+        const spearCritTable = {
+            5:  { 0.10: 0.900, 0.05: 1.000, 0.01: null,  0.001: null },
+            6:  { 0.10: 0.829, 0.05: 0.886, 0.01: 1.000, 0.001: null },
+            7:  { 0.10: 0.714, 0.05: 0.786, 0.01: 0.893, 0.001: 1.000 },
+            8:  { 0.10: 0.643, 0.05: 0.738, 0.01: 0.833, 0.001: 0.929 },
+            9:  { 0.10: 0.600, 0.05: 0.700, 0.01: 0.783, 0.001: 0.883 },
+            10: { 0.10: 0.564, 0.05: 0.648, 0.01: 0.745, 0.001: 0.848 },
+            11: { 0.10: 0.536, 0.05: 0.618, 0.01: 0.736, 0.001: 0.818 },
+            12: { 0.10: 0.503, 0.05: 0.587, 0.01: 0.703, 0.001: 0.783 },
+            13: { 0.10: 0.484, 0.05: 0.560, 0.01: 0.673, 0.001: 0.758 },
+            14: { 0.10: 0.464, 0.05: 0.538, 0.01: 0.646, 0.001: 0.732 },
+            15: { 0.10: 0.446, 0.05: 0.521, 0.01: 0.623, 0.001: 0.711 },
+            16: { 0.10: 0.429, 0.05: 0.503, 0.01: 0.601, 0.001: 0.690 },
+            17: { 0.10: 0.414, 0.05: 0.488, 0.01: 0.582, 0.001: 0.672 },
+            18: { 0.10: 0.401, 0.05: 0.472, 0.01: 0.564, 0.001: 0.655 },
+            19: { 0.10: 0.391, 0.05: 0.460, 0.01: 0.549, 0.001: 0.638 },
+            20: { 0.10: 0.380, 0.05: 0.447, 0.01: 0.534, 0.001: 0.623 },
+            21: { 0.10: 0.370, 0.05: 0.436, 0.01: 0.521, 0.001: 0.609 },
+            22: { 0.10: 0.361, 0.05: 0.425, 0.01: 0.508, 0.001: 0.596 },
+            23: { 0.10: 0.353, 0.05: 0.416, 0.01: 0.496, 0.001: 0.584 },
+            24: { 0.10: 0.344, 0.05: 0.407, 0.01: 0.485, 0.001: 0.572 },
+            25: { 0.10: 0.337, 0.05: 0.398, 0.01: 0.475, 0.001: 0.561 },
+            26: { 0.10: 0.331, 0.05: 0.390, 0.01: 0.465, 0.001: 0.551 },
+            27: { 0.10: 0.324, 0.05: 0.383, 0.01: 0.456, 0.001: 0.541 },
+            28: { 0.10: 0.318, 0.05: 0.375, 0.01: 0.448, 0.001: 0.532 },
+            29: { 0.10: 0.312, 0.05: 0.368, 0.01: 0.440, 0.001: 0.523 },
+            30: { 0.10: 0.306, 0.05: 0.362, 0.01: 0.432, 0.001: 0.515 },
+            35: { 0.10: 0.283, 0.05: 0.335, 0.01: 0.400, 0.001: 0.478 },
+            40: { 0.10: 0.264, 0.05: 0.313, 0.01: 0.373, 0.001: 0.448 },
+            45: { 0.10: 0.248, 0.05: 0.294, 0.01: 0.352, 0.001: 0.423 },
+            50: { 0.10: 0.235, 0.05: 0.279, 0.01: 0.333, 0.001: 0.402 }
+        };
+
+        const tableNs = Object.keys(spearCritTable).map(Number).sort((a,b)=>a-b);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            
+            if (localStorage.getItem('statlab_theme') === 'dark') { 
+                themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); 
+                themeIcon.classList.add('text-warning'); 
+                themeIcon.classList.remove('text-secondary');
+            }
+            
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); 
+                    themeIcon.classList.add('text-warning'); 
+                    themeIcon.classList.remove('text-secondary'); 
+                    localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); 
+                    themeIcon.classList.remove('text-warning'); 
+                    themeIcon.classList.add('text-secondary'); 
+                    localStorage.setItem('statlab_theme', 'light');
+                }
+                drawChart(); 
+            });
+
+            generateTable();
+            handleInputs();
+        });
+
+        function handleInputs() {
+            let rStr = document.getElementById('rInput').value;
+            let nStr = document.getElementById('nInput').value;
+            
+            if(rStr === '' || rStr === '-') return; 
+            
+            currentRs = safeParse(rStr);
+            currentN = parseInt(nStr);
+            
+            if(currentN < 5) { currentN = 5; document.getElementById('nInput').value = 5; }
+            if(currentN > 1000) { currentN = 1000; document.getElementById('nInput').value = 1000; }
+            
+            if(currentRs < -1) currentRs = -1.0;
+            if(currentRs > 1) currentRs = 1.0;
+
+            updateAll();
+        }
+
+        // Student's T inverse for asymptotic critical bounds
+        function tInvApprox(p, df) {
+            // Rough approximation for t-inverse. For better accuracy, use proper t-inv logic.
+            // jStat doesn't have a direct t.inv out of the box in simple min.js, using normal for high df, or simple table logic
+            let x = jStat.studentt.inv ? jStat.studentt.inv(p, df) : jStat.normal.inv(p, 0, 1);
+            return x; // Use normal for large n approximation if jStat t.inv is missing. jStat.studentt.inv usually exists.
+        }
+
+        function getCriticalRs(alpha, n, tails) {
+            let lookupAlpha = (tails === 1) ? alpha * 2 : alpha;
+            let exactAvailable = (spearCritTable[n] && spearCritTable[n][lookupAlpha] !== undefined);
+            
+            if(exactAvailable && spearCritTable[n][lookupAlpha] !== null) {
+                return spearCritTable[n][lookupAlpha];
+            } else {
+                // Asymptotic Approximation: t = r*sqrt(n-2)/sqrt(1-r^2) -> solve for r
+                let df = n - 2;
+                if(df <= 0) return 1.0;
+                let a = tails === 2 ? alpha / 2 : alpha;
+                let tCrit = Math.abs(jStat.studentt.inv(a, df));
+                let rCrit = tCrit / Math.sqrt(tCrit * tCrit + df);
+                return rCrit;
+            }
+        }
+
+        function updateAll() {
+            let alpha = parseFloat(document.getElementById('alphaSelect').value);
+            let tails = parseInt(document.getElementById('tailSelect').value);
+            
+            let df = currentN - 2;
+            let t = 0;
+            let pVal = 0;
+
+            // Handle perfect correlation division by zero
+            if(Math.abs(currentRs) >= 1) {
+                t = currentRs > 0 ? Infinity : -Infinity;
+                pVal = 0.0000;
+            } else {
+                t = currentRs * Math.sqrt(df / (1 - currentRs * currentRs));
+                pVal = jStat.studentt.cdf(-Math.abs(t), df); // one tail area
+                if(tails === 2) pVal *= 2;
+            }
+
+            // Get Critical
+            let rCrit = getCriticalRs(alpha, currentN, tails);
+
+            // Strength string
+            let absR = Math.abs(currentRs);
+            let strength = "Çok Zayıf";
+            if(absR >= 0.2) strength = "Zayıf";
+            if(absR >= 0.4) strength = "Orta";
+            if(absR >= 0.6) strength = "Güçlü";
+            if(absR >= 0.8) strength = "Çok Güçlü";
+
+            let direction = "Yok";
+            if(currentRs > 0.05) direction = "Pozitif Yönlü";
+            else if (currentRs < -0.05) direction = "Negatif Yönlü";
+
+            // UI Updates
+            document.getElementById('tailTitle').innerText = tails === 2 ? "Çift Kuyruk" : "Tek Kuyruk";
+            document.getElementById('resT').innerText = t === Infinity || t === -Infinity ? "∞" : t.toFixed(3);
+            document.getElementById('resDf').innerText = `df = ${df}`;
+            document.getElementById('resPval').innerText = pVal === 0 ? "< 0.0001" : pVal.toFixed(4);
+            document.getElementById('resCrit').innerText = rCrit.toFixed(3);
+            document.getElementById('resStrength').innerText = strength;
+            document.getElementById('resDirection').innerText = direction;
+            
+            let isExact = (spearCritTable[currentN] !== undefined);
+            document.getElementById('critBadge').innerText = isExact ? "Tablo Sınırı" : "Asimptotik Sınır";
+
+            // Decision Update
+            let box = document.getElementById('decisionCard');
+            let dTitle = document.getElementById('decTitle');
+            let dTxt = document.getElementById('decText');
+
+            if(absR >= rCrit) { // Significant
+                box.className = "spear-result-box spear-danger w-100 flex-grow-1 d-flex flex-column justify-content-center text-center mb-3";
+                dTitle.innerText = "Korelasyon Anlamlı (H0 Red)";
+                dTxt.innerHTML = `Mutlak gözlenen katsayı ($|${currentRs.toFixed(3)}|$), Kritik Sınır ($${rCrit.toFixed(3)}$) değerinden büyük veya eşit ($\\ge$) OLDUĞU İÇİN $H_0$ reddedilir. Değişkenler arasında istatistiksel olarak anlamlı bir <strong>monotonik ilişki</strong> vardır.`;
+            } else {
+                box.className = "spear-result-box spear-success w-100 flex-grow-1 d-flex flex-column justify-content-center text-center mb-3";
+                dTitle.innerText = "Korelasyon Anlamsız (H0 Kabul)";
+                dTxt.innerHTML = `Mutlak gözlenen katsayı ($|${currentRs.toFixed(3)}|$), Kritik Sınır ($${rCrit.toFixed(3)}$) değerinden küçük ($<$) OLDUĞU İÇİN $H_0$ reddedilemez. Değişkenler arasında anlamlı bir monotonik ilişki bulunamamıştır.`;
+            }
+
+            MathJax.typesetPromise([dTxt]).catch(err => console.log(err));
+
+            document.getElementById('tableTitleExt').innerText = `(${tails === 2 ? 'Çift' : 'Tek'} Kuyruk)`;
+            highlightTable(currentN, alpha, tails);
+            drawChart(currentRs, currentN);
+        }
+
+        function generateTable() {
+            let tbody = document.getElementById('spearTableBody');
+            
+            let tbodyHtml = '';
+            for(let i=0; i<tableNs.length; i++) {
+                let n = tableNs[i];
+                tbodyHtml += `<tr id="row_n_${n}">`;
+                tbodyHtml += `<td>${n}</td>`;
+                
+                let alphas = [0.10, 0.05, 0.01, 0.001];
+                for(let j=0; j<alphas.length; j++) {
+                    let a = alphas[j];
+                    let val = spearCritTable[n][a];
+                    let valStr = val === null ? "-" : val.toFixed(3);
+                    let oc = val === null ? "" : `onclick="setRsInput(${val}, ${n}, ${a})"`;
+                    tbodyHtml += `<td id="cell_${n}_${Math.round(a*1000)}" ${oc}>${valStr}</td>`;
+                }
+                tbodyHtml += `</tr>`;
+            }
+            tbody.innerHTML = tbodyHtml;
+        }
+
+        function setRsInput(val, n, alpha) {
+            if(val === null || val === "-") return;
+            document.getElementById('rInput').value = val;
+            document.getElementById('nInput').value = n;
+            
+            // Force table compatible state (Two Tail default)
+            document.getElementById('alphaSelect').value = alpha;
+            document.getElementById('tailSelect').value = "2";
+
+            handleInputs();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function highlightTable(n, alpha, tails) {
+            document.querySelectorAll('#spearTable tr.highlighted-row').forEach(el => el.classList.remove('highlighted-row'));
+            document.querySelectorAll('#spearTable td.highlighted-cell').forEach(el => el.classList.remove('highlighted-cell'));
+            
+            let lookupAlpha = (tails === 1) ? alpha * 2 : alpha;
+            let exactAvailable = (spearCritTable[n] && spearCritTable[n][lookupAlpha] !== undefined);
+            
+            if(exactAvailable) {
+                document.getElementById('tableWarningText').innerHTML = "<i class='ri-lightbulb-flash-fill text-warning'></i> Sütunlar anlamlılık düzeyini ($\alpha$), Satırlar örneklem hacmini ($n$) gösterir. Mutlak gözlenen $|r_s|$ değeri, tablodaki Kritik değerden <strong>BÜYÜK veya EŞİT ($\\ge$)</strong> ise korelasyon anlamlıdır (H0 reddedilir).";
+                document.getElementById('tableWrapper').style.opacity = '1';
+                document.getElementById('tableWrapper').style.pointerEvents = 'auto';
+
+                let row = document.getElementById(`row_n_${n}`);
+                if(row) row.classList.add('highlighted-row');
+                
+                let cell = document.getElementById(`cell_${n}_${Math.round(lookupAlpha*1000)}`);
+                if(cell) cell.classList.add('highlighted-cell');
+            } else {
+                document.getElementById('tableWarningText').innerHTML = "<span class='text-danger fw-bold'>Girdiğiniz örneklem hacmi veya kuyruk ayarı aşağıdaki klasik statik tablonun sınırları dışındadır. Ancak üstteki hesaplayıcı asimptotik yaklaşımla doğru kararı vermeye devam eder.</span>";
+                document.getElementById('tableWrapper').style.opacity = '0.4';
+                document.getElementById('tableWrapper').style.pointerEvents = 'auto'; 
+            }
+        }
+
+        function scrollToActiveCell() {
+            let row = document.querySelector('#spearTable tr.highlighted-row');
+            if(row) {
+                let wrapper = document.getElementById('tableWrapper');
+                let scrollPosY = row.offsetTop - wrapper.offsetHeight / 2 + row.offsetHeight / 2;
+                wrapper.scrollTo({ top: scrollPosY, behavior: 'smooth' });
+            }
+        }
+
+        // Rank Scatter Plot Simulation
+        function drawChart(rs, n) {
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; 
+            const gColor = isDark ? '#334155' : '#e2e8f0';
+            
+            document.getElementById('badgeChartRs').innerText = rs.toFixed(2);
+
+            let simN = n > 100 ? 100 : n; // Cap points for visual clarity
+            let points = [];
+            
+            // To simulate rank correlation:
+            // Let X be exact ranks 1 to N.
+            // Generate Y as X + Noise. The amount of noise dictates the correlation.
+            // Noise factor based loosely on 1 - |rs|
+            let noiseFactor = (1 - Math.abs(rs)) * simN; 
+            
+            for(let i=1; i<=simN; i++) {
+                let x = i;
+                // Add noise proportional to rank index and randomness to break perfection
+                let noise = (Math.random() - 0.5) * noiseFactor * 2;
+                let y = x + noise;
+                
+                points.push({x: x, y: y});
+            }
+
+            // If correlation is negative, invert Y
+            if(rs < 0) {
+                points = points.map(p => { return {x: p.x, y: simN - p.y}; });
+            }
+
+            if(scatterChart) scatterChart.destroy();
+
+            scatterChart = new Chart(document.getElementById('scatterChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: `Rank Sıralaması`,
+                        data: points,
+                        backgroundColor: isDark ? '#38bdf8' : '#0369a1',
+                        borderColor: isDark ? '#38bdf8' : '#0369a1',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: {
+                        x: { title: { display: true, text: 'X Değişkeni Sıralaması (Rank X)', color: fColor }, grid: { color: gColor }, ticks: { display: false } },
+                        y: { title: { display: true, text: 'Y Değişkeni Sıralaması (Rank Y)', color: fColor }, grid: { color: gColor }, ticks: { display: false } }
+                    },
+                    animation: { duration: 500 }
+                }
+            });
+        }
+
+        // Rank diff^2 to rs Calculator
+        function calcRsFromD2() {
+            let d2 = safeParse(document.getElementById('calcD2').value);
+            let n = safeParse(document.getElementById('calcN').value);
+
+            if(n < 3 || d2 < 0) return;
+
+            let maxD2 = (n * (Math.pow(n, 2) - 1)) / 3;
+            let rs = 1 - ((6 * d2) / (n * (Math.pow(n, 2) - 1)));
+
+            document.getElementById('resCalcMax').innerText = maxD2.toFixed(0);
+            document.getElementById('resCalcRs').innerText = rs.toFixed(3);
+        }
+
+        function transferCalc() {
+            let rs = document.getElementById('resCalcRs').innerText;
+            let n = document.getElementById('calcN').value;
+            
+            document.getElementById('rInput').value = rs;
+            document.getElementById('nInput').value = n;
+            
+            handleInputs();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>

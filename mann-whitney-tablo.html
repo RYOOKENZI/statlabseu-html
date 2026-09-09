@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!-- CSS Dependencies -->
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    
+    <!-- MathJax for Formulas -->
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <title>Canlı Mann-Whitney U Tablosu ve Hesaplayıcı | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+
+        /* YENİ KONSEPT: Soft Turkuaz / Çam Yeşili (Teal) */
+        .mw-input-wrapper { background: linear-gradient(135deg, #115e59, #0d9488); border-radius: 12px; padding: 25px; color: white; box-shadow: 0 4px 15px rgba(13, 148, 136, 0.3); }
+        .mw-input { font-size: 20px; font-weight: 700; text-align: center; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; border-radius: 10px; padding: 8px; width: 100%; transition: all 0.3s; }
+        .mw-input:focus { outline: none; border-color: white; background: rgba(255,255,255,0.2); box-shadow: 0 0 0 4px rgba(255,255,255,0.1); }
+        .mw-input::placeholder { color: rgba(255,255,255,0.5); }
+
+        .result-card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; text-align: center; height: 100%; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .result-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-color: #cbd5e1; }
+        .result-card h6 { color: #64748b; font-size: 13px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .result-val { font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.2; }
+        .result-pct { font-size: 13px; font-weight: 600; color: #0d9488; background: #f0fdfa; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 5px; }
+
+        .chart-container { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px; }
+
+        .mw-table-wrapper { overflow-x: auto; max-height: 520px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; }
+        .mw-table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 13px; text-align: center; }
+        .mw-table th { background: #f1f5f9; color: #334155; font-weight: 700; padding: 8px; position: sticky; top: 0; z-index: 2; border: 1px solid #e2e8f0; }
+        .mw-table th.top-header { top: 0; border-bottom: 0; }
+        .mw-table th.sub-header { top: 35px; }
+        .mw-table th:first-child { left: 0; z-index: 3; background: #e2e8f0; }
+        .mw-table td { padding: 6px; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.1s; }
+        .mw-table td:first-child { font-weight: 700; background: #f8fafc; position: sticky; left: 0; z-index: 1; }
+        .mw-table td:hover:not(:first-child) { background: #f0fdfa; color: #0f766e; font-weight: 700; }
+        .mw-table tr.highlighted-row td { background: #fef08a !important; color: #854d0e !important; font-weight: 700; }
+        .mw-table tr.highlighted-row td:first-child { background: #eab308 !important; color: white !important; }
+        .mw-table td.highlighted-cell { background: #0d9488 !important; color: white !important; font-weight: 700; transform: scale(1.1); box-shadow: 0 0 10px rgba(13,148,136,0.5); z-index: 5; position: relative; border-radius: 4px; }
+        
+        .formula-box { background-color: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 15px; overflow-x: auto; }
+
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        .theme-btn:hover { background-color: #e2e8f0; }
+
+        /* AKILLI RENK KUTULARI (AÇIK MOD - SOFT) */
+        .mw-result-box { padding: 15px; border-radius: 8px; border: 1px solid transparent; transition: all 0.3s; }
+        .mw-success { background-color: #f0fdf4; border-color: #bbf7d0; }
+        .mw-success .box-label { color: #16a34a; }
+        .mw-success .box-val { color: #14532d; }
+        
+        .mw-danger { background-color: #fef2f2; border-color: #fecaca; }
+        .mw-danger .box-label { color: #dc2626; }
+        .mw-danger .box-val { color: #7f1d1d; }
+        
+        .mw-warning { background-color: #fffbeb; border-color: #fde68a; }
+        .mw-warning .box-label { color: #d97706; }
+        .mw-warning .box-val { color: #92400e; }
+        
+        .mw-info { background-color: #f0fdfa; border-color: #ccfbf1; }
+        .mw-info .box-label { color: #0d9488; }
+        .mw-info .box-val { color: #115e59; }
+
+        /* ========================================= */
+        /* KUSURSUZ GECE MODU (DARK MODE) AYARLARI   */
+        /* ========================================= */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #cbd5e1 !important; }
+        html.dark-mode .bg-white, html.dark-mode .card, html.dark-mode .header-area, html.dark-mode .footer-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light { background-color: #0f172a !important; }
+        
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        html.dark-mode h6, html.dark-mode .result-card h6 { color: #e2e8f0 !important; }
+        
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+
+        html.dark-mode .result-card { background: #1e293b; border-color: #334155; }
+        html.dark-mode .result-val { color: #ffffff; }
+        html.dark-mode .result-pct { background: rgba(13, 148, 136, 0.2); color: #2dd4bf; }
+        
+        html.dark-mode .chart-container { background-color: #1e293b; border-color: #334155; }
+        html.dark-mode .mw-table-wrapper { border-color: #334155; background: #1e293b; }
+        html.dark-mode .mw-table th { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+        html.dark-mode .mw-table th:first-child { background: #1e293b; }
+        html.dark-mode .mw-table td { border-color: #334155; color: #cbd5e1; }
+        html.dark-mode .mw-table td:first-child { background: #0f172a; color: #f8fafc; }
+        html.dark-mode .mw-table td:hover:not(:first-child) { background: #134e4a; color: #2dd4bf; }
+        html.dark-mode .mw-table tr.highlighted-row td { background: #422006 !important; color: #fde047 !important; }
+        html.dark-mode .mw-table tr.highlighted-row td:first-child { background: #854d0e !important; color: white !important; }
+        html.dark-mode .mw-table td.highlighted-cell { background: #0d9488 !important; color: white !important; box-shadow: 0 0 10px rgba(13,148,136,0.8); }
+        
+        html.dark-mode select.form-select, 
+        html.dark-mode input.form-control,
+        html.dark-mode input[type="number"] { background-color: #0f172a !important; color: #f8fafc !important; border-color: #334155 !important; }
+        html.dark-mode input.form-control:focus { background-color: #1e293b !important; border-color: #0d9488 !important; color: #fff !important; }
+        
+        /* AKILLI RENK KUTULARI (GECE MODU) */
+        html.dark-mode .mw-success { background-color: rgba(34, 197, 94, 0.1) !important; border-color: rgba(34, 197, 94, 0.2) !important; }
+        html.dark-mode .mw-success .box-label { color: #86efac !important; }
+        html.dark-mode .mw-success .box-val { color: #dcfce7 !important; }
+
+        html.dark-mode .mw-danger { background-color: rgba(239, 68, 68, 0.1) !important; border-color: rgba(239, 68, 68, 0.2) !important; }
+        html.dark-mode .mw-danger .box-label { color: #fca5a5 !important; }
+        html.dark-mode .mw-danger .box-val { color: #fee2e2 !important; }
+
+        html.dark-mode .mw-warning { background-color: rgba(245, 158, 11, 0.1) !important; border-color: rgba(245, 158, 11, 0.2) !important; }
+        html.dark-mode .mw-warning .box-label { color: #fcd34d !important; }
+        html.dark-mode .mw-warning .box-val { color: #fef3c7 !important; }
+        
+        html.dark-mode .mw-info { background-color: rgba(13, 148, 136, 0.1) !important; border-color: rgba(13, 148, 136, 0.3) !important; }
+        html.dark-mode .mw-info .box-label { color: #2dd4bf !important; }
+        html.dark-mode .mw-info .box-val { color: #ccfbf1 !important; }
+
+        /* AKORDEON VE FORMÜL DÜZELTMELERİ */
+        html.dark-mode .accordion-item { background-color: #1e293b !important; border: 1px solid #334155 !important; }
+        html.dark-mode .accordion-button { background-color: #1e293b !important; color: #f8fafc !important; box-shadow: none !important; }
+        html.dark-mode .accordion-button:not(.collapsed) { background-color: #0f172a !important; color: #f8fafc !important; }
+        html.dark-mode .accordion-button::after { filter: invert(1) brightness(2); }
+        html.dark-mode .accordion-body { background-color: #0f172a !important; color: #cbd5e1 !important; border-top: 1px solid #334155 !important; }
+        
+        html.dark-mode .formula-box { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .formula-box strong { color: #f8fafc !important; } /* Formül başlıkları bembeyaz */
+        
+        html.dark-mode .border { border-color: #334155 !important; }
+        html.dark-mode .border-bottom { border-color: #334155 !important; }
+
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-arrow-left-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-bar-chart-2-line align-middle me-1"></i> İnteraktif Mann-Whitney U Tablosu
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="alert bg-primary-subtle text-primary border-0 rounded-10 mb-4 px-4 py-3 shadow-sm d-flex align-items-start">
+                <i class="ri-information-line fs-18 align-middle me-3 mt-1"></i> 
+                <div>
+                    <strong>Mann-Whitney U Testi</strong>, iki bağımsız grubun dağılımlarını karşılaştırmak için kullanılan parametrik olmayan (non-parametric) bir testtir. Gözlemlerin <strong>birleşik sıralamasına (rank)</strong> dayanır. Test için geçerli olan küçük (minimum) U değeri bulunur ve bu değer kritik tablodaki U sınırından <strong>küçük veya eşitse ($U \le U_{kritik}$)</strong> gruplar arasında anlamlı fark olduğuna karar verilir.
+                </div>
+            </div>
+
+            <!-- HESAPLAMA PANELİ -->
+            <div class="row g-4 mb-4">
+                <!-- MW Girişi -->
+                <div class="col-lg-4">
+                    <div class="mw-input-wrapper h-100 d-flex flex-column justify-content-center">
+                        <div class="row g-2 mb-2">
+                            <div class="col-12 mb-3">
+                                <label class="text-white opacity-75 fs-12 fw-bold mb-1 text-uppercase tracking-wider">Gözlenen U İstatistiği (Hesaplanan)</label>
+                                <input type="text" id="uInput" class="mw-input" placeholder="Örn: 25" value="25" autocomplete="off" oninput="handleInputs()">
+                            </div>
+                            
+                            <div class="col-6">
+                                <label class="text-white opacity-75 fs-12 fw-bold mb-1 text-uppercase tracking-wider">Grup 1 ($n_1$)</label>
+                                <input type="number" id="n1Input" class="mw-input" placeholder="10" value="10" min="3" max="50" step="1" autocomplete="off" oninput="handleInputs()">
+                            </div>
+                            <div class="col-6">
+                                <label class="text-white opacity-75 fs-12 fw-bold mb-1 text-uppercase tracking-wider">Grup 2 ($n_2$)</label>
+                                <input type="number" id="n2Input" class="mw-input" placeholder="12" value="12" min="3" max="50" step="1" autocomplete="off" oninput="handleInputs()">
+                            </div>
+                        </div>
+                        <div class="mt-2 d-flex justify-content-between align-items-center">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="ccCheck" checked onchange="handleInputs()">
+                                <label class="form-check-label fs-11 text-white fw-bold" for="ccCheck">Süreklilik Düzeltmesi (C.C.)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sonuç Kartları (SATIR İÇİ RENKLER TEMİZLENDİ) -->
+                <div class="col-lg-8">
+                    <div class="row g-3 h-100">
+                        <div class="col-md-3 col-6">
+                            <div class="result-card d-flex flex-column justify-content-center shadow-sm">
+                                <h6>Z İstatistiği <br><small class="text-muted text-lowercase">Normal Yaklaşım</small></h6>
+                                <div class="result-val text-dark" id="resZ">-1.545</div>
+                                <div class="result-pct mt-2" id="resZBadge" style="opacity: 1;">Düzeltmeli</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="result-card d-flex flex-column justify-content-center shadow-sm">
+                                <h6 class="fs-14 mb-2"><i class="ri-alert-fill"></i> p-Değeri <br><small class="text-muted text-lowercase" id="tailTitle">Çift Kuyruk</small></h6>
+                                <div class="result-val" id="resPval">0.1224</div>
+                                <div class="result-pct mt-2" id="resMethod">Asimptotik Norm.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="result-card d-flex flex-column justify-content-center">
+                                <h6>Diğer U ($U_2$) <br><small class="text-muted text-lowercase">Ters Yön Değeri</small></h6>
+                                <div class="result-val text-secondary" id="resU2">95</div>
+                                <div class="result-pct mt-2 text-dark bg-light" style="opacity: 1;" id="resUminTxt">Min(U): 25</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="result-card d-flex flex-column justify-content-center">
+                                <h6>Etki Büyüklüğü <br><small class="text-muted text-lowercase">Rank-Biserial ($r_{rb}$)</small></h6>
+                                <div class="result-val text-secondary" id="resEff">0.583</div>
+                                <div class="result-pct mt-2 text-dark bg-light" style="opacity: 1;" id="resEffTxt">Büyük Etki</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KARAR GRAFİĞİ VE YORUM BÖLÜMÜ -->
+            <div class="row g-4 mb-4">
+                
+                <!-- Karar Mekanizması -->
+                <div class="col-lg-4">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                            <h5 class="fs-15 fw-bold text-dark mb-0"><i class="ri-scales-3-fill text-primary me-1"></i> U Testi Kararı</h5>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fs-12 text-muted fw-bold">Test Yönü:</span>
+                                <select id="tailSelect" class="form-select form-select-sm bg-light border-0 text-dark fw-bold" style="width: 100px;" onchange="handleInputs()">
+                                    <option value="2" selected>Çift Kuyruk</option>
+                                    <option value="1">Tek Kuyruk</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div id="decisionCard" class="mw-result-box mw-success w-100 flex-grow-1 d-flex flex-column justify-content-center text-center mb-3">
+                            <div class="fs-15 fw-bold box-label mb-2" id="decTitle">Fark Yok (H0 Reddedilemez)</div>
+                            <div class="fs-14 box-val lh-base" id="decText">
+                                U istatistiği ($25$), tablodaki Kritik U ($29$) değerinden küçük veya eşit ($U \le U_{kritik}$) OLMADIĞI İÇİN $H_0$ hipotezi reddedilemez. Gruplar arasında anlamlı bir dağılım/konum farkı bulunamamıştır.
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center p-3 rounded border bg-light">
+                            <span class="fs-13 fw-bold text-secondary">Test $\alpha$ (Anlamlılık):</span>
+                            <select id="alphaSelect" class="form-select form-select-sm bg-white border text-dark fw-bold" style="width: 80px;" onchange="updateAll()">
+                                <option value="0.10">0.10</option>
+                                <option value="0.05" selected>0.05</option>
+                                <option value="0.01">0.01</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grafik Simülasyonu -->
+                <div class="col-lg-8">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                            <h5 class="fs-15 fw-bold text-dark mb-0"><i class="ri-bar-chart-horizontal-fill text-primary me-1"></i> Asimptotik U Dağılımı ve Kritik Bölgeler</h5>
+                            <span class="badge bg-light text-secondary border">$\mu_U = \frac{n_1 n_2}{2}$</span>
+                        </div>
+                        <p class="fs-12 text-muted mb-2 text-center" style="line-height: 1.4;">
+                            Kırmızı gölgeli alan, hesaplanan Kritik U sınırının altında kalan <strong>Red Bölgesini (Anlamlılık Bölgesi)</strong> temsil eder. <br>Siyah kesik çizgi, sizin gözlediğiniz Min($U_1, U_2$) değerini işaret eder.
+                        </p>
+                        
+                        <div style="position: relative; height: 180px; width: 100%; display: flex; align-items: center; justify-content: center; margin-top: 10px;">
+                            <canvas id="distChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CANLI MANN-WHITNEY TABLOSU -->
+            <div class="row g-4 mb-4">
+                <div class="col-12">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2 border-bottom pb-2">
+                            <h5 class="fs-15 fw-bold text-dark mb-0"><i class="ri-grid-fill text-primary me-1"></i> Kritik U Değerleri Tablosu <span class="fw-normal fs-12 text-muted" id="tableTitleExt">($\alpha = 0.05$ - Çift Kuyruk)</span></h5>
+                            <button class="btn btn-sm btn-outline-primary fw-bold" onclick="scrollToActiveCell()"><i class="ri-focus-3-line"></i> Seçili Hücreye Git</button>
+                        </div>
+                        
+                        <div class="mw-table-wrapper" id="tableWrapper">
+                            <table class="mw-table" id="mwTable">
+                                <thead>
+                                    <tr id="mwTableHeadTop"></tr>
+                                </thead>
+                                <tbody id="mwTableBody"></tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted fs-11 mt-2 d-block text-center" id="tableWarningText"><i class="ri-lightbulb-flash-fill text-warning"></i> Sütunlar $n_2$, Satırlar $n_1$ gösterir. Mann-Whitney U testinde, Gözlenen Min(U) değeri tablodaki Kritik U değerinden <strong>KÜÇÜK VEYA EŞİT ($U \le U_{kritik}$)</strong> ise sonuç anlamlıdır (H0 reddedilir).</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RANK VE U HESAPLAYICILARI (AŞAĞIDAN YUKARI) -->
+            <div class="row g-4 mb-4">
+                
+                <!-- Rank'ten U Hesapla -->
+                <div class="col-md-6">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100">
+                        <h5 class="fs-14 fw-bold text-dark mb-3 border-bottom pb-2"><i class="ri-calculator-line text-primary me-1"></i> Rank (Sıra) Toplamlarından U Hesapla</h5>
+                        <p class="fs-12 text-muted mb-3">Elinizde grup sıra toplamları ($R_1$ ve $R_2$) varsa, istatistiğe dönüştürün.</p>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-4">
+                                <label class="form-label fs-12 fw-bold text-secondary">Grup 1 Rank ($R_1$)</label>
+                                <input type="number" id="calcR1" class="form-control bg-light border-0 text-dark" value="80" oninput="calcUFromRanks()">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label fs-12 fw-bold text-secondary">Grup 1 Hacmi ($n_1$)</label>
+                                <input type="number" id="calcN1" class="form-control bg-light border-0 text-dark" value="10" oninput="calcUFromRanks()">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label fs-12 fw-bold text-secondary">Grup 2 Hacmi ($n_2$)</label>
+                                <input type="number" id="calcN2" class="form-control bg-light border-0 text-dark" value="12" oninput="calcUFromRanks()">
+                            </div>
+                        </div>
+                        
+                        <div class="mw-result-box mw-info mt-auto mb-0 d-flex justify-content-between align-items-center">
+                            <div class="text-start">
+                                <span class="fs-11 box-label fw-bold d-block mb-1">Grup 2 Rank ($R_2$)</span>
+                                <span class="fs-16 box-val fw-bold" id="resCalcR2">173</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="fs-11 box-label fw-bold text-uppercase d-block mb-1">Bulunan $U_{min}$</span>
+                                <span class="fs-20 box-val fw-bold" id="resCalcU">25</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary mt-2 w-100 fw-bold" onclick="transferCalc()"><i class="ri-arrow-up-circle-line me-1"></i> Ana Analize Aktar</button>
+                    </div>
+                </div>
+
+                <!-- Varsayımlar ve Açıklamalar -->
+                <div class="col-md-6">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100 border-start border-4 border-warning d-flex flex-column justify-content-center">
+                        <h5 class="fs-15 fw-bold text-dark mb-3"><i class="ri-error-warning-fill text-warning me-1"></i> Mann-Whitney U Varsayımları ve Bağlılık (Tie)</h5>
+                        <p class="fs-13 text-muted mb-2 lh-base">
+                            Bu test, <strong>Bağımsız iki grup T-Testinin non-parametrik (dağılımsız) alternatifidir.</strong> Grupların normal dağılmasına gerek yoktur.
+                        </p>
+                        <ul class="fs-13 text-muted ps-3 mb-0">
+                            <li class="mb-2"><strong>Bağımlı Gruplar İçin Kullanılmaz:</strong> Öncesi-sonrası (tekrarlı) ölçümler kullanıyorsanız, <strong>Wilcoxon İşaretli Sıralar Testi</strong> yapmalısınız. M-W U yalnızca "farklı kişilerden oluşan" iki grup içindir.</li>
+                            <li><strong>Bağlı Sıralar (Ties):</strong> Veri setinizde aynı değere sahip çok sayıda gözlem varsa (örn: iki kişinin skoru da 55 ise), Z formülünde varyans ($\sigma_U$) için <strong>Tie Correction (Bağ Düzeltmesi)</strong> uygulanmalıdır. Bu araçta Asimptotik Standart formül kullanılmaktadır.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- İSTATİSTİKSEL FORMÜLLER -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-12">
+                    <div class="card bg-white border-0 rounded-10 p-4 shadow-sm h-100 d-flex flex-column justify-content-center">
+                        <h5 class="fs-15 fw-bold text-dark mb-3 border-bottom pb-2"><i class="ri-function-line text-primary me-1"></i> Matematiksel Formüller</h5>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="formula-box bg-light border mb-0 h-100">
+                                    <strong class="d-block mb-2 text-dark fs-13">1. U İstatistiği Dönüşümü</strong>
+                                    <div class="text-center mb-2" style="font-size: 14px;">$$ U_1 = n_1 n_2 + \frac{n_1(n_1+1)}{2} - R_1 $$</div>
+                                    <div class="text-center" style="font-size: 14px;">$$ U_2 = n_1 n_2 - U_1 $$</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="formula-box bg-light border mb-0 h-100">
+                                    <strong class="d-block mb-2 text-dark fs-13">2. Asimptotik Dağılım Parametreleri</strong>
+                                    <div class="text-center mb-2" style="font-size: 14px;">$$ \mu_U = \frac{n_1 n_2}{2} $$</div>
+                                    <div class="text-center" style="font-size: 14px;">$$ \sigma_U = \sqrt{ \frac{n_1 n_2 (n_1+n_2+1)}{12} } $$</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="formula-box bg-light border mb-0 h-100">
+                                    <strong class="d-block mb-2 text-dark fs-13">3. Z Skoru ve Süreklilik Düzeltmesi (c.c)</strong>
+                                    <div class="text-center mb-2" style="font-size: 14px;">$$ Z = \frac{U_{min} - \mu_U + 0.5}{\sigma_U} $$</div>
+                                    <small class="text-muted d-block text-center mt-2">Düzeltme, kesikli (discrete) U dağılımını sürekli normal dağılıma uydurur.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <!-- CORE MATH AND LOGIC SCRIPT -->
+    <script>
+        function safeParse(val) {
+            if(typeof val !== 'string') return parseFloat(val);
+            let cleaned = val.replace(',', '.').replace(/[^0-9.-]/g, '');
+            let parsed = parseFloat(cleaned);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        let currentU = 25;
+        let currentN1 = 10;
+        let currentN2 = 12;
+        let distChart = null;
+
+        // Klasik Mann-Whitney Kritik Tablo Verisi. 
+        // Gerçek exact tablolardan alınmış Alpha=0.05, İki Kuyruklu (Two-Tailed) alt sınırlar. (n1, n2: 3-15)
+        const exactTable05TwoTail = {
+            3:  { 3:0, 4:0, 5:1, 6:2, 7:2, 8:3, 9:4, 10:4, 11:5, 12:5, 13:6, 14:7, 15:7 },
+            4:  { 3:0, 4:1, 5:2, 6:3, 7:4, 8:5, 9:6, 10:7, 11:8, 12:9, 13:10, 14:11, 15:12 },
+            5:  { 3:1, 4:2, 5:4, 6:5, 7:6, 8:8, 9:9, 10:11, 11:12, 12:13, 13:15, 14:16, 15:18 },
+            6:  { 3:2, 4:3, 5:5, 6:7, 7:8, 8:10, 9:12, 10:14, 11:16, 12:17, 13:19, 14:21, 15:23 },
+            7:  { 3:2, 4:4, 5:6, 6:8, 7:11, 8:13, 9:15, 10:17, 11:19, 12:22, 13:24, 14:26, 15:28 },
+            8:  { 3:3, 4:5, 5:8, 6:10, 7:13, 8:15, 9:18, 10:21, 11:23, 12:26, 13:29, 14:31, 15:34 },
+            9:  { 3:4, 4:6, 5:9, 6:12, 7:15, 8:18, 9:21, 10:24, 11:28, 12:31, 13:34, 14:37, 15:40 },
+            10: { 3:4, 4:7, 5:11, 6:14, 7:17, 8:21, 9:24, 10:28, 11:32, 12:35, 13:39, 14:42, 15:46 },
+            11: { 3:5, 4:8, 5:12, 6:16, 7:19, 8:23, 9:28, 10:32, 11:36, 12:40, 13:44, 14:48, 15:52 },
+            12: { 3:5, 4:9, 5:13, 6:17, 7:22, 8:26, 9:31, 10:35, 11:40, 12:45, 13:49, 14:54, 15:58 },
+            13: { 3:6, 4:10, 5:15, 6:19, 7:24, 8:29, 9:34, 10:39, 11:44, 12:49, 13:54, 14:59, 15:64 },
+            14: { 3:7, 4:11, 5:16, 6:21, 7:26, 8:31, 9:37, 10:42, 11:48, 12:54, 13:59, 14:65, 15:70 },
+            15: { 3:7, 4:12, 5:18, 6:23, 7:28, 8:34, 9:40, 10:46, 11:52, 12:58, 13:64, 14:70, 15:77 }
+        };
+
+        const tableNs = [3,4,5,6,7,8,9,10,11,12,13,14,15];
+
+        // Normal CDF and Inverse CDF for P-value Calculation (Asymptotic)
+        function normCDF(z) {
+            let b1 =  0.319381530; let b2 = -0.356563782; let b3 =  1.781477937;
+            let b4 = -1.821255978; let b5 =  1.330274429; let p  =  0.2316419; let c =  0.39894228; 
+            if(z >= 0.0) {
+                let t = 1.0 / ( 1.0 + p * z ); return (1.0 - c * Math.exp( -z * z / 2.0 ) * t * ( t *( t * ( t * ( t * b5 + b4 ) + b3 ) + b2 ) + b1 ));
+            } else {
+                let t = 1.0 / ( 1.0 - p * z ); return ( c * Math.exp( -z * z / 2.0 ) * t * ( t *( t * ( t * ( t * b5 + b4 ) + b3 ) + b2 ) + b1 ));
+            }
+        }
+        function normInv(p) {
+            if (p <= 0.0 || p >= 1.0) return NaN;
+            let half = p < 0.5; let q = half ? p : 1.0 - p; let t = Math.sqrt(-2.0 * Math.log(q));
+            let num = 2.515517 + t * (0.802853 + t * 0.010328); let den = 1.0 + t * (1.432788 + t * (0.189269 + t * 0.001308));
+            let z = t - num / den; return half ? -z : z;
+        }
+        function normPDF(x, mean, std) {
+            let z = (x - mean) / std;
+            return Math.exp(-0.5 * z * z) / (std * Math.sqrt(2 * Math.PI));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            
+            if (localStorage.getItem('statlab_theme') === 'dark') { 
+                themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); 
+                themeIcon.classList.add('text-warning'); 
+                themeIcon.classList.remove('text-secondary');
+            }
+            
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); 
+                    themeIcon.classList.add('text-warning'); 
+                    themeIcon.classList.remove('text-secondary'); 
+                    localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); 
+                    themeIcon.classList.remove('text-warning'); 
+                    themeIcon.classList.add('text-secondary'); 
+                    localStorage.setItem('statlab_theme', 'light');
+                }
+                drawChart(); 
+            });
+
+            generateTable();
+            handleInputs();
+        });
+
+        function handleInputs() {
+            let uStr = document.getElementById('uInput').value;
+            let n1Str = document.getElementById('n1Input').value;
+            let n2Str = document.getElementById('n2Input').value;
+            
+            if(uStr === '' || uStr === '-') return; 
+            
+            currentU = safeParse(uStr);
+            currentN1 = parseInt(n1Str);
+            currentN2 = parseInt(n2Str);
+            
+            if(currentN1 < 3) { currentN1 = 3; document.getElementById('n1Input').value = 3; }
+            if(currentN2 < 3) { currentN2 = 3; document.getElementById('n2Input').value = 3; }
+            
+            let maxU = currentN1 * currentN2;
+            if(currentU < 0) currentU = 0;
+            if(currentU > maxU) { currentU = maxU; document.getElementById('uInput').value = maxU; }
+
+            updateAll();
+        }
+
+        function getCriticalU(alpha, n1, n2, tails) {
+            let exactAvailable = (alpha === 0.05 && tails === 2 && n1 >= 3 && n1 <= 15 && n2 >= 3 && n2 <= 15);
+            
+            if(exactAvailable) {
+                return exactTable05TwoTail[n1][n2];
+            } else {
+                // Asymptotic Approximation
+                let mu = (n1 * n2) / 2;
+                let sig = Math.sqrt((n1 * n2 * (n1 + n2 + 1)) / 12);
+                let a = tails === 2 ? alpha / 2 : alpha;
+                let zCrit = normInv(a); // Negative Z
+                let uC = mu + (zCrit * sig) - 0.5;
+                return uC < 0 ? 0 : Math.round(uC);
+            }
+        }
+
+        function updateAll() {
+            let alpha = parseFloat(document.getElementById('alphaSelect').value);
+            let tails = parseInt(document.getElementById('tailSelect').value);
+            let cc = document.getElementById('ccCheck').checked;
+            
+            let u1 = currentU;
+            let maxU = currentN1 * currentN2;
+            let u2 = maxU - u1;
+            let uMin = Math.min(u1, u2);
+
+            let mu = maxU / 2;
+            let sig = Math.sqrt((maxU * (currentN1 + currentN2 + 1)) / 12);
+
+            // Z Calculation
+            let correction = cc ? 0.5 : 0;
+            let z = (uMin - mu + correction) / sig;
+            if(uMin === mu) z = 0; 
+            
+            // P-value
+            let pVal = normCDF(z); 
+            if(tails === 2) pVal *= 2;
+            if(pVal > 1) pVal = 1.000;
+
+            // Effect Size Rank-Biserial
+            let eff = 1 - ((2 * uMin) / maxU);
+
+            // Get Critical
+            let uCrit = getCriticalU(alpha, currentN1, currentN2, tails);
+
+            // UI Updates
+            document.getElementById('tailTitle').innerText = tails === 2 ? "Çift Kuyruk" : "Tek Kuyruk";
+            document.getElementById('resZ').innerText = z.toFixed(3);
+            document.getElementById('resZBadge').innerText = cc ? "Sürekli Düzeltmeli" : "Düzeltmesiz";
+            document.getElementById('resPval').innerText = pVal.toFixed(4);
+            document.getElementById('resU2').innerText = u2;
+            document.getElementById('resUminTxt').innerText = `Min(U): ${uMin}`;
+            document.getElementById('resEff').innerText = eff.toFixed(3);
+            
+            let effTxt = "Küçük Etki";
+            if(eff >= 0.3) effTxt = "Orta Etki";
+            if(eff >= 0.5) effTxt = "Büyük Etki";
+            document.getElementById('resEffTxt').innerText = effTxt;
+
+            // Decision Update
+            let box = document.getElementById('decisionCard');
+            let dTitle = document.getElementById('decTitle');
+            let dTxt = document.getElementById('decText');
+
+            if(uMin <= uCrit) { // Significant
+                box.className = "mw-result-box mw-danger w-100 flex-grow-1 d-flex flex-column justify-content-center text-center mb-3";
+                dTitle.innerText = "Fark Anlamlı (H0 Reddedilir!)";
+                dTxt.innerHTML = `U istatistiği ($${uMin}$), hesaplanan Kritik U ($${uCrit}$) sınırından küçük veya eşit ($U \\le U_{kritik}$) OLDUĞU İÇİN $H_0$ reddedilir. Gruplar arasında istatistiksel olarak anlamlı bir fark bulunmaktadır.`;
+            } else {
+                box.className = "mw-result-box mw-success w-100 flex-grow-1 d-flex flex-column justify-content-center text-center mb-3";
+                dTitle.innerText = "Fark Yok (H0 Reddedilemez)";
+                dTxt.innerHTML = `U istatistiği ($${uMin}$), hesaplanan Kritik U ($${uCrit}$) sınırından büyük ($U > U_{kritik}$) OLDUĞU İÇİN $H_0$ reddedilemez. Gruplar arasında anlamlı bir dağılım/konum farkı bulunamamıştır.`;
+            }
+
+            MathJax.typesetPromise([dTxt]).catch(err => console.log(err));
+
+            document.getElementById('tableTitleExt').innerText = `(\\alpha = ${alpha} - ${tails === 2 ? 'Çift' : 'Tek'} Kuyruk)`;
+            highlightTable(currentN1, currentN2, alpha, tails);
+            drawChart(uMin, uCrit, mu, sig);
+        }
+
+        function generateTable() {
+            let theadTop = document.getElementById('mwTableHeadTop');
+            let tbody = document.getElementById('mwTableBody');
+            
+            let htmlTop = '<th class="align-middle border-end bg-light" style="min-width:60px;">$n_1$ \\ $n_2$</th>';
+            for(let n2=3; n2<=15; n2++) {
+                htmlTop += `<th class="bg-light">${n2}</th>`;
+            }
+            theadTop.innerHTML = htmlTop;
+
+            let tbodyHtml = '';
+            for(let n1=3; n1<=15; n1++) {
+                tbodyHtml += `<tr id="row_n1_${n1}">`;
+                tbodyHtml += `<td>${n1}</td>`;
+                for(let n2=3; n2<=15; n2++) {
+                    let val = exactTable05TwoTail[n1][n2];
+                    tbodyHtml += `<td id="cell_${n1}_${n2}" onclick="setUInput(${val}, ${n1}, ${n2})">${val}</td>`;
+                }
+                tbodyHtml += `</tr>`;
+            }
+            tbody.innerHTML = tbodyHtml;
+            MathJax.typesetPromise();
+        }
+
+        function setUInput(val, n1, n2) {
+            document.getElementById('uInput').value = val;
+            document.getElementById('n1Input').value = n1;
+            document.getElementById('n2Input').value = n2;
+            
+            // Force table compatible state
+            document.getElementById('alphaSelect').value = "0.05";
+            document.getElementById('tailSelect').value = "2";
+
+            handleInputs();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function highlightTable(n1, n2, alpha, tails) {
+            document.querySelectorAll('#mwTable tr.highlighted-row').forEach(el => el.classList.remove('highlighted-row'));
+            document.querySelectorAll('#mwTable td.highlighted-cell').forEach(el => el.classList.remove('highlighted-cell'));
+            
+            let exactAvailable = (alpha === 0.05 && tails === 2 && n1 >= 3 && n1 <= 15 && n2 >= 3 && n2 <= 15);
+            
+            if(exactAvailable) {
+                document.getElementById('tableWarningText').innerHTML = "<i class='ri-lightbulb-flash-fill text-warning'></i> Sütunlar $n_2$, Satırlar $n_1$ gösterir. Mann-Whitney U testinde, Gözlenen Min(U) değeri tablodaki Kritik U değerinden <strong>KÜÇÜK VEYA EŞİT ($U \\le U_{kritik}$)</strong> ise sonuç anlamlıdır (H0 reddedilir).";
+                document.getElementById('tableWrapper').style.opacity = '1';
+                document.getElementById('tableWrapper').style.pointerEvents = 'auto';
+
+                let row = document.getElementById(`row_n1_${n1}`);
+                if(row) row.classList.add('highlighted-row');
+                
+                let cell = document.getElementById(`cell_${n1}_${n2}`);
+                if(cell) cell.classList.add('highlighted-cell');
+            } else {
+                document.getElementById('tableWarningText').innerHTML = "<span class='text-danger fw-bold'>Girdiğiniz $\\alpha$, kuyruk veya örneklem büyüklüğü değerleri aşağıdaki klasik statik tablonun sınırları dışındadır. Ancak üstteki hesaplayıcı asimptotik (normal) yaklaşımla doğru kararı vermeye devam eder.</span>";
+                document.getElementById('tableWrapper').style.opacity = '0.3';
+                document.getElementById('tableWrapper').style.pointerEvents = 'none';
+            }
+        }
+
+        function scrollToActiveCell() {
+            let cell = document.querySelector('#mwTable td.highlighted-cell');
+            if(cell) {
+                let wrapper = document.getElementById('tableWrapper');
+                let scrollPosY = cell.offsetTop - wrapper.offsetHeight / 2 + cell.offsetHeight / 2;
+                let scrollPosX = cell.offsetLeft - wrapper.offsetWidth / 2 + cell.offsetWidth / 2;
+                wrapper.scrollTo({ top: scrollPosY, left: scrollPosX, behavior: 'smooth' });
+            }
+        }
+
+        function drawChart(uMin, uCrit, mu, sig) {
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const fColor = isDark ? '#94a3b8' : '#64748b'; 
+            const gColor = isDark ? '#334155' : '#e2e8f0';
+            
+            let minX = mu - 4 * sig;
+            let maxX = mu + 4 * sig;
+            if(minX < 0) minX = 0; 
+
+            let xVals = []; let yVals = [];
+            let step = (maxX - minX) / 100;
+            
+            for(let x = minX; x <= maxX; x += step) {
+                xVals.push(x.toFixed(1));
+                yVals.push(normPDF(x, mu, sig));
+            }
+
+            let bgColors = [];
+            for(let i=0; i<xVals.length; i++) {
+                let x = parseFloat(xVals[i]);
+                let shade = false;
+                if(x <= uCrit) shade = true;
+                
+                let uMaxCrit = (currentN1 * currentN2) - uCrit;
+                if(parseInt(document.getElementById('tailSelect').value) === 2 && x >= uMaxCrit) shade = true;
+
+                bgColors.push(shade ? 'rgba(239, 68, 68, 0.3)' : 'rgba(0,0,0,0)');
+            }
+
+            if(distChart) distChart.destroy();
+
+            distChart = new Chart(document.getElementById('distChart'), {
+                type: 'line',
+                data: {
+                    labels: xVals,
+                    datasets: [{
+                        label: `U Asimptotik Dağılımı`,
+                        data: yVals,
+                        borderColor: isDark ? '#2dd4bf' : '#0d9488', /* YENİ SOFT TURKUAZ/ÇAM YEŞİLİ */
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.4,
+                        fill: true,
+                        backgroundColor: bgColors, 
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: {
+                        x: { grid: { color: gColor }, ticks: { color: fColor, maxTicksLimit: 10 } },
+                        y: { display: false }
+                    },
+                    animation: { duration: 400 }
+                },
+                plugins: [{
+                    id: 'customSegmentFill',
+                    beforeDatasetDraw: function(chart) {
+                        const ctx = chart.ctx;
+                        const meta = chart.getDatasetMeta(0);
+                        const xAxis = chart.scales.x;
+                        const yAxis = chart.scales.y;
+                        
+                        ctx.save();
+                        ctx.beginPath();
+                        
+                        for(let i=0; i<meta.data.length; i++) {
+                            let xVal = parseFloat(chart.data.labels[i]);
+                            let point = meta.data[i];
+                            let shade = false;
+                            if(xVal <= uCrit) shade = true;
+                            
+                            let uMaxCrit = (currentN1 * currentN2) - uCrit;
+                            if(parseInt(document.getElementById('tailSelect').value) === 2 && xVal >= uMaxCrit) shade = true;
+
+                            if(shade) {
+                                let xStart = point.x;
+                                let yStart = point.y;
+                                let xNext = (i < meta.data.length-1) ? meta.data[i+1].x : point.x;
+                                ctx.fillStyle = 'rgba(239, 68, 68, 0.2)'; 
+                                ctx.fillRect(xStart, yStart, xNext-xStart, yAxis.bottom - yStart); 
+                            }
+                        }
+                        
+                        // Draw Observed U Line (Teal)
+                        if(uMin >= minX && uMin <= maxX) {
+                            let uPixel = xAxis.getPixelForValue(xVals.reduce((prev, curr) => Math.abs(curr - uMin) < Math.abs(prev - uMin) ? curr : prev));
+                            ctx.beginPath();
+                            ctx.moveTo(uPixel, yAxis.top);
+                            ctx.lineTo(uPixel, yAxis.bottom);
+                            ctx.lineWidth = 2;
+                            ctx.strokeStyle = isDark ? '#ccfbf1' : '#115e59'; 
+                            ctx.setLineDash([5, 5]);
+                            ctx.stroke();
+                        }
+                        
+                        // Draw Critical Limit Line (Red)
+                        if(uCrit >= minX && uCrit <= maxX) {
+                            let cPixel = xAxis.getPixelForValue(xVals.reduce((prev, curr) => Math.abs(curr - uCrit) < Math.abs(prev - uCrit) ? curr : prev));
+                            ctx.beginPath();
+                            ctx.moveTo(cPixel, yAxis.top);
+                            ctx.lineTo(cPixel, yAxis.bottom);
+                            ctx.lineWidth = 2;
+                            ctx.strokeStyle = '#ef4444'; 
+                            ctx.setLineDash([]);
+                            ctx.stroke();
+                        }
+                        
+                        ctx.restore();
+                    }
+                }]
+            });
+        }
+
+        // Rank to U Calculator
+        function calcUFromRanks() {
+            let r1 = safeParse(document.getElementById('calcR1').value);
+            let n1 = safeParse(document.getElementById('calcN1').value);
+            let n2 = safeParse(document.getElementById('calcN2').value);
+
+            if(n1 < 1 || n2 < 1 || r1 < 1) return;
+
+            let nTotal = n1 + n2;
+            let sumTotal = (nTotal * (nTotal + 1)) / 2;
+            let r2 = sumTotal - r1;
+
+            let cU1 = (n1 * n2) + ((n1 * (n1 + 1)) / 2) - r1;
+            let cU2 = (n1 * n2) - cU1;
+            let cMin = Math.min(cU1, cU2);
+
+            document.getElementById('resCalcR2').innerText = r2;
+            document.getElementById('resCalcU').innerText = cMin;
+        }
+
+        function transferCalc() {
+            let cMin = document.getElementById('resCalcU').innerText;
+            let n1 = document.getElementById('calcN1').value;
+            let n2 = document.getElementById('calcN2').value;
+            
+            document.getElementById('uInput').value = cMin;
+            document.getElementById('n1Input').value = n1;
+            document.getElementById('n2Input').value = n2;
+            
+            handleInputs();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>
