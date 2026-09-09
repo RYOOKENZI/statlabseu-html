@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!-- CSS Dependencies -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    
+    <!-- MathJax for Perfect Mathematical Rendering -->
+    <script>
+        window.MathJax = {
+            options: { enableMenu: false },
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <title>Güncelleme Notları (Changelog) | StatLabseu</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, h5, h6, .poppins { font-family: 'Poppins', sans-serif !important; }
+        
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+
+        /* HEADER BANNER */
+        .changelog-header-bg {
+            background: linear-gradient(135deg, #0f172a, #334155, #0f172a);
+            border-radius: 12px; padding: 40px 30px; color: white;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.4);
+            text-align: center; margin-bottom: 40px; position: relative; overflow: hidden;
+        }
+        .changelog-header-bg::before {
+            content: "\F0B2"; font-family: remixicon; position: absolute;
+            font-size: 180px; color: rgba(255, 255, 255, 0.03); top: -40px; right: -20px; transform: rotate(-15deg); pointer-events: none;
+        }
+
+        /* TIMELINE STRUCTURE */
+        .timeline {
+            position: relative;
+            max-width: 950px;
+            margin: 0 auto;
+            padding-left: 30px;
+            border-left: 3px solid #e2e8f0;
+        }
+        
+        .timeline-item { position: relative; margin-bottom: 60px; }
+        .timeline-item:last-child { margin-bottom: 0; }
+        
+        .timeline-dot {
+            position: absolute; left: -39px; top: 0; width: 16px; height: 16px;
+            border-radius: 50%; background: #3b82f6; border: 3px solid #ffffff;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); z-index: 2;
+        }
+        
+        .timeline-date { font-size: 14px; font-weight: 700; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px; display: block; }
+        
+        .timeline-card {
+            background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: all 0.3s ease;
+        }
+        .timeline-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.06); border-color: #cbd5e1; }
+        
+        .version-title { font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 15px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .version-badge { background: #eff6ff; color: #2563eb; padding: 4px 12px; border-radius: 8px; font-size: 14px; font-weight: 700; border: 1px solid #bfdbfe; }
+
+        /* DEVELOPER COMMENTS (YORUMLAR) */
+        .dev-comment {
+            background: #f8fafc; border-left: 4px solid #3b82f6; padding: 15px 20px;
+            border-radius: 0 8px 8px 0; margin-bottom: 25px; font-size: 14px; color: #334155;
+            line-height: 1.6; font-style: italic; position: relative;
+        }
+        .dev-comment::before {
+            content: "\F0E4"; font-family: remixicon; position: absolute;
+            left: -14px; top: 15px; background: #3b82f6; color: white;
+            border-radius: 50%; width: 24px; height: 24px; display: flex;
+            align-items: center; justify-content: center; font-size: 12px; font-style: normal;
+        }
+
+        /* UPDATE LISTS */
+        .update-category { font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 25px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
+        .update-list { list-style: none; padding: 0; margin: 0; }
+        .update-list li { position: relative; padding-left: 32px; margin-bottom: 12px; font-size: 14.5px; color: #475569; line-height: 1.6; }
+        .update-list li i { position: absolute; left: 0; top: 2px; font-size: 20px; }
+        
+        /* BADGES */
+        .li-new i { color: #10b981; } 
+        .li-imp i { color: #3b82f6; } 
+        .li-fix i { color: #f59e0b; } 
+
+        .tag-new { background: #dcfce7; color: #166534; font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 800; margin-right: 8px; vertical-align: middle; }
+        .tag-imp { background: #dbeafe; color: #1e40af; font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 800; margin-right: 8px; vertical-align: middle; }
+
+        /* DARK MODE CSS */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #f8fafc !important; }
+        html.dark-mode .bg-white { background-color: #1e293b !important; border-color: #334155 !important; }
+        
+        html.dark-mode .timeline { border-left-color: #334155; }
+        html.dark-mode .timeline-dot { border-color: #1e293b; background: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3); }
+        html.dark-mode .timeline-date { color: #94a3b8; }
+        
+        html.dark-mode .timeline-card { background: #1e293b; border-color: #334155; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        html.dark-mode .timeline-card:hover { border-color: #475569; }
+        html.dark-mode .version-title { color: #f8fafc; }
+        html.dark-mode .version-badge { background: #1e3a8a; color: #93c5fd; border-color: #1e40af; }
+        
+        html.dark-mode .dev-comment { background: #0f172a; border-left-color: #3b82f6; color: #cbd5e1; }
+        html.dark-mode .dev-comment::before { background: #3b82f6; color: #fff; }
+
+        html.dark-mode .update-category { color: #f8fafc; border-bottom-color: #334155; }
+        html.dark-mode .update-list li { color: #cbd5e1; }
+        
+        html.dark-mode .tag-new { background: rgba(22, 163, 74, 0.2); color: #86efac; }
+        html.dark-mode .tag-imp { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+        
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        html.dark-mode .theme-btn { background-color: #334155; color: #f8fafc; }
+        html.dark-mode .theme-btn:hover { background-color: #475569; }
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <!-- Arka plan animasyonu için zorunlu Canvas (Particle.js buraya render eder) -->
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <!-- HEADER -->
+            <header class="header-area bg-white mb-4 rounded-10 border shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-home-4-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider poppins">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-history-line align-middle me-1"></i> Güncelleme Notları
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- HERO BANNER -->
+            <div class="changelog-header-bg">
+                <h1 class="poppins fw-bold mb-3" style="font-size: 32px; letter-spacing: 1px;">Sistem Güncelleme Notları</h1>
+                <p class="fs-15 opacity-75 mx-auto mb-0" style="max-width: 700px; line-height: 1.6;">StatLabseu'da son 3 ayda gerçekleştirdiğimiz istatistiksel zeka algoritmaları, canlı dağılım tabloları ve zaman serisi entegrasyonlarına ait tüm detaylı dökümleri aşağıdan takip edebilirsiniz.</p>
+            </div>
+
+            <!-- TIMELINE -->
+            <div class="timeline">
+
+                <!-- v1.5.0 -->
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <span class="timeline-date">10 Eylül 2026</span>
+                    <div class="timeline-card">
+                        <div class="version-title">
+                            İstatistiksel Karar Motoru ve Otonom Test Seçimi <span class="version-badge">v1.5.0</span>
+                        </div>
+                        
+                        <div class="dev-comment">
+                            <strong>Geliştirici Yorumu:</strong> Araştırmacıların ve öğrencilerin en çok zorlandığı konu olan "Verime hangi testi uygulamalıyım?" sorunsalını ortadan kaldırmak istedik. Klasik p-değeri ($p < \alpha$) avcılığı yerine; verinin ölçüm düzeyi, bağımsızlık durumu ve normallik varsayımları gibi katı istatistiksel kuralları adım adım sorgulayan muazzam bir "Karar Ağacı (Decision Engine)" inşa ettik.
+                        </div>
+
+                        <div class="update-category">
+                            <i class="ri-compass-discover-line text-primary"></i> Karar Sihirbazı ("Hangi Testi Kullanmalıyım?")
+                        </div>
+                        <ul class="update-list">
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span>Kullanıcının araştırma amacına göre test seçimi yapan dinamik asistan eklendi. Sistem, bağımlı/bağımsız grup ayrımını ve değişken türünü ($\text{Sürekli, Kategorik, Ordinal}$) otomatik algılar.</li>
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span>Sadece tek bir test adı vermek yerine; <strong>Birincil Öneri</strong> ve <strong>Alternatif Test</strong> mantığı kurgulandı. Örn: "Varyanslar homojen değilse ($\sigma_1^2 \neq \sigma_2^2$) Welch t-Testi kullanınız."</li>
+                            <li class="li-imp"><i class="ri-arrow-up-circle-fill"></i> <span class="tag-imp">GELİŞTİRME</span>Test sonuç ekranlarına "Neden Bu Test?" ve "Kontrol Edilmesi Gereken Varsayımlar" (Örn: $H_0: \text{Veri normal dağılımlıdır}$ için Shapiro-Wilk) bölümleri eklendi.</li>
+                            <li class="li-imp"><i class="ri-arrow-up-circle-fill"></i> <span class="tag-imp">GELİŞTİRME</span>Post-Hoc (Tukey HSD, Games-Howell) ve Etki Büyüklüğü (Cohen's $d$, $\eta^2$) için otonom raporlama tavsiyeleri entegre edildi.</li>
+                        </ul>
+
+                        <div class="update-category">
+                            <i class="ri-link-m text-primary"></i> Modüller Arası Veri Entegrasyonu (Session State)
+                        </div>
+                        <ul class="update-list">
+                            <li class="li-imp"><i class="ri-arrow-up-circle-fill"></i> <span class="tag-imp">GELİŞTİRME</span>Analiz zincirleri oluşturuldu. Örn: ANOVA'dan çıkan karesel hata ortalaması ($MSE$) ve serbestlik derecesi ($df$), Tukey HSD tablosuna; Regresyon artıkları ($e_t$) ise Durbin-Watson modülüne otomatik olarak aktarılır.</li>
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span>Veri kalitesi kontrolleri genişletildi. Analize giren verilerdeki $NaN$ (Kayıp) veya aykırı değerler tespit edildiğinde sistem analiz öncesi uyarı verir.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- v1.4.0 -->
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <span class="timeline-date">22 Ağustos 2026</span>
+                    <div class="timeline-card">
+                        <div class="version-title">
+                            Canlı İstatistik Tabloları ve Parametrik Olmayan Algoritmalar <span class="version-badge">v1.4.0</span>
+                        </div>
+                        
+                        <div class="dev-comment">
+                            <strong>Geliştirici Yorumu:</strong> İstatistik kitaplarının son sayfalarındaki o karmaşık, statik ve sınırlı kritik değer tablolarını tarihe gömdük. Artık kullanıcılar, diledikleri anlamlılık düzeyi ($\alpha$) ve serbestlik derecesi ($df$) için $p$-değerlerini asimptotik olarak canlı hesaplayabiliyor. Üstelik non-parametrik testlerde (Sıra toplamları, bağ düzeltmeleri) yaşanan formül kargaşasını tamamen interaktif bir arayüzde birleştirdik.
+                        </div>
+
+                        <div class="update-category">
+                            <i class="ri-grid-fill text-primary"></i> Temel Dağılımlar ve Normallik Modülleri
+                        </div>
+                        <ul class="update-list">
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span><strong>Z, T, F ve Ki-Kare Tabloları:</strong> Statik pdf'ler yerine $P(Z \le z) = \Phi(z)$ integrasyonunu kullanarak çift/tek kuyruk $p$-değeri hesaplayan dinamik araçlar eklendi.</li>
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span><strong>Kolmogorov-Smirnov (KS):</strong> Sürekli kümülatif dağılım fonksiyonlarının maksimum mutlak farkını ($D_n = \sup_x |F_n(x) - F_0(x)|$) grafik üzerinde canlandıran modül kuruldu. Ortalama ve varyans tahmin edildiğinde "Lilliefors" düzeltmesinin kullanılması gerektiği uyarısı eklendi.</li>
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span><strong>Shapiro-Wilk (W):</strong> Katsayı vektörlerine dayanan Royston asimptotik algoritması sisteme kodlandı. Simüle edilmiş Q-Q (Quantile-Quantile) grafiği arayüze dahil edildi.</li>
+                        </ul>
+
+                        <div class="update-category">
+                            <i class="ri-git-branch-line text-primary"></i> Dağılımsiz (Non-Parametric) Testler ve Post-Hoc
+                        </div>
+                        <ul class="update-list">
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span><strong>Mann-Whitney U & Wilcoxon:</strong> $U = \min(U_1, U_2)$ ve $T = \min(W^+, W^-)$ için hem Exact hem de Asimptotik $Z$ yaklaşımları (Süreklilik düzeltmesi $c.c$ ile birlikte: $Z = \frac{U - \mu_U \pm 0.5}{\sigma_U}$) sisteme eklendi.</li>
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span><strong>Spearman Korelasyonu:</strong> Doğrusal olmayan monotonik ilişkiler için $\rho_s = 1 - \frac{6\sum d_i^2}{n(n^2-1)}$ formülünü simüle eden "Rank vs Rank" dağılım simülatörü kodlandı.</li>
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span><strong>Tukey HSD / Tukey-Kramer:</strong> Eşit olmayan örneklem çaplarında paydadaki standart hatayı otomatik olarak $SE = \sqrt{\frac{MSE}{2} (\frac{1}{n_i} + \frac{1}{n_j})}$ formülüne (Kramer) çeviren Studentized Range ($q$) motoru oluşturuldu.</li>
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span><strong>Durbin-Watson:</strong> Otokorelasyon tespiti için alt ve üst kritik sınırların ($d_L, d_U$) yatay bir karar ekseninde simüle edildiği canlı bar grafiği tasarlandı.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- v1.3.0 -->
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <span class="timeline-date">15 Temmuz 2026</span>
+                    <div class="timeline-card">
+                        <div class="version-title">
+                            Zaman Serileri: Tahmin (Forecasting), Volatilite ve İleri Ekonometri <span class="version-badge">v1.3.0</span>
+                        </div>
+                        
+                        <div class="dev-comment">
+                            <strong>Geliştirici Yorumu:</strong> Zaman serisi sadece geleceği tahmin etmek değildir; aynı zamanda finansal piyasalardaki oynaklığı (risk) ve değişkenler arasındaki nedenselliği anlamaktır. Bu nedenle sisteme, koşullu varyansı modelleyen GARCH ailesini ve çok değişkenli şokları analiz eden Vektör Otoregresyon (VAR) altyapılarını dahil ettik.
+                        </div>
+
+                        <div class="update-category">
+                            <i class="ri-rocket-2-fill text-primary"></i> Modelleme ve Tahmin (Forecasting)
+                        </div>
+                        <ul class="update-list">
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span><strong>Auto-ARIMA Optimizasyonu:</strong> Bilgi kriterlerini (AIC, BIC) minimize ederek optimum $p, d, q$ ve mevsimsel $P, D, Q$ gecikmelerini otonom olarak seçen ARIMA/SARIMA modelleyici sisteme entegre edildi.</li>
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span>Gelecek dönem tahminleri için nokta tahminleri (Point Forecast) ve üst/alt %95 Güven Sınırları hesaplanarak dinamik grafiklere aktarıldı. Hata metrikleri (RMSE, MAPE, MAE) canlı olarak raporlandı.</li>
+                        </ul>
+
+                        <div class="update-category">
+                            <i class="ri-funds-line text-primary"></i> Volatilite ve İleri Modeller
+                        </div>
+                        <ul class="update-list">
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span>Finansal zaman serilerinin vazgeçilmezi olan <strong>Volatilite Analizi</strong> eklendi. Varyans denklemindeki zamanla değişen oynaklık ($\sigma_t^2 = \omega + \alpha \epsilon_{t-1}^2 + \beta \sigma_{t-1}^2$) için ARCH, GARCH, EGARCH (Kaldıraç etkisi/Asimetrik şoklar) modelleri kuruldu.</li>
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span>Çok değişkenli seriler için <strong>VAR (Vektör Otoregresyon)</strong>, Granger Nedenselliği ($X \rightarrow Y$), ve Johansen Eşbütünleşme (Cointegration) testleri eklendi. Sisteme bir şok verildiğinde diğer serilerin nasıl tepki verdiğini çizen Etki-Tepki Fonksiyonları (IRF) geliştirildi.</li>
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span>Verideki trend değişimlerini yakalamak için Zivot-Andrews ve CUSUM gibi <strong>Yapısal Kırılma (Structural Break)</strong> testleri yapılandırıldı.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- v1.2.0 -->
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <span class="timeline-date">10 Haziran 2026</span>
+                    <div class="timeline-card">
+                        <div class="version-title">
+                            Zaman Serileri: Temel Altyapı, Durağanlık ve Tanılar <span class="version-badge">v1.2.0</span>
+                        </div>
+                        
+                        <div class="dev-comment">
+                            <strong>Geliştirici Yorumu:</strong> İstatistiksel analizlerde zaman serileri, ardışık bağımlılıklar (otokorelasyon) içerdiği için klasik testlerden ayrılır. Zaman serilerinde durağanlık (Stationarity) sağlanmadan yapılan regresyonlar tamamen "sahtedir" (spurious). Bu gerçeği merkeze alarak sistemin çekirdeğini Dickey-Fuller ve KPSS testleri üzerine inşa ettik.
+                        </div>
+
+                        <div class="update-category">
+                            <i class="ri-stock-line text-primary"></i> Temel Ön Analiz ve Ayrıştırma (Decomposition)
+                        </div>
+                        <ul class="update-list">
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span><strong>Zaman Serisi Modülü:</strong> Başlangıç/bitiş tarihleri, frekans (aylık/günlük vb.) ve kayan pencereli (Rolling Window) hareketli ortalama/standart sapma çizimleri eklendi.</li>
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span><strong>Ayrıştırma (Decomposition):</strong> Zaman serisini $Y_t = T_t + S_t + R_t$ (Toplamsal) veya $Y_t = T_t \times S_t \times R_t$ (Çarpımsal) formüllerine dayanarak "Trend", "Mevsimsellik" ve "Artık" bileşenlerine bölen arayüz kodlandı.</li>
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span><strong>Otokorelasyon:</strong> Verinin geçmiş gecikmeleriyle olan ilişkisini ölçen ACF ve PACF korelogram grafikleri, %95 güven bantları ($ \pm 1.96 / \sqrt{n} $) ile birlikte oluşturuldu.</li>
+                        </ul>
+
+                        <div class="update-category">
+                            <i class="ri-bar-chart-grouped-line text-primary"></i> Durağanlık ve Model Tanıları (Diagnostics)
+                        </div>
+                        <ul class="update-list">
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span>Birim Kök testleri modülü oluşturuldu: Regresyona gecikmeli farkların eklendiği ($\Delta y_t = \gamma y_{t-1} + \sum \phi_i \Delta y_{t-i} + \epsilon_t$) <strong>ADF (Augmented Dickey-Fuller)</strong> ve KPSS testleri sisteme entegre edildi. Seri durağan çıkmazsa "Birinci Fark ($\Delta y_t$)" alma butonu otonomlaştırıldı.</li>
+                            <li class="li-new"><i class="ri-add-circle-fill"></i> <span class="tag-new">YENİ</span>Modellerin doğruluğunu test etmek için <strong>Artık Tanıları (Residual Diagnostics)</strong> yapıldı. Ljung-Box (Artıklarda otokorelasyon var mı?), ARCH-LM (Varyans zamanla değişiyor mu?) ve Jarque-Bera (Artıklar normal mi?) kontrolleri sisteme bağlandı.</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+    
+    <!-- Animasyonlar ve Etkileşim -->
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            
+            if (localStorage.getItem('statlab_theme') === 'dark') {
+                themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill');
+                themeIcon.classList.add('text-warning');
+            }
+
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill');
+                    themeIcon.classList.add('text-warning');
+                    themeIcon.classList.remove('text-secondary');
+                    localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill');
+                    themeIcon.classList.remove('text-warning');
+                    themeIcon.classList.add('text-secondary');
+                    localStorage.setItem('statlab_theme', 'light');
+                }
+                
+                // MathJax yeniden derlenmeli (renk değişimi sorunları için)
+                MathJax.typesetPromise().catch(err => console.log(err));
+            });
+        });
+    </script>
+    
+    <!-- Particle Arka Plan Animasyonu (Zorunlu) -->
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>
