@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!-- CSS Dependencies -->
+    <link rel="stylesheet" href="assets/css/prism.css">
+    <link rel="stylesheet" href="assets/css/quill.snow.css">
+    <link rel="stylesheet" href="assets/css/remixicon.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    
+    <title>Hangi Testi Kullanmalıyım? | İstatistiksel Karar Asistanı</title>
+
+    <script>
+        if (localStorage.getItem('statlab_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+
+    <style>
+        .main-content { margin-left: 0 !important; width: 100% !important; padding: 20px; }
+
+        /* KONSEPT: Safir Mavisi / Derin Mavi (Sapphire / Deep Blue) */
+        .wizard-header-bg {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            border-radius: 12px; padding: 30px; color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            text-align: center; margin-bottom: 25px;
+        }
+        
+        .progress-container { width: 100%; height: 8px; background: rgba(255,255,255,0.2); border-radius: 10px; margin-top: 20px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: #60a5fa; width: 10%; transition: width 0.4s ease; }
+
+        .question-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.03); transition: all 0.3s ease; }
+        .question-title { font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 20px; line-height: 1.4; }
+
+        /* Seçenek Kartları */
+        .option-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+        .option-card {
+            background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 15px 20px;
+            cursor: pointer; transition: all 0.2s ease; display: flex; align-items: flex-start; gap: 12px;
+        }
+        .option-card:hover { border-color: #3b82f6; background: #eff6ff; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(59, 130, 246, 0.1); }
+        .option-icon { font-size: 22px; color: #3b82f6; line-height: 1; }
+        .option-text { font-size: 15px; font-weight: 700; color: #334155; margin-bottom: 4px; }
+        .option-desc { font-size: 12px; color: #64748b; line-height: 1.4; margin: 0; }
+
+        /* Sonuç Ekranı Stilleri */
+        .result-container { display: none; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .result-hero { background: #f0f9ff; border: 2px solid #3b82f6; border-radius: 12px; padding: 25px; text-align: center; position: relative; overflow: hidden; }
+        .result-hero::before { content: "\EA10"; font-family: remixicon; position: absolute; font-size: 120px; color: rgba(59, 130, 246, 0.05); top: -20px; right: -10px; pointer-events: none; }
+        .result-title { font-size: 26px; font-weight: 900; color: #1e3a8a; margin-bottom: 5px; }
+        .confidence-badge { background: #dbeafe; color: #1d4ed8; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-block; margin-bottom: 15px; }
+        
+        .result-section { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .section-title { font-size: 14px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 15px; }
+        
+        .assumptions-list { list-style: none; padding: 0; margin: 0; }
+        .assumptions-list li { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; font-size: 14px; color: #334155; line-height: 1.5; }
+        .assumptions-list i.ri-check-line { color: #10b981; font-size: 18px; }
+        .assumptions-list i.ri-error-warning-line { color: #f59e0b; font-size: 18px; }
+        .assumptions-list i.ri-information-line { color: #3b82f6; font-size: 18px; }
+
+        .alt-test-badge { background: #f1f5f9; color: #475569; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-block; margin-right: 8px; margin-bottom: 8px; border: 1px solid #e2e8f0; }
+        
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 25px; }
+
+        /* KUSURSUZ GECE MODU AYARLARI */
+        html.dark-mode, html.dark-mode body { background-color: #0f172a !important; color: #f8fafc !important; }
+        html.dark-mode .bg-white { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .header-area { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .bg-light { background-color: #0f172a !important; }
+        
+        html.dark-mode .text-dark { color: #f8fafc !important; }
+        html.dark-mode .text-muted { color: #94a3b8 !important; }
+        html.dark-mode .text-secondary { color: #cbd5e1 !important; }
+        
+        /* Kart ve Soru Renkleri */
+        html.dark-mode .question-card { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .question-title { color: #f8fafc !important; }
+        
+        /* Seçenekler */
+        html.dark-mode .option-card { background-color: #0f172a !important; border-color: #334155 !important; }
+        html.dark-mode .option-card:hover { border-color: #3b82f6 !important; background-color: #172554 !important; }
+        html.dark-mode .option-text { color: #f8fafc !important; }
+        html.dark-mode .option-desc { color: #94a3b8 !important; }
+        
+        /* Sonuç Ekranı Gece Modu */
+        html.dark-mode .result-section { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark-mode .section-title { color: #cbd5e1 !important; border-bottom-color: #334155 !important; }
+        html.dark-mode .assumptions-list li { color: #cbd5e1 !important; }
+        html.dark-mode .alt-test-badge { background-color: #0f172a !important; color: #cbd5e1 !important; border-color: #334155 !important; }
+        
+        html.dark-mode .result-hero { background-color: rgba(59, 130, 246, 0.1) !important; border-color: rgba(59, 130, 246, 0.3) !important; }
+        html.dark-mode .result-title { color: #60a5fa !important; }
+        html.dark-mode .confidence-badge { background-color: rgba(59, 130, 246, 0.2) !important; color: #93c5fd !important; }
+        
+        /* Butonlar */
+        .theme-btn { background-color: #f1f5f9; color: #475569; transition: all 0.3s; }
+        html.dark-mode .theme-btn { background-color: #334155 !important; color: #f8fafc !important; }
+        html.dark-mode .theme-btn:hover { background-color: #475569 !important; }
+        html.dark-mode .btn-outline-secondary { color: #cbd5e1; border-color: #475569; }
+        html.dark-mode .btn-outline-secondary:hover { background-color: #334155; color: #f8fafc; }
+        
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <canvas id="statLabCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6;"></canvas>
+
+    <div class="container" style="position: relative; z-index: 1;">
+        <div class="main-content d-flex flex-column">
+            
+            <header class="header-area bg-white mb-4 rounded-10 border shadow-sm px-4 py-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <a href="index.html" class="btn theme-btn rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-home-4-line fs-20"></i>
+                        </a>
+                        <div class="logo d-flex align-items-center">
+                            <img src="assets/images/logo-icon.png" alt="logo" width="35">
+                            <span class="fs-22 fw-bold text-dark ms-2 tracking-wider">StatLabseu</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill fw-medium d-none d-sm-block">
+                            <i class="ri-node-tree align-middle me-1"></i> İstatistiksel Karar Motoru
+                        </span>
+                        <button id="theme-toggle" class="btn theme-btn rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                            <i class="ri-moon-fill fs-20" id="theme-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- WIZARD HEADER -->
+            <div class="wizard-header-bg">
+                <h2 class="fw-bold mb-2 text-white" style="letter-spacing: 1px;">HANGİ TESTİ KULLANMALIYIM?</h2>
+                <p class="fs-14 mb-0 opacity-75">Veri yapınızı ve araştırma amacınızı adım adım belirleyin. Karar Motoru size en doğru istatistiksel testi, alternatiflerini ve raporlanması gereken ön/son koşulları bilimsel bir rehber olarak sunsun.</p>
+                <div class="progress-container">
+                    <div class="progress-bar-fill" id="progressBar"></div>
+                </div>
+                <div class="text-end mt-2 fs-12 fw-bold opacity-75" id="stepCounterText">Adım 1</div>
+            </div>
+
+            <!-- QUESTION AREA -->
+            <div id="questionContainer" class="question-card mb-4">
+                <h4 class="question-title" id="qTitle">Ne yapmak istiyorsunuz?</h4>
+                
+                <div class="option-grid" id="optionsGrid">
+                    <!-- Seçenekler JS ile yüklenecek -->
+                </div>
+                
+                <div class="nav-buttons">
+                    <button class="btn btn-outline-secondary fw-bold px-4" id="btnBack" onclick="goBack()" style="visibility: hidden;"><i class="ri-arrow-left-line me-1"></i> Önceki Soru</button>
+                    <button class="btn btn-outline-danger fw-bold px-3 d-none" id="btnRestart" onclick="startWizard()"><i class="ri-refresh-line"></i> Baştan Başla</button>
+                </div>
+            </div>
+
+            <!-- RESULT AREA (SADECE BİLGİ, LİNK YOK) -->
+            <div id="resultContainer" class="result-container mb-4">
+                
+                <div class="result-hero shadow-sm">
+                    <div class="confidence-badge"><i class="ri-shield-check-fill me-1"></i> Metodolojik Öneri</div>
+                    <div class="fs-13 text-primary fw-bold text-uppercase tracking-wider mb-2">Hedef Test / Analiz</div>
+                    <h2 class="result-title" id="resPrimaryName">Bağımsız Örneklem t-Testi</h2>
+                    <p class="fs-14 mt-3 mb-0 text-dark opacity-75" id="resReason" style="max-width: 650px; margin: 0 auto;">İki bağımsız grubun sürekli bir değişken üzerindeki ortalamalarını karşılaştırıyorsunuz ve parametrik varsayımların sağlandığını belirttiniz.</p>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="result-section h-100">
+                            <h5 class="section-title"><i class="ri-list-check-2 text-primary me-1"></i> Kontrol Edilmesi Gereken Varsayımlar</h5>
+                            <p class="fs-13 text-muted mb-3">Bu testi uygulamadan önce verinizin aşağıdaki bilimsel şartları sağladığını analiz etmelisiniz:</p>
+                            <ul class="assumptions-list" id="resAssumptions">
+                                <!-- JS ile Doldurulacak -->
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="result-section h-100">
+                            <h5 class="section-title"><i class="ri-git-branch-line text-primary me-1"></i> Alternatif Yöntemler & Post-Hoc</h5>
+                            <p class="fs-13 text-muted mb-2">Eğer yukarıdaki varsayımlar (normallik, varyans vb.) ihlal edilirse kullanılabilecek B Planları:</p>
+                            <div id="resAlternatives" class="mb-3">
+                                <!-- JS ile Doldurulacak -->
+                            </div>
+                            
+                            <div id="resPostHocBox" class="pt-3 border-top d-none">
+                                <span class="fs-12 fw-bold text-dark d-block mb-1">Raporlama Notu (Post-Hoc / Etki):</span>
+                                <div id="resPostHocContent"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <button class="btn btn-outline-secondary fw-bold" onclick="goBack()"><i class="ri-arrow-left-line me-1"></i> Kararımı Değiştir</button>
+                    <button class="btn btn-primary fw-bold px-4" onclick="startWizard()"><i class="ri-refresh-line me-1"></i> Yeni Senaryo (Baştan)</button>
+                </div>
+
+                <div class="alert bg-light border text-muted fs-12 mt-4 text-center">
+                    <strong>Bilgilendirme:</strong> Bu sistem, sunduğunuz cevaplara bağlı kalarak literatürdeki en uygun istatistiksel modeli öneren bir rehberdir. Yazılımlarda testi uygulamadan önce <em>Normallik</em> ve <em>Homojenlik</em> gibi ön testlerin sonuçlarını teyit etmeyi unutmayınız.
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <!-- DECISION ENGINE (GELİŞMİŞ İSTATİSTİK VERİTABANI) -->
+    <script>
+        // --- 1. TEST VERİTABANI (Sadece İstatistiksel Bilgiler, Yönlendirme Yok) ---
+        const testDB = {
+            // TEK GRUP
+            "one_sample_t": {
+                name: "Tek Örneklem t-Testi (One-Sample t-Test)",
+                reason: "Tek bir grubun ortalamasını (sürekli veri), literatürde veya teoride bilinen sabit bir popülasyon değeriyle (Örn: Türkiye yaş ortalaması 32'dir) karşılaştırmak istiyorsunuz.",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Bağımlı değişken süreklidir (Continuous/Scale)." },
+                    { icon: "ri-error-warning-line", text: "Veri normal dağılıma uymalıdır (Shapiro-Wilk veya K-S testi ile kontrol edin)." },
+                    { icon: "ri-check-line", text: "Gözlemler birbirinden bağımsız olmalıdır." }
+                ],
+                alternatives: ["Tek Örneklem Wilcoxon Testi (Veri normal dağılmıyorsa)", "Tek Örneklem Z-Testi (Popülasyonun standart sapması önceden kesin olarak biliniyorsa)"],
+                postHoc: "Etki Büyüklüğü: Sonuç anlamlıysa Cohen's d hesaplanmalıdır."
+            },
+            "one_sample_z": {
+                name: "Tek Örneklem Z-Testi",
+                reason: "Tek bir grubun ortalamasını popülasyonla kıyaslıyorsunuz ve popülasyonun (kitle) gerçek standart sapmasını kesin olarak biliyorsunuz.",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Popülasyon standart sapması (σ) BİLİNMELİDİR." },
+                    { icon: "ri-error-warning-line", text: "Örneklem hacmi büyük (n > 30) olmalı veya veri tam normal dağılmalıdır." }
+                ],
+                alternatives: ["Tek Örneklem t-Testi (Genellikle popülasyon standart sapması bilinmediği için bu tercih edilir)."]
+            },
+            "one_sample_wilcoxon": {
+                name: "Tek Örneklem Wilcoxon İşaretli Sıralar Testi",
+                reason: "Tek bir grubun medyanını sabit bir değerle karşılaştırıyorsunuz ve veriniz normal dağılım varsayımını sağlamıyor (veya verileriniz Likert gibi sıralı nitelikte).",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Veri en az sıralı (ordinal) ölçekte olmalıdır." },
+                    { icon: "ri-information-line", text: "Normallik gerektirmez (Non-parametrik)." }
+                ],
+                alternatives: ["İşaret (Sign) Testi (Verinin dağılımı çok asimetrikse)."]
+            },
+            "binom_test": {
+                name: "Binom Testi (Tek Örneklem Oran Testi)",
+                reason: "İki olasılıklı (Örn: Kadın/Erkek, Başarılı/Başarısız) bir kategorik veriniz var ve gözlenen oranın, beklenen teorik bir orandan (Örn: %50) farklı olup olmadığını sınıyorsunuz.",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Değişken sadece iki kategoriye sahip (Binary) olmalıdır." },
+                    { icon: "ri-check-line", text: "Gözlemler birbirinden bağımsız olmalıdır." }
+                ],
+                alternatives: ["Ki-Kare Uygunluk Testi (Kategori sayısı 2'den fazlaysa)"]
+            },
+
+            // İKİ GRUP - BAĞIMSIZ
+            "ind_t_test": {
+                name: "Bağımsız Örneklem t-Testi (Independent t-Test)",
+                reason: "İki tamamen farklı grubun (Örn: Deney vs Kontrol, Erkek vs Kadın), sürekli bir değişkene ait ortalamalarını karşılaştırmak istiyorsunuz.",
+                assumptions: [
+                    { icon: "ri-check-line", text: "İki grup birbirinden tamamen bağımsızdır." },
+                    { icon: "ri-error-warning-line", text: "Her iki grupta da veri normal dağılmalıdır (Shapiro-Wilk p > 0.05)." },
+                    { icon: "ri-error-warning-line", text: "Grupların varyansları homojen/eşit olmalıdır (Levene Testi p > 0.05)." }
+                ],
+                alternatives: ["Welch t-Testi (Varyanslar eşit değilse)", "Mann-Whitney U Testi (Veriler normal dağılmıyorsa)"],
+                postHoc: "Etki Büyüklüğü: Cohen's d veya Hedges' g (Grupların n sayıları farklıysa Hedges' g daha iyidir)."
+            },
+            "welch_t_test": {
+                name: "Welch t-Testi",
+                reason: "İki bağımsız grubu karşılaştırıyorsunuz ancak grupların varyanslarının (Levene Testi) homojen EŞİT OLMADIĞINI tespit ettiniz.",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Varyansların eşit olmasına gerek yoktur (Test formülü bunu düzeltir)." },
+                    { icon: "ri-error-warning-line", text: "Gruplar içi normallik varsayımı halen aranır." }
+                ],
+                alternatives: ["Mann-Whitney U Testi (Normallik de bozulmuşsa)"]
+            },
+            "mann_whitney": {
+                name: "Mann-Whitney U Testi",
+                reason: "İki bağımsız grubu karşılaştırıyorsunuz ancak verileriniz normal dağılım varsayımını sağlamadı (veya veriniz anket puanı gibi sıralı/ordinal ölçekte).",
+                assumptions: [
+                    { icon: "ri-information-line", text: "Normallik ve Varyans homojenliği şartı aramaz." },
+                    { icon: "ri-check-line", text: "İki grup birbirinden bağımsızdır." },
+                    { icon: "ri-information-line", text: "Grupların dağılım şekilleri benzerse 'Medyanları', farklıysa genel 'Sıra/Konumları' karşılaştırır." }
+                ],
+                alternatives: ["Bağımsız t-Testi (Veri logaritma vs. ile dönüştürülüp normalleştirilebilirse)"],
+                postHoc: "Etki Büyüklüğü: Rank-biserial correlation veya z/√N hesaplanabilir."
+            },
+
+            // İKİ GRUP - BAĞIMLI
+            "paired_t_test": {
+                name: "Bağımlı (Eşleştirilmiş) Örneklem t-Testi",
+                reason: "Aynı kişilerin iki farklı zamandaki (Örn: Eğitim Öncesi - Sonrası) veya aynı çiftlerin (Örn: İkizler) ölçümlerini karşılaştırıyorsunuz.",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Gözlemler bağımlıdır (Aynı birimlerin tekrar ölçümü)." },
+                    { icon: "ri-error-warning-line", text: "İki ölçüm arasındaki FARKLARIN (Difference = Post - Pre) normal dağılması gerekir." }
+                ],
+                alternatives: ["Wilcoxon İşaretli Sıralar Testi (Farkların dağılımı normal değilse)"],
+                postHoc: "Etki Büyüklüğü: Cohen's d (dz) hesaplanmalıdır."
+            },
+            "wilcoxon": {
+                name: "Wilcoxon İşaretli Sıralar Testi",
+                reason: "Aynı bireylerin iki ölçümünü (Öncesi-Sonrası) karşılaştırıyorsunuz ancak ölçüm farklarının dağılımı normal değil (veya veriler sıralı/ordinal).",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Gözlemler bağımlıdır (Eşleştirilmiş)." },
+                    { icon: "ri-information-line", text: "Dağılımın normal olmasına gerek yoktur (Parametrik olmayan test)." }
+                ],
+                alternatives: ["İşaret Testi (Dağılım aşırı derecede simetrik değilse)"]
+            },
+            "mcnemar": {
+                name: "McNemar Testi",
+                reason: "Aynı bireylerin iki farklı zamandaki (Öncesi-Sonrası) durumunu 'Evet/Hayır', 'Hasta/Sağlam' gibi İKİLİ (binary) kategorik veriler üzerinden kıyaslıyorsunuz.",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Değişkenler ikili (dikotom) kategorik olmalıdır." },
+                    { icon: "ri-check-line", text: "Veri, bağımlı (eşleşmiş) 2x2 çapraz tablo yapısına uymalıdır." }
+                ],
+                alternatives: ["Cochran's Q Testi (Zaman sayısı 3 veya daha fazlaysa)"]
+            },
+
+            // 3+ GRUP - BAĞIMSIZ
+            "anova_1way": {
+                name: "Tek Yönlü ANOVA (One-Way ANOVA)",
+                reason: "Üç veya daha fazla BAĞIMSIZ grubun (Örn: Düşük, Orta, Yüksek doz alan 3 farklı grup), sürekli bir değişken üzerindeki ortalamalarını karşılaştırıyorsunuz.",
+                assumptions: [
+                    { icon: "ri-error-warning-line", text: "Her grubun kendi içinde veri normal dağılmalıdır." },
+                    { icon: "ri-error-warning-line", text: "Grupların varyansları homojen olmalıdır (Levene p > 0.05)." },
+                    { icon: "ri-check-line", text: "Gruplardaki birimler birbirinden bağımsızdır." }
+                ],
+                alternatives: ["Welch ANOVA (Varyanslar eşit değilse)", "Kruskal-Wallis H Testi (Normallik sağlanmıyorsa)"],
+                postHoc: "Sonuç anlamlıysa (p < 0.05), hangi grupların farklı olduğunu bulmak için <strong>Tukey HSD</strong> post-hoc testi yapılır. Etki Büyüklüğü: Eta-squared (η²)."
+            },
+            "welch_anova": {
+                name: "Welch ANOVA",
+                reason: "Üç veya daha fazla grubu karşılaştırıyorsunuz ancak grupların varyanslarının homojen olmadığını (Levene Testinde p<0.05) belirttiniz.",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Varyansların eşit olmasına gerek yoktur (Test düzeltme yapar)." },
+                    { icon: "ri-error-warning-line", text: "Gruplar içi normallik varsayımı halen aranır." }
+                ],
+                alternatives: ["Kruskal-Wallis H Testi (Aynı zamanda normallik de ihlal edilmişse)"],
+                postHoc: "Sonuç anlamlıysa, varyanslar eşit olmadığı için Tukey YERİNE <strong>Games-Howell</strong> post-hoc testi kullanılmalıdır."
+            },
+            "kruskal_wallis": {
+                name: "Kruskal-Wallis H Testi",
+                reason: "Üç veya daha fazla bağımsız grubu karşılaştırıyorsunuz ancak veriler normal dağılım varsayımını sağlamıyor (veya anket gibi ordinal veriler kullanıyorsunuz).",
+                assumptions: [
+                    { icon: "ri-information-line", text: "Normallik ve Varyans homojenliği gerektirmez (Verilerin sıraları üzerinden çalışır)." },
+                    { icon: "ri-check-line", text: "Gruplar birbirinden bağımsızdır." }
+                ],
+                alternatives: ["Tek Yönlü ANOVA (Veriler dönüştürülüp normallik sağlanırsa)"],
+                postHoc: "Sonuç anlamlıysa: Hangi grupların farklı olduğunu bulmak için <strong>Dunn's Testi</strong> (Bonferroni düzeltmeli) yapılır."
+            },
+
+            // 3+ GRUP - BAĞIMLI
+            "rm_anova": {
+                name: "Tekrarlı Ölçümler ANOVA (Repeated Measures ANOVA)",
+                reason: "Aynı kişilerin 3 veya daha fazla farklı zamanda (Örn: 1. Ay, 2. Ay, 3. Ay) alınan ölçümlerini kıyaslıyorsunuz.",
+                assumptions: [
+                    { icon: "ri-error-warning-line", text: "Her ölçüm zamanındaki veriler normal dağılmalıdır." },
+                    { icon: "ri-error-warning-line", text: "Sphericity (Küresellik) varsayımı sağlanmalıdır (Mauchly's Test)." }
+                ],
+                alternatives: ["Friedman Testi (Normallik sağlanmıyorsa)"],
+                postHoc: "Eğer Küresellik bozulursa Greenhouse-Geisser düzeltmesi uygulanır. Anlamlı çıkarsa Bonferroni düzeltmeli ikili t-testleri yapılır."
+            },
+            "friedman": {
+                name: "Friedman Testi",
+                reason: "Aynı kişilerin 3 veya daha fazla ölçümünü kıyaslıyorsunuz ancak veriler normal dağılmıyor veya sıralı (ordinal) nitelikte.",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Bağımlı (Tekrarlı) ölçüm tasarımı." },
+                    { icon: "ri-information-line", text: "Normal dağılım ve küresellik varsayımı gerektirmez." }
+                ],
+                alternatives: ["Tekrarlı Ölçümler ANOVA (Şartlar sağlanırsa)"],
+                postHoc: "Anlamlı çıkarsa post-hoc olarak Wilcoxon İşaretli Sıralar Testleri (Bonferroni düzeltmesi ile) yapılır."
+            },
+
+            // İLİŞKİ - KORELASYON
+            "pearson": {
+                name: "Pearson Korelasyon Analizi",
+                reason: "İki sürekli (sayısal) değişken arasındaki ilişkinin yönünü ve gücünü ölçmek istiyorsunuz ve ilişkinin doğrusal (çizgisel) olduğunu varsayıyorsunuz.",
+                assumptions: [
+                    { icon: "ri-error-warning-line", text: "Her iki değişkenin de normal dağılması (veya bivariate normalite) önerilir." },
+                    { icon: "ri-error-warning-line", text: "İki değişken arasındaki ilişki doğrusal (linear) olmalıdır (Scatter plot ile teyit edin)." },
+                    { icon: "ri-information-line", text: "Aykırı (Uç) değerlere karşı son derece hassastır." }
+                ],
+                alternatives: ["Spearman Korelasyonu (Veri normal değilse, doğrusal değilse veya aykırı değer çoksa)"]
+            },
+            "spearman": {
+                name: "Spearman Sıra Korelasyonu (Spearman's Rho)",
+                reason: "İki değişken arasındaki ilişkiyi ölçüyorsunuz ancak verileriniz normal dağılmıyor, sıralı (ordinal) nitelikte veya ilişki doğrusal değil (fakat biri artarken diğeri de düzenli artıyor/azalıyor - monotonik).",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Normal dağılım veya doğrusallık gerektirmez." },
+                    { icon: "ri-information-line", text: "Verilerin değerleri yerine 'Sıraları (Rank)' üzerinden işlem yapar." }
+                ],
+                alternatives: ["Kendall Tau (Eğer örneklem hacmi çok küçükse veya aynı değere sahip çok fazla 'Ties/Bağlı sıra' varsa)"]
+            },
+            "kendall": {
+                name: "Kendall Tau Korelasyonu",
+                reason: "İki sıralı/sürekli değişkenin ilişkisine bakıyorsunuz ve örnekleminiz çok küçük veya verinizde aynı puana sahip (Örn: çok sayıda 5 puan veren) gözlem sayısı fazla.",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Dağılım şartı aramaz." },
+                    { icon: "ri-information-line", text: "Ties (Bağlı sıralar) konusunda Spearman'dan daha sağlamdır (Tau-b veya Tau-c varyantları kullanılır)." }
+                ],
+                alternatives: ["Spearman Korelasyonu (Örneklem büyük ve ties az ise)"]
+            },
+
+            // KATEGORİK İLİŞKİ
+            "chi_square": {
+                name: "Ki-Kare Bağımsızlık Testi (Chi-Square)",
+                reason: "İki kategorik değişken (Örn: Cinsiyet [Kadın/Erkek] vs Satın Alma Durumu [Aldı/Almadı]) arasında istatistiksel bir ilişki/bağımlılık olup olmadığını test ediyorsunuz.",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Her iki değişken de kategorik/isimsel (Nominal) olmalıdır." },
+                    { icon: "ri-error-warning-line", text: "Çapraz tablodaki hücrelerin beklenen frekanslarının %20'sinden fazlası 5'ten KÜÇÜK OLMAMALIDIR." }
+                ],
+                alternatives: ["Fisher Kesin Testi (Beklenen frekanslar 5'ten küçükse veya örneklem çok dar ise)"],
+                postHoc: "Sonuç anlamlıysa Standardize Edilmiş Artıklar (Adjusted Residuals) incelenir. Etki Büyüklüğü: Cramer's V veya Phi katsayısı."
+            },
+            "fisher_exact": {
+                name: "Fisher Kesin Testi (Fisher's Exact Test)",
+                reason: "İki kategorik değişkenin ilişkisini inceliyorsunuz ancak örneklem hacminiz çok küçük veya tablodaki bazı hücrelerde çok az gözlem var (Beklenen frekans < 5).",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Hücre sayısı az olduğunda Ki-Kare'nin verdiği hatayı engeller (Kesin p-değeri hesaplar)." },
+                    { icon: "ri-check-line", text: "Genellikle 2x2 tablolar için uygundur (Daha büyük tablolarda Monte Carlo simülasyonu gerekebilir)." }
+                ],
+                alternatives: ["Ki-Kare Testi (Örneklem yeterince büyükse)"]
+            },
+
+            // REGRESYON / TAHMİN
+            "simple_linear": {
+                name: "Basit Doğrusal Regresyon",
+                reason: "Sürekli bir bağımlı değişkeni (Y), TEK BİR bağımsız değişken (X) kullanarak tahmin etmek veya aralarındaki etkinin denklemini kurmak istiyorsunuz.",
+                assumptions: [
+                    { icon: "ri-error-warning-line", text: "Hatalar (Artıklar/Residuals) normal dağılmalıdır." },
+                    { icon: "ri-error-warning-line", text: "Hataların varyansı her seviyede sabit olmalıdır (Homoskedastisite)." },
+                    { icon: "ri-check-line", text: "X ve Y arasındaki ilişki doğrusal olmalıdır." }
+                ],
+                alternatives: ["Doğrusal Olmayan (Non-Linear) Regresyon", "Çoklu Regresyon (X sayısı artarsa)"],
+                postHoc: "Modelin açıklayıcılığı R² (R-Kare) değeri ile değerlendirilir."
+            },
+            "multiple_linear": {
+                name: "Çoklu Doğrusal Regresyon (Multiple Regression)",
+                reason: "Sürekli bir bağımlı değişkeni (Y), BİRDEN FAZLA bağımsız değişken (X1, X2...) kullanarak tahmin etmek istiyorsunuz.",
+                assumptions: [
+                    { icon: "ri-error-warning-line", text: "Hataların normalliği ve varyans sabitliği (Homoskedastisite)." },
+                    { icon: "ri-error-warning-line", text: "Çoklu Doğrusal Bağlantı (Multicollinearity) OLMAMALIDIR (VIF değerleri < 10 olmalı)." }
+                ],
+                alternatives: ["Ridge / Lasso Regresyon (Eğer Multicollinearity sorunu varsa)"],
+                postHoc: "Modelin başarısı için Düzeltilmiş R² (Adjusted R-Squared) dikkate alınır."
+            },
+            "logistic_regression": {
+                name: "İkili Lojistik Regresyon (Binary Logistic Regression)",
+                reason: "Tahmin etmeye çalıştığınız sonuç (Bağımlı değişken) SÜREKLİ DEĞİL; İKİ KATEGORİLİDİR (Örn: Müşteri ayrılır/Ayrılmaz, Hastalık Var/Yok).",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Hataların normal dağılması GEREKMEZ." },
+                    { icon: "ri-check-line", text: "Bağımlı değişken kesinlikle iki kategorili (Binary: 0 ve 1) olmalıdır." },
+                    { icon: "ri-error-warning-line", text: "Bağımsız değişkenler arasında çoklu doğrusal bağlantı (VIF) olmamalıdır." }
+                ],
+                alternatives: ["Multinomial Lojistik (Bağımlı değişken 3+ kategoriliyse)", "Karar Ağaçları"],
+                postHoc: "Bağımsız değişkenlerin etkisi Odds Ratio (OR - Olasılık Oranı) ile yorumlanır."
+            },
+            "poisson_regression": {
+                name: "Poisson veya Negatif Binom Regresyon",
+                reason: "Tahmin etmeye çalıştığınız bağımlı değişken bir SAYIM verisidir (Örn: Bir haftadaki kaza SAYAISI, Web sitesi ziyaret SAYISI: 0,1,2,3...).",
+                assumptions: [
+                    { icon: "ri-error-warning-line", text: "Bağımlı değişkenin varyansı, ortalamasına eşit olmalıdır (Poisson varsayımı)." }
+                ],
+                alternatives: ["Negatif Binom Regresyon (Eğer varyans, ortalamadan çok büyükse - Aşırı Saçılım/Overdispersion durumu)"]
+            },
+
+            // ZAMAN SERİSİ
+            "ts_stationarity": {
+                name: "Durağanlık (Birim Kök) Testleri: ADF veya KPSS",
+                reason: "Zaman serinizin zaman içinde sabit bir ortalama ve varyansa sahip olup olmadığını (Durağanlık) test etmek istiyorsunuz. Modelleme öncesi şarttır.",
+                assumptions: [
+                    { icon: "ri-check-line", text: "ADF (Augmented Dickey-Fuller) Testi: H0 = Seri durağan değildir (Birim kök vardır)." },
+                    { icon: "ri-check-line", text: "KPSS Testi: H0 = Seri durağandır (Birim kök yoktur)." }
+                ],
+                alternatives: ["Phillips-Perron (PP) Testi", "Zivot-Andrews Testi (Seride yapısal kırılma/kriz şüphesi varsa)"]
+            },
+            "ts_forecasting": {
+                name: "ARIMA / SARIMA / Üssel Düzleştirme",
+                reason: "Zaman serinizin geçmiş kalıplarını analiz ederek geleceğe yönelik (Forecast) tahminler üretmek istiyorsunuz.",
+                assumptions: [
+                    { icon: "ri-error-warning-line", text: "ARIMA için serinin durağanlaştırılmış (Farkı alınmış) olması gerekir." },
+                    { icon: "ri-information-line", text: "Eğer veride mevsimsellik varsa SARIMA veya Holt-Winters modelleri seçilmelidir." }
+                ]
+            },
+            "ts_volatility": {
+                name: "GARCH / Volatilite Modelleri",
+                reason: "Özellikle finansal piyasalardaki gibi, verinizin varyansının (oynaklığının) zamanla değiştiği kümeleri analiz etmek ve risk/volatilite tahmini yapmak istiyorsunuz.",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Model artıklarında ARCH etkisi (Otokorelasyonlu Varyans) bulunmalıdır." }
+                ],
+                alternatives: ["EGARCH veya GJR-GARCH (Piyasadaki negatif şokların, pozitif şoklardan daha büyük etki yarattığı 'Kaldıraç Etkisi' varsa)"]
+            },
+
+            // SAĞKALIM (SURVIVAL)
+            "kaplan_meier": {
+                name: "Kaplan-Meier Sağkalım Eğrisi",
+                reason: "Belirli bir olayın (Örn: İyileşme, Müşteri kaybı, Arıza) gerçekleşmesine kadar geçen 'zamanı' grafiksel olarak modellemek istiyorsunuz.",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Sansürlü (Olayın gerçekleşmediği veya takipten çıkan) verileri hesaba katar." }
+                ],
+                alternatives: ["Log-Rank Testi (Eğer birden fazla grubun eğrilerini kıyaslayacaksanız)"]
+            },
+            "log_rank": {
+                name: "Log-Rank Testi",
+                reason: "İki veya daha fazla farklı grubun (Örn: İlaç alanlar vs Almayanlar) yaşam/sağkalım sürelerini birbirleriyle kıyaslamak istiyorsunuz.",
+                assumptions: [
+                    { icon: "ri-check-line", text: "Grupların tehlike (hazard) fonksiyonları orantılı olmalıdır." }
+                ],
+                alternatives: ["Breslow veya Tarone-Ware Testleri (Erken dönem veya geç dönem ölümlere farklı ağırlık vermek isteniyorsa)"]
+            },
+            "cox_ph": {
+                name: "Cox Regresyonu (Proportional Hazards)",
+                reason: "Bir olayın gerçekleşme süresi üzerinde BİRDEN FAZLA faktörün (Yaş, Cinsiyet, Tedavi Tipi vb.) risk etkisini modellemek istiyorsunuz.",
+                assumptions: [
+                    { icon: "ri-error-warning-line", text: "Orantılı Tehlikeler (Proportional Hazards) varsayımı sağlanmalıdır." }
+                ],
+                postHoc: "Sonuçlar Hazard Ratio (Tehlike Oranı / HR) üzerinden yorumlanır."
+            }
+        };
+
+        // --- 2. KARAR AĞACI YAPISI (Decision Tree) ---
+        const dTree = {
+            "q_start": {
+                title: "Araştırmanızın veya verinizin temel amacı nedir?",
+                options: [
+                    { icon: "ri-user-line", text: "Bir grubu belirli bir değere karşılaştırmak", next: "q_one_group" },
+                    { icon: "ri-group-line", text: "İki grubu birbiriyle karşılaştırmak", next: "q_two_groups_dep" },
+                    { icon: "ri-team-line", text: "3 veya daha fazla grubu karşılaştırmak", next: "q_multi_groups_dep" },
+                    { icon: "ri-links-line", text: "İki değişken arasındaki İLİŞKİYİ (Korelasyon) incelemek", next: "q_corr_type" },
+                    { icon: "ri-line-chart-line", text: "Bir sonucu (Bağımlı) diğerleriyle TAHMİN etmek (Regresyon)", next: "q_reg_type" },
+                    { icon: "ri-pie-chart-line", text: "Kategorik oranları / çapraz tabloları incelemek", next: "q_cat_type" },
+                    { icon: "ri-stock-line", text: "Zaman Serisi analizi yapmak (Tarihsel ardışık veri)", next: "q_ts_goal" },
+                    { icon: "ri-heart-pulse-line", text: "Sağkalım / Olay zamanı analizi yapmak (Survival)", next: "q_surv_goal" }
+                ]
+            },
+            
+            // --- BİR GRUP ---
+            "q_one_group": {
+                title: "Karşılaştırma yaptığınız değişkenin (verinin) ölçüm türü nedir?",
+                options: [
+                    { icon: "ri-ruler-line", text: "Sürekli (Sayısal / Ölçümsel)", next: "q_one_group_normality" },
+                    { icon: "ri-bar-chart-horizontal-line", text: "Sıralı (Ordinal) veya Puanlama", result: "one_sample_wilcoxon" },
+                    { icon: "ri-toggle-line", text: "İkili (Evet/Hayır, Başarılı/Başarısız)", result: "binom_test" } 
+                ]
+            },
+            "q_one_group_normality": {
+                title: "Sürekli veriniz Normal Dağılım (çan eğrisi) gösteriyor mu?",
+                options: [
+                    { icon: "ri-check-double-line", text: "Evet, normal dağılıyor", next: "q_one_pop_sd" },
+                    { icon: "ri-close-circle-line", text: "Hayır, normal dağılmıyor", result: "one_sample_wilcoxon" },
+                    { icon: "ri-question-mark", text: "Bilmiyorum (Normal kabul edelim)", next: "q_one_pop_sd" } 
+                ]
+            },
+            "q_one_pop_sd": {
+                title: "Karşılaştırma yaptığınız Popülasyonun (Evrenin) Standart Sapmasını kesin olarak biliyor musunuz?",
+                options: [
+                    { icon: "ri-close-line", text: "Hayır (Sadece kendi verim var)", result: "one_sample_t" },
+                    { icon: "ri-check-line", text: "Evet, teorik olarak biliniyor", result: "one_sample_z" }
+                ]
+            },
+
+            // --- İKİ GRUP ---
+            "q_two_groups_dep": {
+                title: "Karşılaştırdığınız bu 2 grup birbirinden BAĞIMSIZ mı?",
+                options: [
+                    { icon: "ri-user-add-line", text: "Farklı Kişiler (Bağımsız Gruplar - Örn: Kadın/Erkek)", next: "q_two_indep_type" },
+                    { icon: "ri-user-received-2-line", text: "Aynı Kişiler (Öncesi-Sonrası / Bağımlı Ölçüm)", next: "q_two_dep_type" }
+                ]
+            },
+            "q_two_indep_type": {
+                title: "Karşılaştırdığınız bağımlı (ölçülen) değişkenin türü nedir?",
+                options: [
+                    { icon: "ri-ruler-line", text: "Sürekli / Sayısal", next: "q_two_indep_normality" },
+                    { icon: "ri-bar-chart-horizontal-line", text: "Sıralı (Ordinal) veya Puanlama", result: "mann_whitney" }
+                ]
+            },
+            "q_two_indep_normality": {
+                title: "Veriler HER İKİ GRUPTA DA Normal Dağılım gösteriyor mu?",
+                options: [
+                    { icon: "ri-check-double-line", text: "Evet, normal dağılıyor", next: "q_two_indep_var" },
+                    { icon: "ri-close-circle-line", text: "Hayır, normal değil", result: "mann_whitney" },
+                    { icon: "ri-question-mark", text: "Bilmiyorum", next: "q_two_indep_var" }
+                ]
+            },
+            "q_two_indep_var": {
+                title: "Grupların varyansları (yayılımları) homojen (eşit) mi? (Levene Testi)",
+                options: [
+                    { icon: "ri-check-line", text: "Evet, eşit", result: "ind_t_test" },
+                    { icon: "ri-close-line", text: "Hayır, eşit değil", result: "welch_t_test" },
+                    { icon: "ri-question-mark", text: "Bilmiyorum (Kontrol edilmeli)", result: "ind_t_test" }
+                ]
+            },
+            "q_two_dep_type": {
+                title: "Bağımlı (Öncesi-Sonrası) ölçülen değişkenin türü nedir?",
+                options: [
+                    { icon: "ri-ruler-line", text: "Sürekli / Sayısal (Örn: Kilo, Tansiyon)", next: "q_two_dep_normality" },
+                    { icon: "ri-bar-chart-horizontal-line", text: "Sıralı (Ordinal)", result: "wilcoxon" },
+                    { icon: "ri-toggle-line", text: "İkili Kategorik (Örn: İyileşti/İyileşmedi)", result: "mcnemar" }
+                ]
+            },
+            "q_two_dep_normality": {
+                title: "İki ölçüm arasındaki FARKLAR (Difference) normal dağılıyor mu?",
+                options: [
+                    { icon: "ri-check-double-line", text: "Evet", result: "paired_t_test" },
+                    { icon: "ri-close-circle-line", text: "Hayır", result: "wilcoxon" },
+                    { icon: "ri-question-mark", text: "Bilmiyorum", result: "paired_t_test" }
+                ]
+            },
+
+            // --- ÜÇ VEYA DAHA FAZLA GRUP ---
+            "q_multi_groups_dep": {
+                title: "Bu 3 veya daha fazla grup birbirinden BAĞIMSIZ mı?",
+                options: [
+                    { icon: "ri-team-line", text: "Farklı Gruplar (Bağımsız - Örn: 3 Farklı İlaç)", next: "q_multi_indep_type" },
+                    { icon: "ri-history-line", text: "Aynı kişilerin 3+ zamanlı ölçümü (Bağımlı / Tekrarlı)", next: "q_multi_dep_type" } 
+                ]
+            },
+            "q_multi_indep_type": {
+                title: "Karşılaştırdığınız bağımlı değişkenin türü nedir?",
+                options: [
+                    { icon: "ri-ruler-line", text: "Sürekli / Sayısal", next: "q_multi_indep_normality" },
+                    { icon: "ri-bar-chart-horizontal-line", text: "Sıralı (Ordinal)", result: "kruskal_wallis" }
+                ]
+            },
+            "q_multi_indep_normality": {
+                title: "Sürekli veriler TÜM GRUPLARDA Normal Dağılıyor mu?",
+                options: [
+                    { icon: "ri-check-double-line", text: "Evet, normal", next: "q_multi_indep_var" },
+                    { icon: "ri-close-circle-line", text: "Hayır, normal değil", result: "kruskal_wallis" },
+                    { icon: "ri-question-mark", text: "Bilmiyorum", next: "q_multi_indep_var" }
+                ]
+            },
+            "q_multi_indep_var": {
+                title: "Grupların Varyansları homojen mi? (Levene Testi)",
+                options: [
+                    { icon: "ri-check-line", text: "Evet, homojen (Eşit)", result: "anova_1way" },
+                    { icon: "ri-close-line", text: "Hayır, homojen değil", result: "welch_anova" },
+                    { icon: "ri-question-mark", text: "Bilmiyorum", result: "anova_1way" }
+                ]
+            },
+            "q_multi_dep_type": {
+                title: "Aynı kişilerden tekrarlı ölçülen değişkenin türü nedir?",
+                options: [
+                    { icon: "ri-ruler-line", text: "Sürekli / Sayısal", next: "q_multi_dep_norm" },
+                    { icon: "ri-bar-chart-horizontal-line", text: "Sıralı (Ordinal)", result: "friedman" }
+                ]
+            },
+            "q_multi_dep_norm": {
+                title: "Tekrarlı ölçümlerde veriler Normal dağılım gösteriyor mu?",
+                options: [
+                    { icon: "ri-check-double-line", text: "Evet", result: "rm_anova" },
+                    { icon: "ri-close-line", text: "Hayır", result: "friedman" }
+                ]
+            },
+
+            // --- KORELASYON ---
+            "q_corr_type": {
+                title: "İlişkisini inceleyeceğiniz iki değişkenin TÜRÜ ve DAĞILIMI nedir?",
+                options: [
+                    { icon: "ri-line-chart-line", text: "İkisi de Sürekli, Normal Dağılımlı ve Doğrusal (Çizgisel) ilişkili", result: "pearson" },
+                    { icon: "ri-guide-line", text: "Biri/İkisi Sıralı (Ordinal) VEYA Dağılımları Normal Değil (Monotonik)", result: "spearman" },
+                    { icon: "ri-mist-line", text: "Çok Küçük Örneklem veya Aynı puanı (Tie) alan çok fazla kayıt var", result: "kendall" }
+                ]
+            },
+
+            // --- KATEGORİK ---
+            "q_cat_type": {
+                title: "Kategorik değişkenler (Örn: Renk, Cinsiyet) ile ne yapıyorsunuz?",
+                options: [
+                    { icon: "ri-layout-grid-line", text: "İki farklı kategorik değişkenin birbiriyle ilişkisine bakıyorum", next: "q_cat_size" },
+                    { icon: "ri-pie-chart-2-line", text: "Tek bir kategorik oranın / yüzde 50'den farkına bakıyorum", result: "binom_test" }
+                ]
+            },
+            "q_cat_size": {
+                title: "Çapraz tablodaki (Örn: 2x2 matris) frekans değerleri (n) yeterince büyük mü?",
+                options: [
+                    { icon: "ri-check-line", text: "Evet, tüm hücrelerde beklenen frekans 5'ten büyük", result: "chi_square" },
+                    { icon: "ri-error-warning-line", text: "Hayır, bazı hücrelerde çok az (5'ten küçük) kişi/gözlem var", result: "fisher_exact" }
+                ]
+            },
+
+            // --- REGRESYON ---
+            "q_reg_type": {
+                title: "Tahmin etmeye çalıştığınız (Bağımlı / Sonuç) değişkenin türü nedir?",
+                options: [
+                    { icon: "ri-ruler-line", text: "Sürekli / Sayısal (Örn: Fiyat, Boy, Maaş)", next: "q_reg_iv" },
+                    { icon: "ri-toggle-line", text: "İkili Kategorik (Örn: Hasta/Sağlam, Kredi Öder/Ödemez)", result: "logistic_regression" },
+                    { icon: "ri-list-ordered", text: "Sayım Verisi (Örn: Bir haftadaki kaza SAYAISI: 0,1,2...)", result: "poisson_regression" }
+                ]
+            },
+            "q_reg_iv": {
+                title: "Modelde kaç tane Tahmin Edici (Bağımsız - X) değişkeniniz var?",
+                options: [
+                    { icon: "ri-number-1", text: "Sadece 1 Bağımsız Değişken", result: "simple_linear" },
+                    { icon: "ri-list-check-2", text: "2 veya daha fazla Bağımsız Değişken", result: "multiple_linear" }
+                ]
+            },
+
+            // --- SAĞKALIM (SURVIVAL) ---
+            "q_surv_goal": {
+                title: "Sağkalım (Olay gerçekleşme zamanı) verisinde asıl amacınız nedir?",
+                options: [
+                    { icon: "ri-line-chart-fill", text: "Sadece sağkalım ihtimalinin zaman içindeki eğrisini çizmek/tahmin etmek", result: "kaplan_meier" },
+                    { icon: "ri-group-line", text: "İki veya daha fazla grubun sağkalım eğrilerini BİRBİRİYLE kıyaslamak", result: "log_rank" },
+                    { icon: "ri-settings-4-line", text: "Birden fazla risk faktörünün (Kovaryat) sağkalım süresine etkisini modellemek", result: "cox_ph" }
+                ]
+            },
+
+            // --- ZAMAN SERİSİ ---
+            "q_ts_goal": {
+                title: "Zaman Serisi verinizde yapmak istediğiniz ana analiz nedir?",
+                options: [
+                    { icon: "ri-stop-mini-line", text: "Verinin Durağan (Stationary) olup olmadığını test etmek", result: "ts_stationarity" },
+                    { icon: "ri-rocket-line", text: "Geçmiş verilere dayanarak geleceği Tahmin Etmek (Forecasting)", result: "ts_forecasting" },
+                    { icon: "ri-earthquake-line", text: "Verideki Oynaklığı (Varyans / Volatilite / Risk) modellemek", result: "ts_volatility" }
+                ]
+            }
+        };
+
+        // --- 3. STATE AND NAVIGATION LOGIC ---
+        let historyStack = [];
+        let currentStep = "q_start";
+
+        function startWizard() {
+            historyStack = [];
+            document.getElementById('resultContainer').style.display = 'none';
+            document.getElementById('questionContainer').style.display = 'block';
+            document.getElementById('btnBack').style.visibility = 'hidden';
+            document.getElementById('btnRestart').classList.add('d-none');
+            
+            // Progress Bar reset
+            document.getElementById('progressBar').style.width = '10%';
+            
+            renderStep("q_start");
+        }
+
+        function renderStep(stepId) {
+            currentStep = stepId;
+            const node = dTree[stepId];
+            
+            if(!node) { alert("Hata: Karar düğümü bulunamadı."); return; }
+
+            document.getElementById('qTitle').innerText = node.title;
+            
+            // Build options
+            let html = '';
+            node.options.forEach((opt) => {
+                let targetParams = opt.result ? `'result', '${opt.result}'` : `'step', '${opt.next}'`;
+                html += `
+                    <div class="option-card" onclick="makeChoice(${targetParams})">
+                        <i class="${opt.icon} option-icon"></i>
+                        <div>
+                            <div class="option-text">${opt.text}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('optionsGrid').innerHTML = html;
+
+            // Visual Fake Progress
+            let depth = historyStack.length;
+            let pct = 10 + (depth * 25);
+            if(pct > 90) pct = 90;
+            document.getElementById('progressBar').style.width = pct + '%';
+            document.getElementById('stepCounterText').innerText = `Adım ${depth + 1}`;
+
+            if(depth > 0) document.getElementById('btnBack').style.visibility = 'visible';
+            else document.getElementById('btnBack').style.visibility = 'hidden';
+        }
+
+        function makeChoice(type, target) {
+            historyStack.push(currentStep); // Save state
+
+            if(type === 'step') {
+                renderStep(target);
+            } else if (type === 'result') {
+                showResult(target);
+            }
+        }
+
+        function goBack() {
+            if(historyStack.length > 0) {
+                let isResultScreen = document.getElementById('resultContainer').style.display === 'block';
+                let prevStep = historyStack.pop();
+                
+                if(isResultScreen) {
+                    document.getElementById('resultContainer').style.display = 'none';
+                    document.getElementById('questionContainer').style.display = 'block';
+                    document.getElementById('btnRestart').classList.add('d-none');
+                }
+                
+                renderStep(prevStep);
+            }
+        }
+
+        function showResult(resultId) {
+            const data = testDB[resultId];
+            if(!data) {
+                alert("Uyarı: Bu senaryo için sistemde kayıtlı nihai bir test bulunamadı.");
+                goBack();
+                return;
+            }
+
+            document.getElementById('questionContainer').style.display = 'none';
+            document.getElementById('resultContainer').style.display = 'block';
+            document.getElementById('btnRestart').classList.remove('d-none');
+            
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('stepCounterText').innerText = "Sonuç";
+
+            // Fill Data
+            document.getElementById('resPrimaryName').innerText = data.name;
+            document.getElementById('resReason').innerText = data.reason;
+
+            // Assumptions
+            let assHtml = '';
+            if(data.assumptions && data.assumptions.length > 0) {
+                data.assumptions.forEach(ass => {
+                    assHtml += `<li><i class="${ass.icon}"></i> <span>${ass.text}</span></li>`;
+                });
+            } else {
+                assHtml = `<li><i class="ri-information-line"></i> <span>Özel bir ön varsayım gerektirmez.</span></li>`;
+            }
+            document.getElementById('resAssumptions').innerHTML = assHtml;
+
+            // Alternatives
+            let altHtml = '';
+            if(data.alternatives && data.alternatives.length > 0) {
+                data.alternatives.forEach(alt => {
+                    altHtml += `<span class="alt-test-badge">${alt}</span>`;
+                });
+            } else {
+                altHtml = `<span class="text-muted fs-13">Doğrudan alternatifi yoktur.</span>`;
+            }
+            document.getElementById('resAlternatives').innerHTML = altHtml;
+
+            // Post Hoc / Effect Size
+            let phBox = document.getElementById('resPostHocBox');
+            if(data.postHoc) {
+                phBox.classList.remove('d-none');
+                document.getElementById('resPostHocContent').innerHTML = `<p class="fs-13 text-muted mb-0">${data.postHoc}</p>`;
+            } else {
+                phBox.classList.add('d-none');
+            }
+        }
+
+        // INIT
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlEl = document.documentElement;
+            
+            if (localStorage.getItem('statlab_theme') === 'dark') { 
+                themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); 
+                themeIcon.classList.add('text-warning'); 
+                themeIcon.classList.remove('text-secondary');
+            }
+            
+            toggleBtn.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark-mode');
+                if (htmlEl.classList.contains('dark-mode')) {
+                    themeIcon.classList.replace('ri-moon-fill', 'ri-sun-fill'); 
+                    themeIcon.classList.add('text-warning'); 
+                    themeIcon.classList.remove('text-secondary'); 
+                    localStorage.setItem('statlab_theme', 'dark');
+                } else {
+                    themeIcon.classList.replace('ri-sun-fill', 'ri-moon-fill'); 
+                    themeIcon.classList.remove('text-warning'); 
+                    themeIcon.classList.add('text-secondary'); 
+                    localStorage.setItem('statlab_theme', 'light');
+                }
+            });
+
+            startWizard();
+        });
+
+    </script>
+    <script src="assets/js/particle-bg.js"></script>
+</body>
+</html>
