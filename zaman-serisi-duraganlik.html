@@ -183,10 +183,11 @@
 
                                 <div class="mb-3">
                                     <label class="form-label fw-bold text-secondary fs-12 mb-1">Gecikme (Lag) Seçimi</label>
+                                    <!-- HATA BURADAYDI: value değerleri python statsmodels'in beklediği gibi 'aic', 'bic', 't-stat' yapıldı -->
                                     <select id="lagInput" class="form-select bg-light border-0 fs-13">
-                                        <option value="AIC" selected>Otomatik (AIC Kriteri)</option>
-                                        <option value="BIC">Otomatik (BIC Kriteri)</option>
-                                        <option value="12">Manuel (Lag = 12)</option>
+                                        <option value="aic" selected>Otomatik (AIC Kriteri)</option>
+                                        <option value="bic">Otomatik (BIC Kriteri)</option>
+                                        <option value="t-stat">Otomatik (T-Stat)</option>
                                     </select>
                                 </div>
 
