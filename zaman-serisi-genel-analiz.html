@@ -497,7 +497,7 @@
             
             if(document.getElementById('dosyaGezgini')) {
                 document.getElementById('dosyaGezgini').addEventListener('change', function(e) { 
-                    if(typeof handleFile === 'function') handleFile(e.target.files[0]); 
+                    handleFile(e.target.files[0]); 
                 });
             }
             
@@ -516,6 +516,45 @@
             setupExcelGridFeatures();
         });
 
+        // --- DOSYA (CSV/EXCEL) OKUMA FONKSİYONU ---
+        function handleFile(file) {
+            if (!file) return;
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const data = e.target.result;
+                let rowsText = "";
+
+                if (file.name.endsWith('.csv') || file.name.endsWith('.txt')) {
+                    // Düz metin okuma
+                    rowsText = data;
+                } else {
+                    // Excel (.xlsx, .xls) okuma
+                    const workbook = XLSX.read(data, { type: 'binary' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    // Tab ile ayrılmış CSV (tsv) formatına çeviriyoruz, handleGridPaste algılayabilsin diye
+                    rowsText = XLSX.utils.sheet_to_csv(worksheet, {FS: "\t"}); 
+                }
+
+                // Veriyi sanal bir panoya kopyalayıp, sanki kullanıcı yapıştırmış gibi mevcut yapıştırma fonksiyonunu tetikliyoruz
+                const dataTransfer = new DataTransfer(); 
+                dataTransfer.setData('text', rowsText);
+                const pasteEvent = new ClipboardEvent('paste', { clipboardData: dataTransfer });
+                document.getElementById('excelGrid').dispatchEvent(pasteEvent);
+                
+                // Dosya inputunu sıfırlayalım ki aynı dosyayı tekrar seçebilsin
+                document.getElementById('dosyaGezgini').value = "";
+            };
+
+            if (file.name.endsWith('.csv') || file.name.endsWith('.txt')) {
+                reader.readAsText(file); // CSV'leri düz metin oku
+            } else {
+                reader.readAsBinaryString(file); // Excel dosyaları için binary oku
+            }
+        }
+
         // --- EXCEL BENZERİ HÜCRE İÇİ GEZİNME VE SEÇİM FONKSİYONU ---
         function setupExcelGridFeatures() {
             const gridBody = document.getElementById('gridBody');
@@ -523,7 +562,10 @@
             // 1. Özellik: Hücreye girildiğinde tüm metni seç
             gridBody.addEventListener('focusin', function(e) {
                 if (e.target.classList.contains('excel-input')) {
-                    e.target.select();
+                    // setTimeout kullanmak, tarayıcının kendi default seçimini (imleci sona koyma) ezmemizi sağlar
+                    setTimeout(() => {
+                        e.target.select();
+                    }, 10);
                 }
             });
 
@@ -553,7 +595,8 @@
                         e.preventDefault();
                     } 
                     else if (e.key === 'ArrowLeft') {
-                        if (currentInput.selectionStart === 0 || currentInput.value === "") {
+                        // Eğer metin tamamen seçiliyse veya imleç en baştaysa sola geç
+                        if (currentInput.selectionStart === 0 || currentInput.selectionStart !== currentInput.selectionEnd || currentInput.value === "") {
                             targetCol -= 1;
                             e.preventDefault();
                         } else {
@@ -561,7 +604,8 @@
                         }
                     } 
                     else if (e.key === 'ArrowRight') {
-                        if (currentInput.selectionStart === currentInput.value.length || currentInput.value === "") {
+                        // Eğer metin tamamen seçiliyse veya imleç en sondaysa sağa geç
+                        if (currentInput.selectionStart === currentInput.value.length || currentInput.selectionStart !== currentInput.selectionEnd || currentInput.value === "") {
                             targetCol += 1;
                             e.preventDefault();
                         } else {
@@ -574,7 +618,7 @@
                         if (targetCol > 0 && targetCol < row.children.length) {
                             const targetInput = row.children[targetCol].querySelector('input');
                             if (targetInput) {
-                                targetInput.focus();
+                                targetInput.focus(); // Bu işlem yukarıdaki focusin event'ini tetikleyip içindeki yazıyı da seçecek
                             }
                         }
                     }
@@ -647,9 +691,15 @@
             if(!pastedData) return;
 
             let rows = pastedData.trim().split('\n'); if(rows.length === 0) return;
-            let firstRowParts = rows[0].split(/[\t]+/).map(s=>s.trim());
             
-            // HATA GIDERİLDİ: Başlığın tam olarak Tarih ve Sayısal değere hizalanması için isHeader mantığı
+            // CSV'de virgülle veya noktalı virgülle ayırma ihtimaline karşı akıllı split (Önce tab, sonra noktalı virgül, sonra virgül)
+            let delimiter = /[\t]+/;
+            if(rows[0].includes(';')) delimiter = ';';
+            else if(rows[0].includes(',') && !rows[0].includes('\t')) delimiter = ',';
+            
+            let firstRowParts = rows[0].split(delimiter).map(s=>s.trim());
+            
+            // Başlığın tam olarak Tarih ve Sayısal değere hizalanması için isHeader mantığı
             let isHeader = isNaN(Number(firstRowParts[1] ? firstRowParts[1].replace(',','.') : "NaN")); 
             let dataStartIndex = isHeader ? 1 : 0;
             let reqCols = firstRowParts.length;
@@ -669,7 +719,7 @@
             while(tbody.rows.length < reqRows) addRow();
 
             for(let i=dataStartIndex; i<rows.length; i++) {
-                let parts = rows[i].split(/[\t]+/).map(s=>s.trim());
+                let parts = rows[i].split(delimiter).map(s=>s.trim());
                 let tr = tbody.rows[i - dataStartIndex];
                 for(let j=0; j<Math.min(colCount, parts.length); j++) {
                     if(tr.cells[j+1]) { 
