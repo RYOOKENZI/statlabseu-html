@@ -205,7 +205,7 @@
                                 </div>
 
                                 <div class="alert alert-warning-smart py-2 fs-12 mb-3 border-0 rounded-3">
-                                    <i class="ri-edit-2-fill align-middle me-1"></i> Hücrelere tıklayıp değer girebilir veya <strong>Excel'den doğrudan yapıştırabilirsiniz (Ctrl+V)</strong>.
+                                    <i class="ri-edit-2-fill align-middle me-1"></i> Hücrelere tıklayıp değer girebilir, <strong>Excel'den yapıştırabilir (Ctrl+V)</strong> veya ok tuşlarıyla dolaşabilirsiniz.
                                 </div>
 
                                 <div id="gridErrorMsg" class="text-danger fw-bold fs-12 mb-2 d-none"><i class="ri-error-warning-line align-middle"></i> Hata: Kırmızı renkli hücrelerdeki verileri düzeltin! Zaman ve Sayısal alanları kontrol edin.</div>
@@ -495,7 +495,12 @@
                 updateChartLayers(); // Theme refresh
             });
             
-            document.getElementById('dosyaGezgini').addEventListener('change', function(e) { handleFile(e.target.files[0]); });
+            if(document.getElementById('dosyaGezgini')) {
+                document.getElementById('dosyaGezgini').addEventListener('change', function(e) { 
+                    if(typeof handleFile === 'function') handleFile(e.target.files[0]); 
+                });
+            }
+            
             document.getElementById('excelGrid').addEventListener('paste', handleGridPaste);
             
             // Eğer session'da veri varsa yükle, yoksa boş grid çiz
@@ -506,7 +511,76 @@
             } else {
                 buildInitialGrid();
             }
+
+            // EXCEL GRİD ÖZELLİKLERİ BURADA ÇAĞRILIYOR
+            setupExcelGridFeatures();
         });
+
+        // --- EXCEL BENZERİ HÜCRE İÇİ GEZİNME VE SEÇİM FONKSİYONU ---
+        function setupExcelGridFeatures() {
+            const gridBody = document.getElementById('gridBody');
+
+            // 1. Özellik: Hücreye girildiğinde tüm metni seç
+            gridBody.addEventListener('focusin', function(e) {
+                if (e.target.classList.contains('excel-input')) {
+                    e.target.select();
+                }
+            });
+
+            // 2. Özellik: Ok tuşları ile gezinme
+            gridBody.addEventListener('keydown', function(e) {
+                if (!e.target.classList.contains('excel-input')) return;
+
+                const currentInput = e.target;
+                const currentTd = currentInput.closest('td');
+                const currentRow = currentTd.closest('tr');
+                const tbody = currentRow.closest('tbody');
+
+                const colIndex = Array.from(currentRow.children).indexOf(currentTd);
+                const rowIndex = Array.from(tbody.children).indexOf(currentRow);
+
+                let targetRow = rowIndex;
+                let targetCol = colIndex;
+
+                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    
+                    if (e.key === 'ArrowUp') {
+                        targetRow -= 1;
+                        e.preventDefault();
+                    } 
+                    else if (e.key === 'ArrowDown') {
+                        targetRow += 1;
+                        e.preventDefault();
+                    } 
+                    else if (e.key === 'ArrowLeft') {
+                        if (currentInput.selectionStart === 0 || currentInput.value === "") {
+                            targetCol -= 1;
+                            e.preventDefault();
+                        } else {
+                            return; 
+                        }
+                    } 
+                    else if (e.key === 'ArrowRight') {
+                        if (currentInput.selectionStart === currentInput.value.length || currentInput.value === "") {
+                            targetCol += 1;
+                            e.preventDefault();
+                        } else {
+                            return; 
+                        }
+                    }
+
+                    if (targetRow >= 0 && targetRow < tbody.children.length) {
+                        const row = tbody.children[targetRow];
+                        if (targetCol > 0 && targetCol < row.children.length) {
+                            const targetInput = row.children[targetCol].querySelector('input');
+                            if (targetInput) {
+                                targetInput.focus();
+                            }
+                        }
+                    }
+                }
+            });
+        }
 
         // --- GRID YÖNETİMİ ---
         function buildInitialGrid() {
